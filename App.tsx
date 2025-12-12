@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { 
   Trophy, Activity, User, BarChart2, Home, Lock, CheckCircle, Play, 
   Zap, Dumbbell, Clock, ChevronRight, Sun, Moon, Cloud, X, Star, 
@@ -34,7 +34,6 @@ const ImageWithFallback = ({ src, alt, className, fallbackText }: { src: string,
   const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
-    // URL directa, ya que estamos usando espejos de Pinterest fiables
     setImgSrc(src);
     setHasError(false);
     setIsLoading(true);
@@ -44,7 +43,6 @@ const ImageWithFallback = ({ src, alt, className, fallbackText }: { src: string,
     if (!hasError) {
       setHasError(true);
       setIsLoading(false);
-      // Fallback a un placeholder limpio generado dinámicamente
       setImgSrc(`https://placehold.co/600x400/f1f5f9/475569?text=${encodeURIComponent(fallbackText || alt)}`);
     }
   };
@@ -54,7 +52,7 @@ const ImageWithFallback = ({ src, alt, className, fallbackText }: { src: string,
   };
 
   return (
-    <div className={`relative overflow-hidden bg-white ${className}`}>
+    <div className={`relative overflow-hidden bg-transparent ${className}`}>
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-slate-100 dark:bg-slate-700 z-10">
           <Loader2 className="w-6 h-6 text-slate-400 animate-spin" />
@@ -63,7 +61,7 @@ const ImageWithFallback = ({ src, alt, className, fallbackText }: { src: string,
       <img 
         src={imgSrc} 
         alt={alt} 
-        className={`w-full h-full object-contain transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
+        className={`w-full h-full object-cover transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
         onError={handleError}
         onLoad={handleLoad}
         loading="lazy"
@@ -837,8 +835,15 @@ const ActiveWorkoutView = ({
   const [timer, setTimer] = useState(0);
   const [expandedEx, setExpandedEx] = useState<string | null>(null);
 
+  // Use refs to track latest state for interval saving without re-running effects
+  const exercisesRef = useRef(exercises);
+  const timerRef = useRef(timer);
+
+  // Sync refs with state
+  useEffect(() => { exercisesRef.current = exercises; }, [exercises]);
+  useEffect(() => { timerRef.current = timer; }, [timer]);
+
   // Inicializar estado (o recuperar del log guardado)
-  // IMPORTANTE: Escuchamos activeProgData?.startedAt para resetear si se inicia uno nuevo
   useEffect(() => {
     if (!dayData) return;
 
@@ -866,7 +871,7 @@ const ActiveWorkoutView = ({
     }
   }, [dayData?.id, activeProgData?.startedAt]); 
 
-  // Timer
+  // Timer: Runs every second
   useEffect(() => {
     const interval = setInterval(() => {
       setTimer(t => t + 1);
@@ -874,16 +879,22 @@ const ActiveWorkoutView = ({
     return () => clearInterval(interval);
   }, []);
 
-  // Auto-save progress every 2 seconds
+  // ROBUST AUTO-SAVE: Runs every 10 seconds
   useEffect(() => {
-    // Only save if we have exercises populated to avoid saving empty state over good state
-    if (exercises.length === 0) return;
+    const saveState = () => {
+      if (exercisesRef.current.length > 0) {
+        updateProgress(exercisesRef.current, timerRef.current);
+      }
+    };
 
-    const timeout = setTimeout(() => {
-       updateProgress(exercises, timer);
-    }, 2000);
-    return () => clearTimeout(timeout);
-  }, [exercises, timer]);
+    const intervalId = setInterval(saveState, 10000);
+
+    // Save on unmount/cleanup to ensure latest state is captured when leaving the view
+    return () => {
+      clearInterval(intervalId);
+      saveState();
+    };
+  }, [updateProgress]); // updateProgress is stable via useCallback in App
 
 
   if (!program || !dayData) return (
@@ -925,6 +936,8 @@ const ActiveWorkoutView = ({
     }
 
     setExercises(newExs);
+    // Immediate save on interaction
+    updateProgress(newExs, timer);
   };
 
   const tryFinishWorkout = () => {
@@ -996,7 +1009,7 @@ const ActiveWorkoutView = ({
                 {/* Miniatura solo cuando está cerrado, para no duplicar */}
                 {!isExpanded && (
                   <div className="w-12 h-12 rounded-lg bg-white overflow-hidden shrink-0 border border-slate-100 dark:border-slate-700">
-                    <ImageWithFallback src={ex.image} alt={ex.name} className="w-full h-full object-contain" />
+                    <ImageWithFallback src={ex.image} alt={ex.name} className="w-full h-full object-cover" />
                   </div>
                 )}
                 
@@ -1016,17 +1029,17 @@ const ActiveWorkoutView = ({
               {isExpanded && (
                 <div className="p-4 pt-0 border-t border-slate-100 dark:border-slate-700">
                    
-                   {/* Description & Image Section - Fondo blanco forzado para GIFs transparentes */}
-                   <div className="flex flex-col sm:flex-row gap-4 mt-4 mb-6 bg-white p-4 rounded-xl border border-slate-100 dark:border-slate-700 shadow-inner">
-                     <div className="sm:w-1/3 flex items-center justify-center rounded-lg p-2 min-h-[160px]">
-                        <ImageWithFallback src={ex.image} alt={ex.name} className="w-full h-40 object-contain" fallbackText={ex.name} />
+                   {/* Description & Image Section - Fondo adaptativo y texto legible */}
+                   <div className="flex flex-col sm:flex-row gap-4 mt-4 mb-6 bg-slate-50 dark:bg-slate-700/30 p-4 rounded-xl border border-slate-100 dark:border-slate-700 shadow-inner">
+                     <div className="sm:w-1/3 flex items-center justify-center rounded-lg min-h-[160px] overflow-hidden bg-black/5 dark:bg-black/20">
+                        <ImageWithFallback src={ex.image} alt={ex.name} className="w-full h-40 object-cover rounded-lg" fallbackText={ex.name} />
                      </div>
                      <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
                           <Info className="w-4 h-4 text-primary-500" />
-                          <h4 className="font-bold text-sm text-primary-600 uppercase tracking-wide">Técnica</h4>
+                          <h4 className="font-bold text-sm text-primary-600 dark:text-primary-400 uppercase tracking-wide">Técnica</h4>
                         </div>
-                        <p className="text-sm text-slate-600 leading-relaxed">{ex.description}</p>
+                        <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">{ex.description}</p>
                      </div>
                    </div>
 
@@ -1265,7 +1278,7 @@ export default function App() {
     });
   };
 
-  const updateWorkoutProgress = (exercises: ActiveExerciseState[], timer: number) => {
+  const updateWorkoutProgress = useCallback((exercises: ActiveExerciseState[], timer: number) => {
     setUser(prev => {
       if (!prev.activeProgram) return prev;
       return {
@@ -1276,7 +1289,7 @@ export default function App() {
         }
       };
     });
-  };
+  }, []);
 
   const toggleTheme = () => {
     setUser(prev => ({

@@ -17,8 +17,6 @@ export const INITIAL_USER_STATE: UserState = {
   }
 };
 
-const getTotalMinutes = (user: UserState) => user.history.reduce((acc, curr) => acc + curr.durationMinutes, 0);
-
 export const ACHIEVEMENTS: Achievement[] = [
    // --- CONSTANCIA (Workouts) ---
    { id: 'w1', name: "Primer Paso", description: "Completa tu primer entrenamiento.", icon: "🦶", unlocked: false, condition: (u) => u.completedWorkouts >= 1 },
@@ -45,122 +43,60 @@ export const ACHIEVEMENTS: Achievement[] = [
    { id: 'kg100k', name: "Ballena Azul", description: "Levanta 100,000kg en total.", icon: "🐋", unlocked: false, condition: (u) => u.totalWeightLifted >= 100000 },
 ];
 
-// --- LIBRERÍA DE GIFS ILUSTRATIVOS (Enlaces Directos de Pinterest - Estilo Vector) ---
-const GIF_LIBRARY: Record<string, string> = {
-  // --- CARDIO & CALENTAMIENTO ---
-  "Jumping Jacks": "https://i.pinimg.com/originals/9c/d0/c3/9cd0c39279b94727546387d33703c53d.gif",
-  "Mountain Climbers": "https://i.pinimg.com/originals/18/27/be/1827be178c019b1dc6f8a8d8b4a7b748.gif",
-  "Cardio Suave": "https://i.pinimg.com/originals/f4/b0/f3/f4b0f3093fcadd64968e4c46d1767b50.gif", // Generic active
-  "Burpees (sin salto)": "https://i.pinimg.com/originals/17/52/64/175264379963e52292359be61853d9a6.gif",
-  "Burpees": "https://i.pinimg.com/originals/17/52/64/175264379963e52292359be61853d9a6.gif",
-
-  // --- PIERNAS (SQUAT PATTERN) ---
-  "Sentadillas al aire": "https://i.pinimg.com/originals/18/1c/65/181c65790c377d48332a67bc450090be.gif", // Bodyweight Squat
-  "Sentadilla Isométrica": "https://i.pinimg.com/originals/8c/54/22/8c54227f7a934b999d3d3b76233ba05e.gif", // Wall Sit
-  "Sentadilla con Barra": "https://i.pinimg.com/originals/31/58/6a/31586a63273e925d436d33a5932594df.gif",
-  "Sentadilla": "https://i.pinimg.com/originals/31/58/6a/31586a63273e925d436d33a5932594df.gif",
-  "Goblet Squat (Mancuerna)": "https://i.pinimg.com/originals/24/7c/4f/247c4f451f1638c47f9f31835626ae2b.gif", // Placeholder/Generic Squat pattern
-  "Sentadilla Low Bar": "https://i.pinimg.com/originals/31/58/6a/31586a63273e925d436d33a5932594df.gif",
-  "Sentadilla Frontal": "https://i.pinimg.com/originals/31/58/6a/31586a63273e925d436d33a5932594df.gif", // Using barbell squat visual
-  "Prensa de Piernas": "https://i.pinimg.com/originals/90/a1/d2/90a1d28362d294025164d1808620df94.gif",
+// --- LIBRERÍA DE IMÁGENES (Fuente: Pexels - Fotografía Fitness Real) ---
+// Categorizamos las imágenes para asegurar que siempre haya una foto de alta calidad relevante.
+const IMAGE_LIBRARY: Record<string, string> = {
+  // --- GENERAL / DUMBBELLS ---
+  "default": "https://images.pexels.com/photos/841130/pexels-photo-841130.jpeg?auto=compress&cs=tinysrgb&w=800",
   
-  // --- PIERNAS (LUNGE/SINGLE LEG) ---
-  "Zancadas Alternas": "https://i.pinimg.com/originals/a0/4e/11/a04e1169622d0b57100b957688223d49.gif",
-  "Zancadas Búlgaras": "https://i.pinimg.com/originals/6f/a6/66/6fa66687981504104c35e3b62ae51921.gif",
-  "Sentadilla Búlgara": "https://i.pinimg.com/originals/6f/a6/66/6fa66687981504104c35e3b62ae51921.gif",
-  "Zancadas con Salto": "https://i.pinimg.com/originals/0f/50/f0/0f50f061e8605202678c13904533037c.gif",
-  "Zancadas con Barra": "https://i.pinimg.com/originals/a0/4e/11/a04e1169622d0b57100b957688223d49.gif",
+  // --- LEGS / SQUATS ---
+  "squat": "https://images.pexels.com/photos/1552242/pexels-photo-1552242.jpeg?auto=compress&cs=tinysrgb&w=800",
+  "lunge": "https://images.pexels.com/photos/4164761/pexels-photo-4164761.jpeg?auto=compress&cs=tinysrgb&w=800",
+  "legs": "https://images.pexels.com/photos/1552252/pexels-photo-1552252.jpeg?auto=compress&cs=tinysrgb&w=800",
   
-  // --- PIERNAS (HINGE/HAMSTRINGS/GLUTES) ---
-  "Puente de Glúteo": "https://i.pinimg.com/originals/82/3d/74/823d74c0df2033488730873a248a3900.gif",
-  "Puente Glúteo a 1 pierna": "https://i.pinimg.com/originals/82/3d/74/823d74c0df2033488730873a248a3900.gif", // Single leg var
-  "Peso Muerto Rumano": "https://i.pinimg.com/originals/27/9d/21/279d211029c36209b19e992923bc6043.gif",
-  "Peso Muerto": "https://i.pinimg.com/originals/27/9d/21/279d211029c36209b19e992923bc6043.gif",
-  "Peso Muerto Rumano (Mancuernas)": "https://i.pinimg.com/originals/27/9d/21/279d211029c36209b19e992923bc6043.gif",
-  "Peso Muerto Convencional": "https://i.pinimg.com/originals/27/9d/21/279d211029c36209b19e992923bc6043.gif",
-  "Peso Muerto Déficit": "https://i.pinimg.com/originals/27/9d/21/279d211029c36209b19e992923bc6043.gif",
-  "Hip Thrust Pesado": "https://i.pinimg.com/originals/82/3d/74/823d74c0df2033488730873a248a3900.gif",
-  "Curl Femoral": "https://i.pinimg.com/originals/23/e8/62/23e86207038e1a106c642646399088ba.gif",
-  "Curl Femoral Tumbado": "https://i.pinimg.com/originals/23/e8/62/23e86207038e1a106c642646399088ba.gif",
-  
-  // --- PIERNAS (ISOLATION) ---
-  "Extensión Cuádriceps": "https://i.pinimg.com/originals/eb/c3/8c/ebc38c83e1628d0526487e49c7161b9e.gif",
-  "Elevación de Gemelos": "https://i.pinimg.com/originals/24/7c/4f/247c4f451f1638c47f9f31835626ae2b.gif", 
-  "Gemelos Sentado": "https://i.pinimg.com/originals/24/7c/4f/247c4f451f1638c47f9f31835626ae2b.gif",
-  "Elevación Gemelo 1 pierna": "https://i.pinimg.com/originals/24/7c/4f/247c4f451f1638c47f9f31835626ae2b.gif",
+  // --- PUSH / CHEST / SHOULDERS ---
+  "pushup": "https://images.pexels.com/photos/176782/pexels-photo-176782.jpeg?auto=compress&cs=tinysrgb&w=800",
+  "bench": "https://images.pexels.com/photos/3837781/pexels-photo-3837781.jpeg?auto=compress&cs=tinysrgb&w=800",
+  "shoulder": "https://images.pexels.com/photos/1552249/pexels-photo-1552249.jpeg?auto=compress&cs=tinysrgb&w=800",
+  "dips": "https://images.pexels.com/photos/4162451/pexels-photo-4162451.jpeg?auto=compress&cs=tinysrgb&w=800",
 
-  // --- EMPUJE (PECHO/HOMBROS/TRICEPS) ---
-  "Flexiones (o rodillas)": "https://i.pinimg.com/originals/3f/b3/66/3fb366a0bc9a96e952672373007997ca.gif",
-  "Flexiones Diamante (o cerradas)": "https://i.pinimg.com/originals/3f/b3/66/3fb366a0bc9a96e952672373007997ca.gif",
-  "Flexiones Explosivas": "https://i.pinimg.com/originals/3f/b3/66/3fb366a0bc9a96e952672373007997ca.gif", 
-  "Flexiones declinadas": "https://i.pinimg.com/originals/a0/0a/63/a00a631f49646b97669d0d38b555819e.gif",
-  
-  "Press de Banca": "https://i.pinimg.com/originals/03/49/74/034974249a43a0492823a07ac02e3b2e.gif",
-  "Press Banca Inclinado": "https://i.pinimg.com/originals/f3/ae/92/f3ae920b66311b5186b5b5c98d67566d.gif",
-  "Press Banca Competición": "https://i.pinimg.com/originals/03/49/74/034974249a43a0492823a07ac02e3b2e.gif",
-  "Press Banca Agarre Estrecho": "https://i.pinimg.com/originals/03/49/74/034974249a43a0492823a07ac02e3b2e.gif",
-  "Press de Pecho en Máquina": "https://i.pinimg.com/originals/82/38/c4/8238c437340d8628043657b98d363f03.gif",
-  "Press Inclinado Mancuernas": "https://i.pinimg.com/originals/8a/0a/1c/8a0a1c7784f186060c1d100913c32918.gif",
-  
-  "Fondos en silla": "https://i.pinimg.com/originals/f4/04/b8/f404b8686d63e9089025170d1d6a6665.gif",
-  "Fondos Lastrados": "https://i.pinimg.com/originals/2e/ef/0e/2eef0eb5006b5278dfc9f1a0293126be.gif", 
-  "Fondos en Máquina o Banco": "https://i.pinimg.com/originals/f4/04/b8/f404b8686d63e9089025170d1d6a6665.gif",
-  "Fondos en Paralelas (o Sillas)": "https://i.pinimg.com/originals/2e/ef/0e/2eef0eb5006b5278dfc9f1a0293126be.gif",
-  
-  "Press Militar Mancuernas": "https://i.pinimg.com/originals/39/10/25/3910252677d27e997e3fc22790938484.gif",
-  "Press Militar": "https://i.pinimg.com/originals/fa/73/0d/fa730d1d7826d9c6e39552b01438914b.gif",
-  "Press Militar Sentado (Mancuernas)": "https://i.pinimg.com/originals/39/10/25/3910252677d27e997e3fc22790938484.gif",
-  "Press Militar Estricto": "https://i.pinimg.com/originals/fa/73/0d/fa730d1d7826d9c6e39552b01438914b.gif",
-  "Pino contra pared (Hold)": "https://i.pinimg.com/originals/39/10/25/3910252677d27e997e3fc22790938484.gif", 
-  
-  "Aperturas Mancuernas": "https://i.pinimg.com/originals/e5/23/0f/e5230f37902d184088a70c804f553f17.gif",
-  "Elevaciones Laterales": "https://i.pinimg.com/originals/8c/52/fd/8c52fd64d3d758d4d732ba06d4e8b39b.gif",
-  "Extensión de Tríceps Polea": "https://i.pinimg.com/originals/df/06/f0/df06f0237bf363574d7dfc920bd7d526.gif",
-  "Extensión Tríceps": "https://i.pinimg.com/originals/df/06/f0/df06f0237bf363574d7dfc920bd7d526.gif",
+  // --- PULL / BACK / BICEPS ---
+  "pullup": "https://images.pexels.com/photos/4164844/pexels-photo-4164844.jpeg?auto=compress&cs=tinysrgb&w=800", // Man doing pullups
+  "row": "https://images.pexels.com/photos/4162489/pexels-photo-4162489.jpeg?auto=compress&cs=tinysrgb&w=800", // Barbell generic
+  "bicep": "https://images.pexels.com/photos/1229356/pexels-photo-1229356.jpeg?auto=compress&cs=tinysrgb&w=800",
 
-  // --- TRACCIÓN (ESPALDA/BICEPS) ---
-  "Remo con mochila/agua": "https://i.pinimg.com/originals/f3/79/b9/f379b9409b533e4987dc344600d43a6d.gif", 
-  "Remo con Barra": "https://i.pinimg.com/originals/f3/79/b9/f379b9409b533e4987dc344600d43a6d.gif",
-  "Remo en Máquina": "https://i.pinimg.com/originals/a0/62/16/a0621681a54728f3d13215266cb2264a.gif",
-  "Remo Gironda": "https://i.pinimg.com/originals/a0/62/16/a0621681a54728f3d13215266cb2264a.gif",
-  "Remo Pendlay": "https://i.pinimg.com/originals/f3/79/b9/f379b9409b533e4987dc344600d43a6d.gif",
-  "Remo puerta con toalla": "https://i.pinimg.com/originals/a0/62/16/a0621681a54728f3d13215266cb2264a.gif", 
+  // --- CORE / ABS ---
+  "plank": "https://images.pexels.com/photos/2294354/pexels-photo-2294354.jpeg?auto=compress&cs=tinysrgb&w=800",
+  "abs": "https://images.pexels.com/photos/221247/pexels-photo-221247.jpeg?auto=compress&cs=tinysrgb&w=800",
 
-  "Dominadas": "https://i.pinimg.com/originals/a5/d6/39/a5d639b7dfdf8309fc3df8992d99742f.gif",
-  "Dominadas (o Remo invertido mesa)": "https://i.pinimg.com/originals/a5/d6/39/a5d639b7dfdf8309fc3df8992d99742f.gif",
-  "Dominadas Lastradas": "https://i.pinimg.com/originals/a5/d6/39/a5d639b7dfdf8309fc3df8992d99742f.gif",
-  "Chin ups": "https://i.pinimg.com/originals/a5/d6/39/a5d639b7dfdf8309fc3df8992d99742f.gif",
-  "Jalón al Pecho": "https://i.pinimg.com/originals/11/44/14/1144143a5342a8489849547d21c431df.gif",
-
-  "Face Pull": "https://i.pinimg.com/originals/a0/62/16/a0621681a54728f3d13215266cb2264a.gif", 
-
-  "Curl de Bíceps Barra": "https://i.pinimg.com/originals/d4/73/46/d47346618e7b3da2774900a0b9a9c299.gif",
-  "Curl Barra Z": "https://i.pinimg.com/originals/d4/73/46/d47346618e7b3da2774900a0b9a9c299.gif",
-  "Curl Martillo": "https://i.pinimg.com/originals/d4/73/46/d47346618e7b3da2774900a0b9a9c299.gif", // Hammer curl visual
-  "Curl de Bíceps Máquina": "https://i.pinimg.com/originals/d4/73/46/d47346618e7b3da2774900a0b9a9c299.gif", 
-
-  // --- CORE & VARIOS ---
-  "Plancha Abdominal": "https://i.pinimg.com/originals/14/c2/22/14c222bf0997d9bc263e8df31737ed97.gif",
-  "Plancha": "https://i.pinimg.com/originals/14/c2/22/14c222bf0997d9bc263e8df31737ed97.gif",
-  "Plancha con lastre": "https://i.pinimg.com/originals/14/c2/22/14c222bf0997d9bc263e8df31737ed97.gif",
-  "Superman": "https://i.pinimg.com/originals/f4/b0/f3/f4b0f3093fcadd64968e4c46d1767b50.gif", // Core generic
-  "Superman Hold": "https://i.pinimg.com/originals/f4/b0/f3/f4b0f3093fcadd64968e4c46d1767b50.gif",
-  "Crunch Abdominal": "https://i.pinimg.com/originals/f4/b0/f3/f4b0f3093fcadd64968e4c46d1767b50.gif",
-  "Leg Raises colgado (o suelo)": "https://i.pinimg.com/originals/f4/b0/f3/f4b0f3093fcadd64968e4c46d1767b50.gif",
-  "L-Sit (o progresión)": "https://i.pinimg.com/originals/14/c2/22/14c222bf0997d9bc263e8df31737ed97.gif", // Plank visual for static hold
+  // --- CARDIO ---
+  "cardio": "https://images.pexels.com/photos/3757954/pexels-photo-3757954.jpeg?auto=compress&cs=tinysrgb&w=800",
+  "jump": "https://images.pexels.com/photos/4164765/pexels-photo-4164765.jpeg?auto=compress&cs=tinysrgb&w=800",
 };
 
-// Función para obtener el GIF correspondiente
-const getExerciseGif = (name: string) => {
-  // 1. Buscar coincidencia exacta
-  if (GIF_LIBRARY[name]) return GIF_LIBRARY[name];
+// Función inteligente para asignar fotos de Pexels basadas en palabras clave
+const getExerciseImage = (name: string) => {
+  const lowerName = name.toLowerCase();
 
-  // 2. Buscar coincidencia parcial (Ej: "Sentadilla" -> matches "Sentadilla con barra")
-  const partialMatch = Object.keys(GIF_LIBRARY).find(key => name.includes(key) || key.includes(name));
-  if (partialMatch) return GIF_LIBRARY[partialMatch];
+  // Mapeo de palabras clave a claves de la librería
+  if (lowerName.includes("sentadilla") || lowerName.includes("squat") || lowerName.includes("prensa")) return IMAGE_LIBRARY.squat;
+  if (lowerName.includes("zancada") || lowerName.includes("búlgar") || lowerName.includes("gemelo") || lowerName.includes("femoral")) return IMAGE_LIBRARY.lunge;
+  if (lowerName.includes("peso muerto") || lowerName.includes("deadlift") || lowerName.includes("hip")) return IMAGE_LIBRARY.legs;
   
-  // 3. Fallback visual limpio
-  return `https://placehold.co/600x400/f8fafc/64748b?text=${encodeURIComponent(name)}`;
+  if (lowerName.includes("flexion") || lowerName.includes("push") || lowerName.includes("fondo")) return IMAGE_LIBRARY.pushup;
+  if (lowerName.includes("press") || lowerName.includes("banca") || lowerName.includes("pecho") || lowerName.includes("apertura")) return IMAGE_LIBRARY.bench;
+  if (lowerName.includes("militar") || lowerName.includes("hombro") || lowerName.includes("lateral") || lowerName.includes("tríceps") || lowerName.includes("triceps")) return IMAGE_LIBRARY.shoulder;
+  
+  if (lowerName.includes("dominada") || lowerName.includes("chin") || lowerName.includes("jalón")) return IMAGE_LIBRARY.pullup;
+  if (lowerName.includes("remo") || lowerName.includes("row") || lowerName.includes("face")) return IMAGE_LIBRARY.row;
+  if (lowerName.includes("curl") || lowerName.includes("bíceps") || lowerName.includes("biceps")) return IMAGE_LIBRARY.bicep;
+  
+  if (lowerName.includes("plancha") || lowerName.includes("plank")) return IMAGE_LIBRARY.plank;
+  if (lowerName.includes("abdominal") || lowerName.includes("crunch") || lowerName.includes("leg raise") || lowerName.includes("sit") || lowerName.includes("superman")) return IMAGE_LIBRARY.abs;
+  
+  if (lowerName.includes("jack") || lowerName.includes("burpee") || lowerName.includes("mountain") || lowerName.includes("cardio") || lowerName.includes("salto")) return IMAGE_LIBRARY.cardio;
+
+  return IMAGE_LIBRARY.default;
 };
 
 // --- Helper Functions to build programs ---
@@ -168,7 +104,7 @@ const getExerciseGif = (name: string) => {
 const createExercise = (name: string, sets: number, reps: string, rest: number, description: string): ExerciseTemplate => ({
   id: name.toLowerCase().replace(/\s/g, '_') + Math.random().toString(36).substr(2, 5),
   name,
-  image: getExerciseGif(name),
+  image: getExerciseImage(name),
   description,
   targetSets: sets,
   targetReps: reps,
