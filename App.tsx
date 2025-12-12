@@ -142,10 +142,23 @@ const LevelUpModal = ({ level, onClose }: { level: number, onClose: () => void }
 const AvatarSelectionModal = ({ isOpen, onClose, onSelect }: { isOpen: boolean, onClose: () => void, onSelect: (url: string) => void }) => {
   const [customUrl, setCustomUrl] = useState('');
   
-  // Estilo "Adventurer" de DiceBear
-  const seeds = [
-    'Felix', 'Aneka', 'Zack', 'Midnight', 'Luna', 'Shadow', 
-    'Buddy', 'Giggle', 'Bandit', 'Whiskers', 'Leo', 'Willow'
+  // Categorías de avatares
+  const avatarCollections = [
+    {
+      name: 'Aventureros RPG',
+      style: 'adventurer',
+      seeds: ['Felix', 'Aneka', 'Zack', 'Midnight', 'Luna', 'Shadow', 'Buddy', 'Giggle', 'Bandit', 'Whiskers', 'Leo', 'Willow', 'Sheba', 'Cuddles', 'Abby', 'Chester']
+    },
+    {
+      name: 'Cyborgs',
+      style: 'bottts',
+      seeds: ['C3PO', 'R2D2', 'WallE', 'Eve', 'Bender', 'Tron', 'Data', 'Cyber', 'Glitch', 'Spark', 'Chip', 'Byte']
+    },
+    {
+      name: 'Humanos',
+      style: 'avataaars',
+      seeds: ['John', 'Jane', 'Alex', 'Sarah', 'Mike', 'Emily', 'Chris', 'Katie', 'David', 'Lisa', 'Ryan', 'Amy']
+    }
   ];
 
   if (!isOpen) return null;
@@ -153,31 +166,38 @@ const AvatarSelectionModal = ({ isOpen, onClose, onSelect }: { isOpen: boolean, 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
       <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-2xl max-w-md w-full border border-slate-200 dark:border-slate-700 animate-bounce-in flex flex-col max-h-[90vh]">
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex justify-between items-center mb-4 border-b border-slate-100 dark:border-slate-700 pb-4">
           <h3 className="text-xl font-bold text-slate-900 dark:text-white">Elige tu Avatar</h3>
-          <button onClick={onClose} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full">
+          <button onClick={onClose} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors">
             <X className="w-6 h-6 text-slate-500" />
           </button>
         </div>
 
         <div className="overflow-y-auto pr-2 mb-4 flex-1">
-          <p className="text-sm text-slate-500 mb-3 font-bold">Héroes Predefinidos</p>
-          <div className="grid grid-cols-4 gap-3 mb-6">
-            {seeds.map(seed => {
-              const url = `https://api.dicebear.com/7.x/adventurer/svg?seed=${seed}&backgroundColor=b6e3f4,c0aede,d1d4f9`;
-              return (
-                <button 
-                  key={seed}
-                  onClick={() => { onSelect(url); onClose(); }}
-                  className="aspect-square rounded-xl overflow-hidden border-2 border-transparent hover:border-primary-500 hover:scale-105 transition-all bg-slate-100 dark:bg-slate-700"
-                >
-                  <ImageWithFallback src={url} alt={seed} className="w-full h-full object-cover" />
-                </button>
-              );
-            })}
-          </div>
+          {avatarCollections.map((collection) => (
+            <div key={collection.name} className="mb-6">
+              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                <span className="w-1 h-4 bg-primary-500 rounded-full"></span>
+                {collection.name}
+              </h4>
+              <div className="grid grid-cols-4 gap-3">
+                {collection.seeds.map(seed => {
+                  const url = `https://api.dicebear.com/7.x/${collection.style}/svg?seed=${seed}&backgroundColor=b6e3f4,c0aede,d1d4f9`;
+                  return (
+                    <button 
+                      key={seed}
+                      onClick={() => { onSelect(url); onClose(); }}
+                      className="aspect-square rounded-xl overflow-hidden border-2 border-transparent hover:border-primary-500 hover:scale-105 hover:shadow-md transition-all bg-slate-100 dark:bg-slate-700/50 group"
+                    >
+                      <ImageWithFallback src={url} alt={seed} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
 
-          <div className="border-t border-slate-200 dark:border-slate-700 pt-4">
+          <div className="border-t border-slate-200 dark:border-slate-700 pt-4 mt-2">
             <p className="text-sm text-slate-500 mb-2 font-bold">O usa una URL personalizada</p>
             <div className="flex gap-2">
               <div className="relative flex-1">
@@ -187,13 +207,13 @@ const AvatarSelectionModal = ({ isOpen, onClose, onSelect }: { isOpen: boolean, 
                   placeholder="https://..." 
                   value={customUrl}
                   onChange={(e) => setCustomUrl(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-lg text-sm focus:border-primary-500 outline-none"
+                  className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-lg text-sm focus:border-primary-500 outline-none transition-colors"
                 />
               </div>
               <button 
                 onClick={() => { if(customUrl) { onSelect(customUrl); onClose(); } }}
                 disabled={!customUrl}
-                className="px-4 py-2 bg-primary-600 text-white rounded-lg font-bold text-sm disabled:opacity-50 hover:bg-primary-500"
+                className="px-4 py-2 bg-primary-600 text-white rounded-lg font-bold text-sm disabled:opacity-50 hover:bg-primary-500 transition-colors"
               >
                 Guardar
               </button>
