@@ -11,7 +11,7 @@ import { supabase } from './services/supabaseClient';
 import { getAiCoachAdvice } from './services/geminiService';
 import { AuthView } from './components/AuthView';
 import { INITIAL_USER_STATE, PROGRAMS, ACHIEVEMENTS } from './constants';
-import { UserState, Program, ViewState, ActiveExerciseState, WorkoutLog, ActiveProgramProgress, SetLog } from './types';
+import { UserState, Program, ViewState, ActiveExerciseState, WorkoutLog, ActiveProgramProgress, SetLog, Difficulty } from './types';
 
 // --- Shared Components ---
 
@@ -427,23 +427,63 @@ const ProgramsView = ({ user, startProgram, continueProgram, abandonProgram }: {
   continueProgram: () => void;
   abandonProgram: () => void;
 }) => {
-  // Sort programs: active one first
-  const sortedPrograms = useMemo(() => {
-    return [...PROGRAMS].sort((a, b) => {
+  const [difficultyFilter, setDifficultyFilter] = useState<Difficulty | 'All'>('All');
+
+  // Filter and Sort programs
+  const filteredPrograms = useMemo(() => {
+    let progs = [...PROGRAMS];
+    
+    // Filter
+    if (difficultyFilter !== 'All') {
+      progs = progs.filter(p => p.difficulty === difficultyFilter);
+    }
+
+    // Sort: active one first
+    return progs.sort((a, b) => {
       const isActiveA = user.activeProgram?.programId === a.id;
       const isActiveB = user.activeProgram?.programId === b.id;
       if (isActiveA) return -1;
       if (isActiveB) return 1;
       return 0;
     });
-  }, [user.activeProgram?.programId]);
+  }, [user.activeProgram?.programId, difficultyFilter]);
 
   return (
     <div className="space-y-6 pb-28 animate-fade-in">
-      <h2 className="text-2xl font-bold px-1">Programas Disponibles</h2>
+      <div className="flex items-center justify-between px-1">
+        <h2 className="text-2xl font-bold">Programas Disponibles</h2>
+      </div>
+
+      {/* Filter UI - Chips */}
+      <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide no-scrollbar">
+         <button 
+           onClick={() => setDifficultyFilter('All')}
+           className={`px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap border ${
+             difficultyFilter === 'All' 
+               ? 'bg-slate-900 text-white border-slate-900 dark:bg-white dark:text-slate-900 dark:border-white' 
+               : 'bg-white dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700'
+           }`}
+         >
+           Todos
+         </button>
+         {Object.values(Difficulty).map(diff => (
+           <button 
+             key={diff}
+             onClick={() => setDifficultyFilter(diff)}
+             className={`px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap border ${
+               difficultyFilter === diff 
+                 ? 'bg-primary-500 text-white border-primary-500 shadow-lg shadow-primary-500/30' 
+                 : 'bg-white dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700 hover:border-primary-300'
+           }`}
+           >
+             {diff}
+           </button>
+         ))}
+      </div>
       
       <div className="grid grid-cols-1 gap-6">
-        {sortedPrograms.map(prog => {
+        {filteredPrograms.length > 0 ? (
+          filteredPrograms.map(prog => {
           const isActive = user.activeProgram?.programId === prog.id;
           const isLocked = user.activeProgram && !isActive; // Lock others if one is active
 
@@ -523,7 +563,16 @@ const ProgramsView = ({ user, startProgram, continueProgram, abandonProgram }: {
               </div>
             </div>
           );
-        })}
+        })
+        ) : (
+           <div className="glass-card p-8 rounded-2xl flex flex-col items-center justify-center text-center opacity-70">
+            <div className="bg-slate-100 dark:bg-slate-800 p-4 rounded-full mb-3">
+               <Trophy className="w-8 h-8 text-slate-400" />
+            </div>
+            <p className="text-slate-500 font-medium">No hay programas disponibles con esta dificultad.</p>
+            <button onClick={() => setDifficultyFilter('All')} className="text-primary-500 text-sm font-bold mt-2">Ver todos</button>
+          </div>
+        )}
       </div>
     </div>
   );
