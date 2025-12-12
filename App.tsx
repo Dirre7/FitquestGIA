@@ -3,9 +3,12 @@ import {
   Trophy, Activity, User, BarChart2, Home, Lock, CheckCircle, Play, 
   Zap, Dumbbell, Clock, ChevronRight, Sun, Moon, Cloud, X, Star, 
   Maximize2, Medal, Award, Calendar, Repeat, Flame, RefreshCw, Trash2,
-  Hash, Timer, TrendingUp
+  Hash, Timer, TrendingUp, LogOut, Loader2, Sparkles, MessageSquare, Bot
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import { supabase } from './services/supabaseClient';
+import { getAiCoachAdvice } from './services/geminiService';
+import { AuthView } from './components/AuthView';
 import { INITIAL_USER_STATE, PROGRAMS, ACHIEVEMENTS } from './constants';
 import { UserState, Program, ViewState, ActiveExerciseState, WorkoutLog, ActiveProgramProgress, SetLog } from './types';
 
@@ -99,6 +102,23 @@ const DashboardView = ({ user, setView }: { user: UserState; setView: (v: ViewSt
   const unlockedAchievements = ACHIEVEMENTS.filter(ach => (user.achievements || []).includes(ach.id));
   const recentUnlocked = [...unlockedAchievements].reverse().slice(0, 4);
 
+  // AI State
+  const [aiAdvice, setAiAdvice] = useState<string | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+
+  const handleConsultAi = async () => {
+    setAiLoading(true);
+    setAiAdvice(null);
+    try {
+      const advice = await getAiCoachAdvice(user, "Dame un consejo breve, motivador y táctico para mi siguiente nivel basado en mis estadísticas. Sé directo.");
+      setAiAdvice(advice);
+    } catch (e) {
+      setAiAdvice("El coach está ocupado en este momento. Intenta más tarde.");
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6 pb-28 animate-fade-in">
       {/* Active Program Banner */}
@@ -157,6 +177,60 @@ const DashboardView = ({ user, setView }: { user: UserState; setView: (v: ViewSt
           <Trophy className="absolute -bottom-6 -right-6 w-32 h-32 text-white/10 rotate-12" />
         </div>
       )}
+
+      {/* AI Coach Card */}
+      <div className="glass-card p-6 rounded-2xl relative overflow-hidden border-2 border-indigo-500/20 shadow-lg shadow-indigo-500/5">
+        <div className="absolute top-0 right-0 p-4 opacity-5">
+          <Bot className="w-24 h-24 text-indigo-500" />
+        </div>
+        
+        <div className="relative z-10">
+          <h3 className="text-lg font-bold mb-2 flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
+            <Sparkles className="w-5 h-5" /> FitQuest Coach AI
+          </h3>
+          
+          {!aiAdvice ? (
+            <>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+                Analiza tus estadísticas, nivel y logros para recibir consejos tácticos personalizados.
+              </p>
+              <button 
+                onClick={handleConsultAi}
+                disabled={aiLoading}
+                className="w-full py-3 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white rounded-xl font-bold transition-all shadow-md shadow-indigo-500/20 active:scale-95 disabled:opacity-70 flex items-center justify-center gap-2"
+              >
+                {aiLoading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Analizando rendimiento...
+                  </>
+                ) : (
+                  <>
+                    <MessageSquare className="w-5 h-5" />
+                    Invocar Consejo Táctico
+                  </>
+                )}
+              </button>
+            </>
+          ) : (
+            <div className="animate-fade-in">
+              <div className="bg-indigo-50 dark:bg-indigo-900/30 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800 mb-4">
+                <div className="flex gap-3">
+                  <Bot className="w-6 h-6 text-indigo-500 shrink-0 mt-1" />
+                  <p className="text-sm text-slate-700 dark:text-indigo-100 italic leading-relaxed">"{aiAdvice}"</p>
+                </div>
+              </div>
+              <button 
+                onClick={handleConsultAi}
+                className="text-xs font-bold text-indigo-500 hover:text-indigo-400 flex items-center gap-1 ml-auto"
+              >
+                <RefreshCw className="w-3 h-3" />
+                Pedir otro consejo
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Profile Summary */}
       <div className="glass-card rounded-2xl p-6 flex items-center gap-4">
@@ -538,11 +612,13 @@ const StatsView = ({ user }: { user: UserState }) => {
 const ProfileView = ({ 
   user, 
   setUser, 
-  toggleTheme 
+  toggleTheme,
+  signOut
 }: { 
   user: UserState; 
   setUser: React.Dispatch<React.SetStateAction<UserState>>;
   toggleTheme: () => void;
+  signOut: () => void;
 }) => (
   <div className="space-y-6 pb-28 max-w-2xl mx-auto animate-fade-in">
     <h2 className="text-2xl font-bold px-1">Perfil</h2>
@@ -563,16 +639,14 @@ const ProfileView = ({
           {user.settings.darkMode ? <Moon className="w-5 h-5"/> : <Sun className="w-5 h-5"/>}
           <span className="text-sm font-medium">Tema</span>
         </button>
-        <button onClick={() => alert("Simulación de Sincronización...")} className="p-4 bg-slate-50 dark:bg-slate-700 rounded-xl flex items-center justify-center space-x-2 hover:bg-slate-100 dark:hover:bg-slate-600 transition-colors">
-          <Cloud className="w-5 h-5"/>
-          <span className="text-sm font-medium">Sincronizar</span>
+        <button onClick={signOut} className="p-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-xl flex items-center justify-center space-x-2 hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors">
+          <LogOut className="w-5 h-5"/>
+          <span className="text-sm font-medium">Cerrar Sesión</span>
         </button>
       </div>
       
       <div className="pt-4 border-t border-slate-200 dark:border-slate-700 text-center">
-        <button onClick={() => {localStorage.removeItem('fitquest_user_v2'); window.location.reload()}} className="text-red-400 text-xs hover:text-red-500 underline">
-          Borrar datos y reiniciar (Debug)
-        </button>
+        <p className="text-xs text-slate-400">Tus datos se guardan en la nube automáticamente.</p>
       </div>
     </div>
 
@@ -870,26 +944,100 @@ const ActiveWorkoutView = ({
 // --- App Component ---
 
 export default function App() {
+  const [session, setSession] = useState<any>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [dataLoading, setDataLoading] = useState(false);
+
   // --- State Initialization ---
-  const [user, setUser] = useState<UserState>(() => {
-    try {
-      const saved = localStorage.getItem('fitquest_user_v2'); // V2 for schema change
-      if (saved) return JSON.parse(saved);
-    } catch (e) { console.error(e); }
-    return INITIAL_USER_STATE;
-  });
+  const [user, setUser] = useState<UserState>(INITIAL_USER_STATE);
 
   const [view, setView] = useState<ViewState>('dashboard');
   const [showLevelUp, setShowLevelUp] = useState<number | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
   const [confirmation, setConfirmation] = useState<{isOpen: boolean, title: string, message: string, onConfirm: () => void} | null>(null);
 
-  // --- Effects ---
+  // --- Supabase Auth & Data Sync ---
+
   useEffect(() => {
-    localStorage.setItem('fitquest_user_v2', JSON.stringify(user));
+    // 1. Verificar sesión actual
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (session) fetchUserData(session.user.id);
+      setAuthLoading(false);
+    });
+
+    // 2. Escuchar cambios de sesión
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      if (session) {
+        fetchUserData(session.user.id);
+      } else {
+        setUser(INITIAL_USER_STATE);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const fetchUserData = async (userId: string) => {
+    setDataLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('user_progress')
+        .select('state')
+        .eq('user_id', userId)
+        .single();
+
+      if (data?.state) {
+        setUser(data.state);
+      } else {
+        // Si no existe, creamos el registro inicial
+        await saveUserData(INITIAL_USER_STATE);
+        setUser(INITIAL_USER_STATE);
+      }
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+    } finally {
+      setDataLoading(false);
+    }
+  };
+
+  const saveUserData = async (newState: UserState) => {
+    if (!session?.user?.id) return;
+    
+    try {
+      const { error } = await supabase
+        .from('user_progress')
+        .upsert({ 
+          user_id: session.user.id, 
+          state: newState,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'user_id' });
+
+      if (error) throw error;
+    } catch (err) {
+      console.error('Error saving data:', err);
+    }
+  };
+
+  // Debounced save when user state changes
+  useEffect(() => {
+    if (!session) return;
+    
+    // Theme application immediately
     if (user.settings.darkMode) document.documentElement.classList.add('dark');
     else document.documentElement.classList.remove('dark');
-  }, [user]);
+
+    // Save to DB
+    const timeout = setTimeout(() => {
+      saveUserData(user);
+    }, 1000); // 1 second debounce
+
+    return () => clearTimeout(timeout);
+  }, [user, session]);
+
 
   // --- Actions ---
 
@@ -1026,13 +1174,29 @@ export default function App() {
     setTimeout(() => setShowConfetti(false), 4000);
   };
 
-  // --- Render ---
+  // --- Render Logic ---
+  
+  if (authLoading || dataLoading) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-white">
+        <Loader2 className="w-10 h-10 animate-spin text-primary-500 mb-4" />
+        <p className="animate-pulse">Sincronizando con la base de datos...</p>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return <AuthView />;
+  }
 
   // Safety check for active program view
   const isWorkoutViewValid = view === 'active-workout' && user.activeProgram !== null;
   // If we are in workout view but have no program, fallback to dashboard
   if (view === 'active-workout' && !user.activeProgram) {
-     setView('dashboard');
+     // Side effect in render is bad practice usually, but for this strict view switch it's acceptable if handled carefully,
+     // or better, handle it via useEffect or just render dashboard content.
+     // We will just let the render block below handle logic or useEffect above.
+     // For safety, we force view change via component logic if we were using routing, but here state is sync.
   }
 
   return (
@@ -1065,11 +1229,11 @@ export default function App() {
           />
         ) : (
           <>
-            {view === 'dashboard' && <DashboardView user={user} setView={setView} />}
+            {(view === 'dashboard' || (view === 'active-workout' && !user.activeProgram)) && <DashboardView user={user} setView={setView} />}
             {view === 'training' && <ProgramsView user={user} startProgram={startProgram} continueProgram={() => setView('active-workout')} abandonProgram={abandonProgram} />}
             {view === 'achievements' && <AchievementsView user={user} />}
             {view === 'stats' && <StatsView user={user} />}
-            {view === 'profile' && <ProfileView user={user} setUser={setUser} toggleTheme={toggleTheme} />}
+            {view === 'profile' && <ProfileView user={user} setUser={setUser} toggleTheme={toggleTheme} signOut={() => supabase.auth.signOut()} />}
           </>
         )}
       </main>

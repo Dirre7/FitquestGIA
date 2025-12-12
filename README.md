@@ -1,20 +1,26 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# FitQuest IA
 
-# Run and deploy your AI Studio app
+Aplicación de entrenamiento gamificada potenciada por IA y Supabase.
 
-This contains everything you need to run your app locally.
+## Configuración de Supabase
 
-View your app in AI Studio: https://ai.studio/apps/drive/1i9HPcr0N8LNAh57aNVj29ItLYlv8znEq
+Para que la aplicación funcione correctamente y guarde el progreso de los usuarios, necesitas configurar la base de datos en Supabase.
 
-## Run Locally
+1. Ve a tu proyecto en [Supabase](https://supabase.com/dashboard).
+2. Abre la sección **SQL Editor** en la barra lateral.
+3. Crea una nueva consulta (New Query).
+4. Copia el contenido del archivo `supabase_setup.sql` de este proyecto.
+5. Pégalo en el editor y haz clic en **Run**.
 
-**Prerequisites:**  Node.js
+Esto creará la tabla `user_progress` y configurará las políticas de seguridad necesarias para que cada usuario tenga sus datos privados.
 
+## Desarrollo
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+1. Instala dependencias:
+   ```bash
+   npm install
+   ```
+2. Inicia el servidor de desarrollo:
+   ```bash
+   npm run dev
+   ```
