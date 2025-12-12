@@ -45,14 +45,131 @@ export const ACHIEVEMENTS: Achievement[] = [
    { id: 'kg100k', name: "Ballena Azul", description: "Levanta 100,000kg en total.", icon: "🐋", unlocked: false, condition: (u) => u.totalWeightLifted >= 100000 },
 ];
 
-const getImg = (name: string) => `https://placehold.co/600x400/e2e8f0/1e293b?text=${encodeURIComponent(name)}`;
+// --- LIBRERÍA DE GIFS ILUSTRATIVOS (Fuente: Pinterest CDN - Alta disponibilidad) ---
+const GIF_LIBRARY: Record<string, string> = {
+  // --- CARDIO & CALENTAMIENTO ---
+  "Jumping Jacks": "https://i.pinimg.com/originals/e8/63/33/e8633367123d57f5c78663d274e1d2c6.gif",
+  "Mountain Climbers": "https://i.pinimg.com/originals/18/27/be/1827be178c019b1dc6f8a8d8b4a7b748.gif",
+  "Cardio Suave": "https://i.pinimg.com/originals/81/25/30/81253073733230c149d53f65e49527df.gif",
+  "Burpees (sin salto)": "https://i.pinimg.com/originals/d4/06/18/d406180630b5853f58a3627d354d241d.gif",
+  "Burpees": "https://i.pinimg.com/originals/24/27/e6/2427e6564614c27a92fb9c4d96a60341.gif",
+
+  // --- PIERNAS (SQUAT PATTERN) ---
+  "Sentadillas al aire": "https://i.pinimg.com/originals/cf/d6/33/cfd633391d4e0220c382377a00f1469e.gif",
+  "Sentadilla Isométrica": "https://i.pinimg.com/originals/b5/1d/72/b51d72477341e98d97746419741f237f.gif", // Wall Sit
+  "Sentadilla con Barra": "https://i.pinimg.com/originals/60/c6/12/60c6126b48439499709d1877f078d494.gif",
+  "Sentadilla": "https://i.pinimg.com/originals/60/c6/12/60c6126b48439499709d1877f078d494.gif",
+  "Goblet Squat (Mancuerna)": "https://i.pinimg.com/originals/b3/b2/e0/b3b2e04313df3133cb6d5673d327885e.gif",
+  "Sentadilla Low Bar": "https://i.pinimg.com/originals/60/c6/12/60c6126b48439499709d1877f078d494.gif",
+  "Sentadilla Frontal": "https://i.pinimg.com/originals/44/2c/6a/442c6a0c0b8f0412e434f40d89243761.gif",
+  "Prensa de Piernas": "https://i.pinimg.com/originals/90/a1/d2/90a1d28362d294025164d1808620df94.gif",
+  
+  // --- PIERNAS (LUNGE/SINGLE LEG) ---
+  "Zancadas Alternas": "https://i.pinimg.com/originals/22/e1/9b/22e19b882310b8316c02133917812908.gif",
+  "Zancadas Búlgaras": "https://i.pinimg.com/originals/6f/a6/66/6fa66687981504104c35e3b62ae51921.gif",
+  "Sentadilla Búlgara": "https://i.pinimg.com/originals/6f/a6/66/6fa66687981504104c35e3b62ae51921.gif",
+  "Zancadas con Salto": "https://i.pinimg.com/originals/0f/50/f0/0f50f061e8605202678c13904533037c.gif",
+  "Zancadas con Barra": "https://i.pinimg.com/originals/22/e1/9b/22e19b882310b8316c02133917812908.gif",
+  
+  // --- PIERNAS (HINGE/HAMSTRINGS/GLUTES) ---
+  "Puente de Glúteo": "https://i.pinimg.com/originals/47/43/3e/47433ea339189196775b8a514d2a233b.gif",
+  "Puente Glúteo a 1 pierna": "https://i.pinimg.com/originals/8c/19/a6/8c19a6b8f522777174668cb778550cb5.gif",
+  "Peso Muerto Rumano": "https://i.pinimg.com/originals/65/c0/86/65c086036720e1d0f55d31a54c9c10f8.gif",
+  "Peso Muerto": "https://i.pinimg.com/originals/6c/31/ea/6c31eaf25fbb3d2b27a8a91341c88c7a.gif",
+  "Peso Muerto Rumano (Mancuernas)": "https://i.pinimg.com/originals/0f/6c/35/0f6c35c24e6459392e2764b4b2401f81.gif",
+  "Peso Muerto Convencional": "https://i.pinimg.com/originals/6c/31/ea/6c31eaf25fbb3d2b27a8a91341c88c7a.gif",
+  "Peso Muerto Déficit": "https://i.pinimg.com/originals/6c/31/ea/6c31eaf25fbb3d2b27a8a91341c88c7a.gif",
+  "Hip Thrust Pesado": "https://i.pinimg.com/originals/f5/61/52/f56152ec57321d812267dc2b376d8ba9.gif",
+  "Curl Femoral": "https://i.pinimg.com/originals/23/e8/62/23e86207038e1a106c642646399088ba.gif",
+  "Curl Femoral Tumbado": "https://i.pinimg.com/originals/23/e8/62/23e86207038e1a106c642646399088ba.gif",
+  
+  // --- PIERNAS (ISOLATION) ---
+  "Extensión Cuádriceps": "https://i.pinimg.com/originals/eb/c3/8c/ebc38c83e1628d0526487e49c7161b9e.gif",
+  "Elevación de Gemelos": "https://i.pinimg.com/originals/24/7c/4f/247c4f451f1638c47f9f31835626ae2b.gif", 
+  "Gemelos Sentado": "https://i.pinimg.com/originals/24/7c/4f/247c4f451f1638c47f9f31835626ae2b.gif",
+  "Elevación Gemelo 1 pierna": "https://i.pinimg.com/originals/24/7c/4f/247c4f451f1638c47f9f31835626ae2b.gif",
+
+  // --- EMPUJE (PECHO/HOMBROS/TRICEPS) ---
+  "Flexiones (o rodillas)": "https://i.pinimg.com/originals/ff/15/3c/ff153c3e80931235b2e3c03164a06789.gif",
+  "Flexiones Diamante (o cerradas)": "https://i.pinimg.com/originals/d2/88/4a/d2884a869752b02381e4b3014631252d.gif",
+  "Flexiones Explosivas": "https://i.pinimg.com/originals/18/d0/26/18d026330084478d10b8003923c72b2c.gif",
+  "Flexiones declinadas": "https://i.pinimg.com/originals/a0/0a/63/a00a631f49646b97669d0d38b555819e.gif",
+  
+  "Press de Banca": "https://i.pinimg.com/originals/5b/c2/f0/5bc2f00a5833481231be4d852a3a0c0a.gif",
+  "Press Banca Inclinado": "https://i.pinimg.com/originals/f3/ae/92/f3ae920b66311b5186b5b5c98d67566d.gif",
+  "Press Banca Competición": "https://i.pinimg.com/originals/5b/c2/f0/5bc2f00a5833481231be4d852a3a0c0a.gif",
+  "Press Banca Agarre Estrecho": "https://i.pinimg.com/originals/5b/c2/f0/5bc2f00a5833481231be4d852a3a0c0a.gif",
+  "Press de Pecho en Máquina": "https://i.pinimg.com/originals/82/38/c4/8238c437340d8628043657b98d363f03.gif",
+  "Press Inclinado Mancuernas": "https://i.pinimg.com/originals/8a/0a/1c/8a0a1c7784f186060c1d100913c32918.gif",
+  
+  "Fondos en silla": "https://i.pinimg.com/originals/f4/04/b8/f404b8686d63e9089025170d1d6a6665.gif",
+  "Fondos Lastrados": "https://i.pinimg.com/originals/2e/ef/0e/2eef0eb5006b5278dfc9f1a0293126be.gif",
+  "Fondos en Máquina o Banco": "https://i.pinimg.com/originals/f4/04/b8/f404b8686d63e9089025170d1d6a6665.gif",
+  "Fondos en Paralelas (o Sillas)": "https://i.pinimg.com/originals/2e/ef/0e/2eef0eb5006b5278dfc9f1a0293126be.gif",
+  
+  "Press Militar Mancuernas": "https://i.pinimg.com/originals/fa/73/0d/fa730d1d7826d9c6e39552b01438914b.gif",
+  "Press Militar": "https://i.pinimg.com/originals/fa/73/0d/fa730d1d7826d9c6e39552b01438914b.gif",
+  "Press Militar Sentado (Mancuernas)": "https://i.pinimg.com/originals/8a/92/75/8a9275086e33e4c45b721869f20c159c.gif",
+  "Press Militar Estricto": "https://i.pinimg.com/originals/fa/73/0d/fa730d1d7826d9c6e39552b01438914b.gif",
+  "Pino contra pared (Hold)": "https://i.pinimg.com/originals/8a/92/75/8a9275086e33e4c45b721869f20c159c.gif",
+  
+  "Aperturas Mancuernas": "https://i.pinimg.com/originals/e5/23/0f/e5230f37902d184088a70c804f553f17.gif",
+  "Elevaciones Laterales": "https://i.pinimg.com/originals/e8/51/d0/e851d02e3b231163273e5d36e2f17042.gif",
+  "Extensión de Tríceps Polea": "https://i.pinimg.com/originals/93/29/73/9329739077c444f9c66ec963134372e9.gif",
+  "Extensión Tríceps": "https://i.pinimg.com/originals/93/29/73/9329739077c444f9c66ec963134372e9.gif",
+
+  // --- TRACCIÓN (ESPALDA/BICEPS) ---
+  "Remo con mochila/agua": "https://i.pinimg.com/originals/1d/13/2a/1d132ac6cb0a463a55855734563a9483.gif", 
+  "Remo con Barra": "https://i.pinimg.com/originals/0f/08/94/0f089403b9b4661726a45778a48b594b.gif",
+  "Remo en Máquina": "https://i.pinimg.com/originals/a0/62/16/a0621681a54728f3d13215266cb2264a.gif",
+  "Remo Gironda": "https://i.pinimg.com/originals/a0/62/16/a0621681a54728f3d13215266cb2264a.gif",
+  "Remo Pendlay": "https://i.pinimg.com/originals/0f/08/94/0f089403b9b4661726a45778a48b594b.gif",
+  "Remo puerta con toalla": "https://i.pinimg.com/originals/a0/62/16/a0621681a54728f3d13215266cb2264a.gif",
+
+  "Dominadas": "https://i.pinimg.com/originals/f3/9d/1f/f39d1f3e098807d0f9836f6d0a7c4f69.gif",
+  "Dominadas (o Remo invertido mesa)": "https://i.pinimg.com/originals/f3/9d/1f/f39d1f3e098807d0f9836f6d0a7c4f69.gif",
+  "Dominadas Lastradas": "https://i.pinimg.com/originals/f3/9d/1f/f39d1f3e098807d0f9836f6d0a7c4f69.gif",
+  "Chin ups": "https://i.pinimg.com/originals/85/3e/26/853e26b13564c74f26034177263b8214.gif",
+  "Jalón al Pecho": "https://i.pinimg.com/originals/11/44/14/1144143a5342a8489849547d21c431df.gif",
+
+  "Face Pull": "https://i.pinimg.com/originals/a0/62/16/a0621681a54728f3d13215266cb2264a.gif",
+
+  "Curl de Bíceps Barra": "https://i.pinimg.com/originals/19/33/2e/19332ea7000d2350849319e728468b4c.gif",
+  "Curl Barra Z": "https://i.pinimg.com/originals/19/33/2e/19332ea7000d2350849319e728468b4c.gif",
+  "Curl Martillo": "https://i.pinimg.com/originals/19/33/2e/19332ea7000d2350849319e728468b4c.gif",
+  "Curl de Bíceps Máquina": "https://i.pinimg.com/originals/19/33/2e/19332ea7000d2350849319e728468b4c.gif", 
+
+  // --- CORE & VARIOS ---
+  "Plancha Abdominal": "https://i.pinimg.com/originals/39/3a/0b/393a0b59c402b80145c26b911760c78a.gif",
+  "Plancha": "https://i.pinimg.com/originals/39/3a/0b/393a0b59c402b80145c26b911760c78a.gif",
+  "Plancha con lastre": "https://i.pinimg.com/originals/39/3a/0b/393a0b59c402b80145c26b911760c78a.gif",
+  "Superman": "https://i.pinimg.com/originals/30/a2/12/30a212264c399b17325608b63e803f26.gif",
+  "Superman Hold": "https://i.pinimg.com/originals/30/a2/12/30a212264c399b17325608b63e803f26.gif",
+  "Crunch Abdominal": "https://i.pinimg.com/originals/f8/f4/04/f8f404434220e8b2b71216694e924a66.gif",
+  "Leg Raises colgado (o suelo)": "https://i.pinimg.com/originals/f8/f4/04/f8f404434220e8b2b71216694e924a66.gif",
+  "L-Sit (o progresión)": "https://i.pinimg.com/originals/39/3a/0b/393a0b59c402b80145c26b911760c78a.gif",
+};
+
+// Función para obtener el GIF correspondiente
+const getExerciseGif = (name: string) => {
+  // 1. Buscar coincidencia exacta
+  if (GIF_LIBRARY[name]) return GIF_LIBRARY[name];
+
+  // 2. Buscar coincidencia parcial (Ej: "Sentadilla" -> matches "Sentadilla con barra")
+  const partialMatch = Object.keys(GIF_LIBRARY).find(key => name.includes(key) || key.includes(name));
+  if (partialMatch) return GIF_LIBRARY[partialMatch];
+  
+  // 3. Fallback visual limpio con el nombre del ejercicio (si no hay GIF específico)
+  return `https://placehold.co/600x400/f8fafc/64748b?text=${encodeURIComponent(name)}`;
+};
 
 // --- Helper Functions to build programs ---
 
-const createExercise = (name: string, sets: number, reps: string, rest: number): ExerciseTemplate => ({
+const createExercise = (name: string, sets: number, reps: string, rest: number, description: string): ExerciseTemplate => ({
   id: name.toLowerCase().replace(/\s/g, '_') + Math.random().toString(36).substr(2, 5),
   name,
-  image: getImg(name),
+  image: getExerciseGif(name),
+  description,
   targetSets: sets,
   targetReps: reps,
   restSeconds: rest
@@ -60,24 +177,24 @@ const createExercise = (name: string, sets: number, reps: string, rest: number):
 
 // --- PROGRAMA 1: DESPERTAR EN CASA (Principiante - Casa) ---
 const homeDayA: ExerciseTemplate[] = [
-  createExercise("Sentadillas al aire", 3, "12-15", 60),
-  createExercise("Flexiones (o rodillas)", 3, "8-10", 60),
-  createExercise("Zancadas Alternas", 3, "10/pierna", 60),
-  createExercise("Plancha Abdominal", 3, "30 seg", 45),
+  createExercise("Sentadillas al aire", 3, "12-15", 60, "Pies a la anchura de los hombros. Baja la cadera hacia atrás y abajo manteniendo la espalda recta, como si te sentaras en una silla invisible. Baja hasta que los muslos estén paralelos al suelo."),
+  createExercise("Flexiones (o rodillas)", 3, "8-10", 60, "Manos bajo los hombros. Mantén el cuerpo en línea recta desde la cabeza a los talones (o rodillas). Baja el pecho hasta casi tocar el suelo y empuja explosivamente."),
+  createExercise("Zancadas Alternas", 3, "10/pierna", 60, "Da un paso largo hacia adelante. Baja la cadera hasta que ambas rodillas formen ángulos de 90 grados. Mantén el torso erguido. Alterna piernas."),
+  createExercise("Plancha Abdominal", 3, "30 seg", 45, "Apóyate en antebrazos y puntas de los pies. Mantén el cuerpo totalmente recto y contrae fuerte el abdomen y glúteos. No dejes que la cadera caiga."),
 ];
 
 const homeDayB: ExerciseTemplate[] = [
-  createExercise("Puente de Glúteo", 3, "15", 60),
-  createExercise("Fondos en silla", 3, "10-12", 60),
-  createExercise("Remo con mochila/agua", 3, "12", 60),
-  createExercise("Jumping Jacks", 3, "30", 45),
+  createExercise("Puente de Glúteo", 3, "15", 60, "Tumbado boca arriba, rodillas flexionadas. Eleva la cadera contrayendo los glúteos hasta alinear rodillas, cadera y hombros. Aprieta arriba 1 segundo."),
+  createExercise("Fondos en silla", 3, "10-12", 60, "Apoya las manos en el borde de una silla. Baja la cadera flexionando los codos hasta 90 grados. Mantén la espalda cerca de la silla."),
+  createExercise("Remo con mochila/agua", 3, "12", 60, "Inclina el torso hacia adelante con espalda recta. Tira de la mochila hacia tu cadera, manteniendo los codos pegados al cuerpo. Siente la contracción en la espalda."),
+  createExercise("Jumping Jacks", 3, "30", 45, "Salta abriendo piernas y brazos simultáneamente. Vuelve a la posición inicial coordinando el movimiento. Mantén un ritmo fluido."),
 ];
 
 const homeDayC: ExerciseTemplate[] = [
-  createExercise("Sentadilla Isométrica", 3, "30 seg", 60),
-  createExercise("Flexiones Diamante (o cerradas)", 3, "8", 60),
-  createExercise("Burpees (sin salto)", 3, "10", 90),
-  createExercise("Superman", 3, "15", 45),
+  createExercise("Sentadilla Isométrica", 3, "30 seg", 60, "Apoya la espalda contra una pared y baja hasta posición de sentadilla. Aguanta la posición sin moverte, manteniendo la tensión en los cuádriceps."),
+  createExercise("Flexiones Diamante (o cerradas)", 3, "8", 60, "Igual que una flexión normal, pero junta las manos formando un diamante con índices y pulgares. Enfoca el esfuerzo en los tríceps."),
+  createExercise("Burpees (sin salto)", 3, "10", 90, "Baja a posición de flexión, realiza una flexión, recoge las piernas hacia el pecho y ponte de pie. Hazlo de forma fluida pero controlada."),
+  createExercise("Superman", 3, "15", 45, "Tumbado boca abajo, eleva simultáneamente brazos y piernas del suelo contrayendo la espalda baja y glúteos. Aguanta 1 segundo arriba."),
 ];
 
 const buildHomeProgram = (): ProgramDay[] => {
@@ -92,20 +209,20 @@ const buildHomeProgram = (): ProgramDay[] => {
 
 // --- PROGRAMA 2: GUERRERO DE HIERRO (Gimnasio - Intermedio) ---
 const gymUpper: ExerciseTemplate[] = [
-  createExercise("Press de Banca", 4, "8-10", 90),
-  createExercise("Jalón al Pecho", 4, "10-12", 90),
-  createExercise("Press Militar Mancuernas", 3, "10-12", 60),
-  createExercise("Remo Gironda", 3, "12", 60),
-  createExercise("Curl de Bíceps Barra", 3, "12-15", 45),
-  createExercise("Extensión de Tríceps Polea", 3, "12-15", 45),
+  createExercise("Press de Banca", 4, "8-10", 90, "Tumbado en el banco, baja la barra controladamente hasta tocar la parte baja del pecho. Empuja fuerte hacia arriba sin despegar la espalda del banco."),
+  createExercise("Jalón al Pecho", 4, "10-12", 90, "Sentado, agarra la barra más ancho que los hombros. Tira de ella hacia la parte superior del pecho inclinándote ligeramente atrás. Controla el retorno."),
+  createExercise("Press Militar Mancuernas", 3, "10-12", 60, "Sentado con respaldo recto. Empuja las mancuernas desde los hombros hasta estirar los brazos arriba. No arquees la espalda baja en exceso."),
+  createExercise("Remo Gironda", 3, "12", 60, "Sentado en polea baja, espalda recta. Tira del agarre hacia el abdomen bajo, llevando los codos hacia atrás y sacando pecho."),
+  createExercise("Curl de Bíceps Barra", 3, "12-15", 45, "De pie, sujeta la barra. Flexiona los codos para subir la barra al pecho sin balancear el cuerpo. Baja lento."),
+  createExercise("Extensión de Tríceps Polea", 3, "12-15", 45, "De pie frente a la polea alta. Con los codos pegados al cuerpo, extiende los brazos hacia abajo separando la cuerda al final."),
 ];
 
 const gymLower: ExerciseTemplate[] = [
-  createExercise("Sentadilla con Barra", 4, "8", 120),
-  createExercise("Peso Muerto Rumano", 4, "10", 90),
-  createExercise("Prensa de Piernas", 3, "12-15", 90),
-  createExercise("Elevación de Gemelos", 4, "15-20", 45),
-  createExercise("Plancha Abdominal", 3, "45 seg", 45),
+  createExercise("Sentadilla con Barra", 4, "8", 120, "Barra sobre trapecios. Pies anchura hombros. Baja profundo manteniendo talones pegados al suelo y pecho alto. Empuja el suelo para subir."),
+  createExercise("Peso Muerto Rumano", 4, "10", 90, "Con las piernas semirrígidas, baja la barra pegada a las piernas echando la cadera muy atrás hasta notar estiramiento en isquios. Sube apretando glúteo."),
+  createExercise("Prensa de Piernas", 3, "12-15", 90, "Pies en la plataforma. Baja el peso hasta que las rodillas estén cerca del pecho (sin levantar glúteo). Empuja sin bloquear rodillas."),
+  createExercise("Elevación de Gemelos", 4, "15-20", 45, "De pie o en máquina, eleva los talones lo máximo posible y baja hasta sentir un buen estiramiento. Rango completo."),
+  createExercise("Plancha Abdominal", 3, "45 seg", 45, "Posición de tabla sobre codos. Contrae abdomen fuerte como si fueras a recibir un golpe. Respira controlado."),
 ];
 
 const buildGymProgram = (): ProgramDay[] => {
@@ -121,27 +238,27 @@ const buildGymProgram = (): ProgramDay[] => {
 
 // --- PROGRAMA 3: ESTÉTICA DIVINA (Gimnasio - Avanzado) ---
 const pushDay: ExerciseTemplate[] = [
-  createExercise("Press Banca Inclinado", 4, "8", 90),
-  createExercise("Press Militar", 4, "8", 90),
-  createExercise("Aperturas Mancuernas", 3, "12", 60),
-  createExercise("Elevaciones Laterales", 4, "15", 45),
-  createExercise("Fondos Lastrados", 3, "10", 60),
+  createExercise("Press Banca Inclinado", 4, "8", 90, "Banco a 30-45 grados. Barra al pecho alto. Prioriza la parte superior del pectoral. Controla la bajada."),
+  createExercise("Press Militar", 4, "8", 90, "De pie, barra desde clavículas hasta encima de la cabeza. Contrae glúteos y abdomen para estabilidad."),
+  createExercise("Aperturas Mancuernas", 3, "12", 60, "Tumbado, abre los brazos como un abrazo amplio hasta sentir estiramiento en el pecho. Cierra arriba apretando."),
+  createExercise("Elevaciones Laterales", 4, "15", 45, "Sube las mancuernas a los lados hasta altura de hombros. Codos ligeramente flexionados. No uses impulso."),
+  createExercise("Fondos Lastrados", 3, "10", 60, "En paralelas, inclina el cuerpo adelante para enfatizar pecho. Baja hasta que el hombro pase el codo."),
 ];
 
 const pullDay: ExerciseTemplate[] = [
-  createExercise("Dominadas", 4, "Falllo", 90),
-  createExercise("Remo con Barra", 4, "8-10", 90),
-  createExercise("Face Pull", 3, "15", 60),
-  createExercise("Curl Barra Z", 4, "10", 60),
-  createExercise("Curl Martillo", 3, "12", 45),
+  createExercise("Dominadas", 4, "Falllo", 90, "Cuélgate y sube hasta pasar la barbilla por encima de la barra. Retrae escápulas antes de tirar."),
+  createExercise("Remo con Barra", 4, "8-10", 90, "Torso inclinado casi paralelo al suelo. Tira la barra al ombligo. Espalda neutra en todo momento."),
+  createExercise("Face Pull", 3, "15", 60, "Polea alta a la cara. Tira de la cuerda separando las manos hacia atrás de la cabeza. Codos altos."),
+  createExercise("Curl Barra Z", 4, "10", 60, "Agarre en la curva de la barra. Flexiona codos sin moverlos de su posición junto al torso."),
+  createExercise("Curl Martillo", 3, "12", 45, "Mancuernas con agarre neutro (palmas enfrentadas). Sube y baja controlado."),
 ];
 
 const legDay: ExerciseTemplate[] = [
-  createExercise("Sentadilla", 5, "5", 120),
-  createExercise("Peso Muerto", 5, "5", 120),
-  createExercise("Zancadas Búlgaras", 3, "10/p", 90),
-  createExercise("Extensión Cuádriceps", 3, "15", 45),
-  createExercise("Curl Femoral", 3, "15", 45),
+  createExercise("Sentadilla", 5, "5", 120, "Movimiento rey. Profundidad al menos paralela. Mantén la tensión en el core (maniobra valsava)."),
+  createExercise("Peso Muerto", 5, "5", 120, "Barra pegada a espinillas. Tira con todo el cuerpo, empujando el suelo. Espalda bloqueada."),
+  createExercise("Zancadas Búlgaras", 3, "10/p", 90, "Pie trasero elevado en banco. Baja verticalmente. Ejercicio unilateral clave para equilibrio y masa."),
+  createExercise("Extensión Cuádriceps", 3, "15", 45, "Sentado en máquina. Extiende rodillas hasta bloquear. Aguanta 1 seg arriba. Baja lento."),
+  createExercise("Curl Femoral", 3, "15", 45, "Tumbado o sentado. Flexiona rodillas llevando talones al glúteo. No levantes la cadera del banco."),
 ];
 
 const buildAdvProgram = (): ProgramDay[] => {
@@ -151,7 +268,7 @@ const buildAdvProgram = (): ProgramDay[] => {
     schedule.push({ id: `a_w${w}_d2`, title: `Semana ${w}: Tracción (Pull)`, exercises: pullDay });
     schedule.push({ id: `a_w${w}_d3`, title: `Semana ${w}: Pierna (Legs)`, exercises: legDay });
     schedule.push({ id: `a_w${w}_d4`, title: `Semana ${w}: Upper Pump`, exercises: [...pushDay.slice(0,2), ...pullDay.slice(0,2)] });
-    schedule.push({ id: `a_w${w}_d5`, title: `Semana ${w}: Lower Pump`, exercises: [...legDay.slice(2), createExercise("Gemelos Sentado", 4, "20", 45)] });
+    schedule.push({ id: `a_w${w}_d5`, title: `Semana ${w}: Lower Pump`, exercises: [...legDay.slice(2), createExercise("Gemelos Sentado", 4, "20", 45, "Sentado, peso sobre rodillas. Eleva talones rango completo.")] });
   }
   return schedule;
 }
@@ -159,24 +276,24 @@ const buildAdvProgram = (): ProgramDay[] => {
 // --- PROGRAMA 4: INICIACIÓN AL HIERRO (Gimnasio - Principiante) ---
 // 4 Semanas, 3 Días/semana
 const gymBegDayA: ExerciseTemplate[] = [
-  createExercise("Prensa de Piernas", 3, "12", 60),
-  createExercise("Press de Pecho en Máquina", 3, "12", 60),
-  createExercise("Jalón al Pecho", 3, "12", 60),
-  createExercise("Crunch Abdominal", 3, "15", 45),
+  createExercise("Prensa de Piernas", 3, "12", 60, "Pies anchura hombros en plataforma. Empuja con toda la planta del pie. No bloquees rodillas al final."),
+  createExercise("Press de Pecho en Máquina", 3, "12", 60, "Ajusta el asiento para que los agarres estén a altura media del pecho. Empuja adelante y vuelve lento."),
+  createExercise("Jalón al Pecho", 3, "12", 60, "Tira de la barra hacia el pecho superior. Mantén la espalda firme, no te columpies."),
+  createExercise("Crunch Abdominal", 3, "15", 45, "Tumbado, flexiona el tronco intentando llevar costillas a cadera. No tires del cuello."),
 ];
 
 const gymBegDayB: ExerciseTemplate[] = [
-  createExercise("Goblet Squat (Mancuerna)", 3, "10-12", 60),
-  createExercise("Press Militar Sentado (Mancuernas)", 3, "10", 60),
-  createExercise("Remo en Máquina", 3, "12", 60),
-  createExercise("Plancha", 3, "30 seg", 45),
+  createExercise("Goblet Squat (Mancuerna)", 3, "10-12", 60, "Sujeta una mancuerna pegada al pecho. Haz sentadillas manteniendo el torso muy vertical. Codos por dentro de rodillas."),
+  createExercise("Press Militar Sentado (Mancuernas)", 3, "10", 60, "Siéntate recto. Sube las mancuernas desde los hombros hasta casi tocarse arriba. Controla la bajada."),
+  createExercise("Remo en Máquina", 3, "12", 60, "Apoya el pecho en el pad. Tira de los agarres hacia atrás apretando la espalda."),
+  createExercise("Plancha", 3, "30 seg", 45, "Codos bajo hombros. Cuerpo recto como una tabla. Aguanta la posición."),
 ];
 
 const gymBegDayC: ExerciseTemplate[] = [
-  createExercise("Peso Muerto Rumano (Mancuernas)", 3, "10-12", 60),
-  createExercise("Fondos en Máquina o Banco", 3, "10", 60),
-  createExercise("Curl de Bíceps Máquina", 3, "12", 45),
-  createExercise("Cardio Suave", 1, "15 min", 0),
+  createExercise("Peso Muerto Rumano (Mancuernas)", 3, "10-12", 60, "Mancuernas al frente. Deslízalas por los muslos bajando la cadera atrás. Siente el estiramiento posterior."),
+  createExercise("Fondos en Máquina o Banco", 3, "10", 60, "Empuja hacia abajo extendiendo los codos. Mantén los hombros lejos de las orejas."),
+  createExercise("Curl de Bíceps Máquina", 3, "12", 45, "Apoya los brazos en el predicador. Flexiona los codos subiendo el peso."),
+  createExercise("Cardio Suave", 1, "15 min", 0, "Cinta, elíptica o bici a ritmo conversacional para enfriar y quemar extra."),
 ];
 
 const buildGymBegProgram = (): ProgramDay[] => {
@@ -192,31 +309,31 @@ const buildGymBegProgram = (): ProgramDay[] => {
 // --- PROGRAMA 5: CALISTENIA TÁCTICA (Casa - Intermedio) ---
 // 6 Semanas, 4 Días/semana
 const caliPush: ExerciseTemplate[] = [
-  createExercise("Flexiones Explosivas", 4, "10", 90),
-  createExercise("Fondos en Paralelas (o Sillas)", 4, "12", 90),
-  createExercise("Flexiones declinadas", 3, "12", 60),
-  createExercise("Pino contra pared (Hold)", 3, "30 seg", 60),
+  createExercise("Flexiones Explosivas", 4, "10", 90, "Baja normal, pero sube con tanta fuerza que tus manos se despeguen ligeramente del suelo."),
+  createExercise("Fondos en Paralelas (o Sillas)", 4, "12", 90, "Entre dos sillas estables. Baja hasta 90 grados y sube. Cuerpo recto."),
+  createExercise("Flexiones declinadas", 3, "12", 60, "Pies elevados en sofá o silla. Manos en suelo. Enfoca en hombros y pecho superior."),
+  createExercise("Pino contra pared (Hold)", 3, "30 seg", 60, "Trepa con los pies por la pared hasta quedar vertical sobre las manos. Aguanta."),
 ];
 
 const caliLegs: ExerciseTemplate[] = [
-  createExercise("Sentadilla Búlgara", 4, "10/p", 90),
-  createExercise("Zancadas con Salto", 3, "20 total", 60),
-  createExercise("Puente Glúteo a 1 pierna", 3, "12/p", 60),
-  createExercise("Elevación Gemelo 1 pierna", 4, "15/p", 45),
+  createExercise("Sentadilla Búlgara", 4, "10/p", 90, "Un pie apoyado atrás en silla. Baja con la pierna delantera hasta que el muslo quede paralelo al suelo."),
+  createExercise("Zancadas con Salto", 3, "20 total", 60, "Haz una zancada y salta para cambiar de pierna en el aire. Aterriza suave y baja de nuevo."),
+  createExercise("Puente Glúteo a 1 pierna", 3, "12/p", 60, "Tumbado, una pierna al aire. Empuja con el talón de la otra para subir la cadera."),
+  createExercise("Elevación Gemelo 1 pierna", 4, "15/p", 45, "Apóyate en pared para equilibrio. Sube y baja con un solo pie."),
 ];
 
 const caliPull: ExerciseTemplate[] = [
-  createExercise("Dominadas (o Remo invertido mesa)", 4, "8-10", 120),
-  createExercise("Chin ups", 3, "8-10", 90),
-  createExercise("Remo puerta con toalla", 4, "15", 60),
-  createExercise("Superman Hold", 3, "45 seg", 45),
+  createExercise("Dominadas (o Remo invertido mesa)", 4, "8-10", 120, "Sube la barbilla sobre la barra. Si no tienes barra, túmbate bajo una mesa robusta y tracciona hacia ella."),
+  createExercise("Chin ups", 3, "8-10", 90, "Dominadas con agarre supino (palmas hacia ti). Enfoca en bíceps."),
+  createExercise("Remo puerta con toalla", 4, "15", 60, "Engancha toalla en pomo. Inclínate atrás y tracciona hacia la puerta."),
+  createExercise("Superman Hold", 3, "45 seg", 45, "Mantén la posición de Superman (brazos y piernas arriba) estáticamente."),
 ];
 
 const caliCore: ExerciseTemplate[] = [
-  createExercise("L-Sit (o progresión)", 3, "Al fallo", 90),
-  createExercise("Leg Raises colgado (o suelo)", 4, "12", 60),
-  createExercise("Mountain Climbers", 3, "45 seg", 45),
-  createExercise("Burpees", 3, "15", 60),
+  createExercise("L-Sit (o progresión)", 3, "Al fallo", 90, "Apoya manos en suelo/sillas. Eleva el cuerpo y estira las piernas al frente formando una L."),
+  createExercise("Leg Raises colgado (o suelo)", 4, "12", 60, "Colgado de barra o tumbado. Sube las piernas rectas hasta formar 90 grados con el torso."),
+  createExercise("Mountain Climbers", 3, "45 seg", 45, "Posición de plancha. Lleva rodillas al pecho alternativamente a ritmo rápido."),
+  createExercise("Burpees", 3, "15", 60, "Flexión, salto de rana y salto vertical con palmada. Intenso."),
 ];
 
 const buildCaliProgram = (): ProgramDay[] => {
@@ -233,31 +350,31 @@ const buildCaliProgram = (): ProgramDay[] => {
 // --- PROGRAMA 6: TITÁN DE FUERZA (Gimnasio - Avanzado) ---
 // 8 Semanas, 4 Días/semana
 const powerSquat: ExerciseTemplate[] = [
-  createExercise("Sentadilla Low Bar", 5, "3-5", 180),
-  createExercise("Sentadilla Frontal", 3, "6-8", 120),
-  createExercise("Zancadas con Barra", 3, "10", 90),
-  createExercise("Plancha con lastre", 3, "45 seg", 60),
+  createExercise("Sentadilla Low Bar", 5, "3-5", 180, "Barra baja en deltoides posterior. Torso más inclinado. Enfoca en mover grandes pesos."),
+  createExercise("Sentadilla Frontal", 3, "6-8", 120, "Barra apoyada en deltoides anterior. Torso muy vertical. Enfoca en cuádriceps y core."),
+  createExercise("Zancadas con Barra", 3, "10", 90, "Paso largo. Controla el equilibrio. Rodilla trasera toca suelo suavemente."),
+  createExercise("Plancha con lastre", 3, "45 seg", 60, "Plancha normal con disco en la espalda. Estabilidad total."),
 ];
 
 const powerBench: ExerciseTemplate[] = [
-  createExercise("Press Banca Competición", 5, "3-5", 180),
-  createExercise("Press Banca Agarre Estrecho", 3, "6-8", 120),
-  createExercise("Press Militar Estricto", 3, "6-8", 90),
-  createExercise("Remo Pendlay", 4, "8", 90),
+  createExercise("Press Banca Competición", 5, "3-5", 180, "Pies plantados, arco lumbar, retracción escapular. Pausa de 1 seg en el pecho antes de subir."),
+  createExercise("Press Banca Agarre Estrecho", 3, "6-8", 120, "Manos ancho de hombros. Codos pegados. Enfoca en tríceps para mejorar el bloqueo."),
+  createExercise("Press Militar Estricto", 3, "6-8", 90, "De pie, sin impulso de piernas. Fuerza pura de hombros."),
+  createExercise("Remo Pendlay", 4, "8", 90, "Espalda paralela al suelo. La barra empieza en el suelo en cada repetición. Explosivo."),
 ];
 
 const powerDeadlift: ExerciseTemplate[] = [
-  createExercise("Peso Muerto Convencional", 5, "2-4", 240),
-  createExercise("Peso Muerto Déficit", 3, "6", 150),
-  createExercise("Hip Thrust Pesado", 3, "8-10", 120),
-  createExercise("Dominadas Lastradas", 3, "6-8", 120),
+  createExercise("Peso Muerto Convencional", 5, "2-4", 240, "Agarre mixto o hook. Tensión antes de subir (slack). Empuja el suelo, no tires con la espalda."),
+  createExercise("Peso Muerto Déficit", 3, "6", 150, "Subido a un disco o plataforma baja. Aumenta el recorrido para mejorar la salida."),
+  createExercise("Hip Thrust Pesado", 3, "8-10", 120, "Barra en cadera, espalda en banco. Empuja con glúteos hasta bloquear arriba."),
+  createExercise("Dominadas Lastradas", 3, "6-8", 120, "Dominadas con cinturón y peso. Fuerza de espalda vertical."),
 ];
 
 const powerAccessory: ExerciseTemplate[] = [
-  createExercise("Press Inclinado Mancuernas", 3, "10", 90),
-  createExercise("Curl Femoral Tumbado", 4, "12", 60),
-  createExercise("Extensión Tríceps", 4, "15", 60),
-  createExercise("Face Pull", 4, "15", 45),
+  createExercise("Press Inclinado Mancuernas", 3, "10", 90, "Volumen para pecho superior y hombro."),
+  createExercise("Curl Femoral Tumbado", 4, "12", 60, "Aislamiento necesario para isquios."),
+  createExercise("Extensión Tríceps", 4, "15", 60, "Salud del codo y volumen de brazo."),
+  createExercise("Face Pull", 4, "15", 45, "Salud del hombro y deltoides posterior."),
 ];
 
 const buildPowerProgram = (): ProgramDay[] => {

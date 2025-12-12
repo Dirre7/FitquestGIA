@@ -4,7 +4,7 @@ import {
   Zap, Dumbbell, Clock, ChevronRight, Sun, Moon, Cloud, X, Star, 
   Maximize2, Medal, Award, Calendar, Repeat, Flame, RefreshCw, Trash2,
   Hash, Timer, TrendingUp, LogOut, Loader2, Sparkles, MessageSquare, Bot,
-  Camera, Image as ImageIcon
+  Camera, Image as ImageIcon, Info
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { supabase } from './services/supabaseClient';
@@ -22,6 +22,51 @@ const ProgressBar = ({ current, max, colorClass = "bg-primary-500" }: { current:
       <div 
         className={`h-full ${colorClass} transition-all duration-1000 ease-out`} 
         style={{ width: `${percentage}%` }}
+      />
+    </div>
+  );
+};
+
+// Componente inteligente que maneja errores de carga de imágenes
+const ImageWithFallback = ({ src, alt, className, fallbackText }: { src: string, alt: string, className?: string, fallbackText?: string }) => {
+  const [imgSrc, setImgSrc] = useState(src);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    setImgSrc(src);
+    setHasError(false);
+    setIsLoading(true);
+  }, [src]);
+
+  const handleError = () => {
+    if (!hasError) {
+      setHasError(true);
+      setIsLoading(false);
+      // Fallback a un placeholder limpio generado dinámicamente
+      setImgSrc(`https://placehold.co/600x400/f1f5f9/475569?text=${encodeURIComponent(fallbackText || alt)}`);
+    }
+  };
+
+  const handleLoad = () => {
+    setIsLoading(false);
+  };
+
+  return (
+    <div className={`relative overflow-hidden bg-white ${className}`}>
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-slate-100 dark:bg-slate-700 z-10">
+          <Loader2 className="w-6 h-6 text-slate-400 animate-spin" />
+        </div>
+      )}
+      <img 
+        src={imgSrc} 
+        alt={alt} 
+        className={`w-full h-full object-contain transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
+        onError={handleError}
+        onLoad={handleLoad}
+        loading="lazy"
+        referrerPolicy="no-referrer"
       />
     </div>
   );
@@ -127,7 +172,7 @@ const AvatarSelectionModal = ({ isOpen, onClose, onSelect }: { isOpen: boolean, 
                   onClick={() => { onSelect(url); onClose(); }}
                   className="aspect-square rounded-xl overflow-hidden border-2 border-transparent hover:border-primary-500 hover:scale-105 transition-all bg-slate-100 dark:bg-slate-700"
                 >
-                  <img src={url} alt={seed} className="w-full h-full object-cover" />
+                  <ImageWithFallback src={url} alt={seed} className="w-full h-full object-cover" />
                 </button>
               );
             })}
@@ -696,11 +741,9 @@ const ProfileView = ({
       <div className="glass-card p-6 rounded-2xl space-y-6">
         <div className="flex flex-col items-center relative">
           <div className="relative group cursor-pointer" onClick={() => setShowAvatarModal(true)}>
-            <img 
-              src={user.avatar} 
-              className="w-24 h-24 rounded-full border-4 border-primary-500 mb-4 bg-slate-200 object-cover group-hover:brightness-75 transition-all" 
-              alt="profile"
-            />
+            <div className="w-24 h-24 rounded-full border-4 border-primary-500 mb-4 bg-slate-200 overflow-hidden relative group-hover:brightness-75 transition-all">
+                <ImageWithFallback src={user.avatar} alt="profile" className="w-full h-full object-cover" />
+            </div>
             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity mb-4">
               <Camera className="w-8 h-8 text-white drop-shadow-lg" />
             </div>
@@ -949,9 +992,15 @@ const ActiveWorkoutView = ({
                 className="p-4 flex items-center gap-4 cursor-pointer"
                 onClick={() => setExpandedEx(isExpanded ? null : ex.id)}
               >
-                <img src={ex.image} alt={ex.name} className="w-16 h-16 rounded-lg object-cover bg-slate-200" />
-                <div className="flex-1">
-                  <h3 className={`font-bold text-lg ${ex.isFullyCompleted ? 'text-green-600 line-through' : ''}`}>{ex.name}</h3>
+                {/* Miniatura solo cuando está cerrado, para no duplicar */}
+                {!isExpanded && (
+                  <div className="w-12 h-12 rounded-lg bg-white overflow-hidden shrink-0 border border-slate-100 dark:border-slate-700">
+                    <ImageWithFallback src={ex.image} alt={ex.name} className="w-full h-full object-contain" />
+                  </div>
+                )}
+                
+                <div className="flex-1 min-w-0">
+                  <h3 className={`font-bold text-lg truncate ${ex.isFullyCompleted ? 'text-green-600 line-through' : ''}`}>{ex.name}</h3>
                   <div className="text-xs text-slate-500 flex gap-2">
                     <span>{ex.setsLog.filter(s => s.completed).length}/{ex.targetSets} Series</span>
                     <span>• Meta: {ex.targetReps} reps</span>
@@ -962,10 +1011,26 @@ const ActiveWorkoutView = ({
                 </div>
               </div>
 
-              {/* Expanded Details (Sets Table) */}
+              {/* Expanded Details */}
               {isExpanded && (
                 <div className="p-4 pt-0 border-t border-slate-100 dark:border-slate-700">
-                   <div className="grid grid-cols-10 gap-2 mb-2 text-[10px] uppercase font-bold text-slate-400 text-center mt-3">
+                   
+                   {/* Description & Image Section - Fondo blanco forzado para GIFs transparentes */}
+                   <div className="flex flex-col sm:flex-row gap-4 mt-4 mb-6 bg-white p-4 rounded-xl border border-slate-100 dark:border-slate-700 shadow-inner">
+                     <div className="sm:w-1/3 flex items-center justify-center rounded-lg p-2 min-h-[160px]">
+                        <ImageWithFallback src={ex.image} alt={ex.name} className="w-full h-40 object-contain" fallbackText={ex.name} />
+                     </div>
+                     <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Info className="w-4 h-4 text-primary-500" />
+                          <h4 className="font-bold text-sm text-primary-600 uppercase tracking-wide">Técnica</h4>
+                        </div>
+                        <p className="text-sm text-slate-600 leading-relaxed">{ex.description}</p>
+                     </div>
+                   </div>
+
+                   {/* Sets Table */}
+                   <div className="grid grid-cols-10 gap-2 mb-2 text-[10px] uppercase font-bold text-slate-400 text-center">
                      <div className="col-span-2">Serie</div>
                      <div className="col-span-3">Kg</div>
                      <div className="col-span-3">Reps</div>

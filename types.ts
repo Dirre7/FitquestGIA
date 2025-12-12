@@ -11,6 +11,7 @@ export interface ExerciseTemplate {
   id: string;
   name: string;
   image: string;
+  description: string; // Nueva explicación técnica
   targetSets: number;
   targetReps: string; // "10-12", "15", "Al fallo"
   restSeconds: number;
