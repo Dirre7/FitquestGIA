@@ -1450,7 +1450,7 @@ export default function App() {
         )}
       </main>
 
-      <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-white/20 dark:border-slate-700/50 shadow-2xl rounded-full px-6 py-3 flex gap-6 md:gap-8 z-40">
+      <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 liquid-glass rounded-full px-8 py-4 flex gap-8 md:gap-10 z-50 transition-all duration-300">
         <NavBtn icon={Home} active={view === 'dashboard'} onClick={() => setView('dashboard')} />
         <NavBtn icon={Dumbbell} active={view === 'training' || view === 'active-workout'} onClick={() => setView('training')} />
         <NavBtn icon={BarChart2} active={view === 'stats'} onClick={() => setView('stats')} />
@@ -1462,7 +1462,11 @@ export default function App() {
 }
 
 const NavBtn = ({ icon: Icon, active, onClick }: any) => (
-  <button onClick={onClick} className={`p-2 rounded-full transition-all ${active ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30' : 'text-slate-400 hover:text-primary-500'}`}>
-    <Icon className="w-6 h-6" strokeWidth={2.5} />
+  <button onClick={onClick} className={`p-2 rounded-full transition-all relative group ${active ? 'text-primary-500' : 'text-slate-400 hover:text-white'}`}>
+    {/* Active Glow Dot */}
+    {active && (
+      <span className="absolute inset-0 bg-primary-500/20 blur-md rounded-full"></span>
+    )}
+    <Icon className={`w-6 h-6 relative z-10 transition-transform ${active ? 'scale-110 drop-shadow-[0_0_8px_rgba(20,184,166,0.5)]' : 'group-hover:scale-110'}`} strokeWidth={active ? 2.5 : 2} />
   </button>
 );
