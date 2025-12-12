@@ -131,8 +131,18 @@ const IMAGE_LIBRARY: Record<string, string> = {
   "jump": "https://images.pexels.com/photos/4164765/pexels-photo-4164765.jpeg?auto=compress&cs=tinysrgb&w=800",
 };
 
+// IMAGEN PERSONALIZADA: "Sentadilla Libre"
+// Por favor guarda la segunda imagen que adjuntaste (la del hombre de rojo y azul) 
+// con el nombre 'sentadilla.png' en la carpeta public.
+const CUSTOM_SQUAT_IMAGE = "/sentadilla.png";
+
 // Función inteligente para asignar fotos de Pexels basadas en palabras clave
 const getExerciseImage = (name: string) => {
+  // Regla específica para usar la imagen adjuntada UNICAMENTE en este ejercicio exacto
+  if (name === "Sentadilla Libre") {
+    return CUSTOM_SQUAT_IMAGE;
+  }
+
   const lowerName = name.toLowerCase();
 
   // Mapeo de palabras clave a claves de la librería
@@ -170,7 +180,7 @@ const createExercise = (name: string, sets: number, reps: string, rest: number, 
 
 // --- PROGRAMA 1: DESPERTAR EN CASA (Principiante - Casa) ---
 const homeDayA: ExerciseTemplate[] = [
-  createExercise("Sentadillas al aire", 3, "12-15", 60, "Pies a la anchura de los hombros. Baja la cadera hacia atrás y abajo manteniendo la espalda recta, como si te sentaras en una silla invisible. Baja hasta que los muslos estén paralelos al suelo."),
+  createExercise("Sentadilla Libre", 3, "12-15", 60, "Pies a la anchura de los hombros. Baja la cadera hacia atrás y abajo manteniendo la espalda recta, como si te sentaras en una silla invisible. Baja hasta que los muslos estén paralelos al suelo."),
   createExercise("Flexiones (o rodillas)", 3, "8-10", 60, "Manos bajo los hombros. Mantén el cuerpo en línea recta desde la cabeza a los talones (o rodillas). Baja el pecho hasta casi tocar el suelo y empuja explosivamente."),
   createExercise("Zancadas Alternas", 3, "10/pierna", 60, "Da un paso largo hacia adelante. Baja la cadera hasta que ambas rodillas formen ángulos de 90 grados. Mantén el torso erguido. Alterna piernas."),
   createExercise("Plancha Abdominal", 3, "30 seg", 45, "Apóyate en antebrazos y puntas de los pies. Mantén el cuerpo totalmente recto y contrae fuerte el abdomen y glúteos. No dejes que la cadera caiga."),
