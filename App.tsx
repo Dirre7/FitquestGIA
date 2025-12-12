@@ -1539,15 +1539,15 @@ const App = () => {
         </div>
 
         {view !== 'active-workout' && (
-          <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 pb-safe">
-            <div className="max-w-md mx-auto flex justify-around items-center h-16 px-2">
+          <nav className="fixed bottom-6 left-4 right-4 z-50 max-w-[400px] mx-auto pb-safe">
+            <div className="liquid-glass rounded-3xl flex justify-around items-center h-20 px-2 shadow-2xl backdrop-blur-xl border border-white/40 dark:border-white/5">
               <NavButton icon={Home} label="Inicio" isActive={view === 'dashboard'} onClick={() => setView('dashboard')} />
               <NavButton icon={Dumbbell} label="Entrenar" isActive={view === 'training'} onClick={() => setView('training')} />
               <NavButton icon={BarChart2} label="Stats" isActive={view === 'stats'} onClick={() => setView('stats')} />
               <NavButton icon={Trophy} label="Logros" isActive={view === 'achievements'} onClick={() => setView('achievements')} />
               <NavButton icon={User} label="Perfil" isActive={view === 'profile'} onClick={() => setView('profile')} />
             </div>
-          </div>
+          </nav>
         )}
       </main>
 
@@ -1572,8 +1572,10 @@ const App = () => {
 const NavButton = ({ icon: Icon, label, isActive, onClick }: { icon: React.ElementType, label: string, isActive: boolean, onClick: () => void }) => (
   <button 
     onClick={onClick}
-    className={`flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${
-      isActive ? 'text-primary-500' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+    className={`flex flex-col items-center justify-center w-full h-full space-y-1 transition-all duration-300 ${
+      isActive 
+        ? 'text-primary-600 dark:text-primary-400 scale-110' 
+        : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
     }`}
   >
     <Icon className={`w-6 h-6 ${isActive ? 'fill-current opacity-20' : ''}`} strokeWidth={isActive ? 2.5 : 2} />
