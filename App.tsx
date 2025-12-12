@@ -396,21 +396,23 @@ const DashboardView = ({ user, setView }: { user: UserState; setView: (v: ViewSt
             <p className="text-sm">Aún no has desbloqueado logros. ¡Entrena para empezar!</p>
           </div>
         ) : (
-          <div className="flex space-x-4 overflow-x-auto pb-4 no-scrollbar">
+          <div className="space-y-3">
             {recentUnlocked.map(ach => (
-              <div key={ach.id} className="glass-card min-w-[140px] p-4 rounded-xl flex flex-col items-center text-center border-2 border-yellow-400 bg-yellow-50/50 dark:bg-yellow-900/10 shadow-md">
-                <div className="text-3xl mb-2">{ach.icon}</div>
-                <h4 className="font-bold text-sm mb-1">{ach.name}</h4>
-                <p className="text-[10px] text-slate-500 leading-tight">{ach.description}</p>
-                <Star className="w-3 h-3 text-yellow-500 mt-2 animate-spin-slow" />
+              <div key={ach.id} className="glass-card p-4 rounded-xl flex items-center gap-4 transition-all hover:scale-[1.01] border-l-4 border-yellow-400 bg-yellow-50/30 dark:bg-yellow-900/10">
+                <div className="text-3xl shrink-0 bg-white/50 dark:bg-slate-800/50 p-2 rounded-full shadow-sm">{ach.icon}</div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-bold text-sm text-slate-900 dark:text-white truncate">{ach.name}</h4>
+                  <p className="text-xs text-slate-500 truncate">{ach.description}</p>
+                </div>
+                <Star className="w-4 h-4 text-yellow-500 animate-spin-slow shrink-0" />
               </div>
             ))}
              <button 
               onClick={() => setView('achievements')}
-              className="min-w-[140px] p-4 rounded-xl flex flex-col items-center justify-center text-center border-2 border-dashed border-slate-300 dark:border-slate-700 text-slate-400 hover:border-primary-500 hover:text-primary-500 transition-colors"
+              className="w-full p-3 rounded-xl flex items-center justify-center gap-2 border border-dashed border-slate-300 dark:border-slate-700 text-slate-400 hover:border-primary-500 hover:text-primary-500 transition-colors text-xs font-bold"
             >
-              <Award className="w-8 h-8 mb-2" />
-              <span className="text-xs font-bold">Ver Colección</span>
+              <Award className="w-4 h-4" />
+              Ver Colección Completa
             </button>
           </div>
         )}
