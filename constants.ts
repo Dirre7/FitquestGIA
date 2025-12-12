@@ -18,8 +18,20 @@ export const INITIAL_USER_STATE: UserState = {
   }
 };
 
+// --- HELPERS FOR ACHIEVEMENTS ---
+const getTotalReps = (u: UserState) => u.history.reduce((acc, log) => acc + (log.totalReps || 0), 0);
+const getTotalSets = (u: UserState) => u.history.reduce((acc, log) => acc + (log.totalSets || 0), 0);
+const getMaxSessionVolume = (u: UserState) => Math.max(0, ...u.history.map(h => h.totalVolume));
+const getMaxSessionDuration = (u: UserState) => Math.max(0, ...u.history.map(h => h.durationMinutes));
+const hasFinishedProgram = (u: UserState, id: string) => u.completedProgramIds.includes(id);
+const checkTimeOfDay = (u: UserState, startHour: number, endHour: number) => 
+  u.history.some(h => {
+    const hours = new Date(h.date).getHours();
+    return hours >= startHour && hours < endHour;
+  });
+
 export const ACHIEVEMENTS: Achievement[] = [
-   // --- CONSTANCIA (Workouts) ---
+   // --- CONSTANCIA (Workouts Count) [10] ---
    { id: 'w1', name: "Primer Paso", description: "Completa tu primer entrenamiento.", icon: "🦶", unlocked: false, condition: (u) => u.completedWorkouts >= 1 },
    { id: 'w5', name: "Calentando Motores", description: "Completa 5 entrenamientos.", icon: "🛵", unlocked: false, condition: (u) => u.completedWorkouts >= 5 },
    { id: 'w10', name: "Hábito Formado", description: "Completa 10 entrenamientos.", icon: "🗓️", unlocked: false, condition: (u) => u.completedWorkouts >= 10 },
@@ -27,21 +39,61 @@ export const ACHIEVEMENTS: Achievement[] = [
    { id: 'w50', name: "Medio Centenar", description: "Completa 50 entrenamientos.", icon: "🎯", unlocked: false, condition: (u) => u.completedWorkouts >= 50 },
    { id: 'w75', name: "Dedicación Pura", description: "Completa 75 entrenamientos.", icon: "🧘", unlocked: false, condition: (u) => u.completedWorkouts >= 75 },
    { id: 'w100', name: "Centurión", description: "Completa 100 entrenamientos.", icon: "💯", unlocked: false, condition: (u) => u.completedWorkouts >= 100 },
+   { id: 'w200', name: "Espartano", description: "Completa 200 entrenamientos.", icon: "🛡️", unlocked: false, condition: (u) => u.completedWorkouts >= 200 },
+   { id: 'w365', name: "Año de Hierro", description: "Completa 365 entrenamientos.", icon: "🌍", unlocked: false, condition: (u) => u.completedWorkouts >= 365 },
+   { id: 'w500', name: "Inmortal", description: "Completa 500 entrenamientos.", icon: "🗿", unlocked: false, condition: (u) => u.completedWorkouts >= 500 },
    
-   // --- NIVELES ---
+   // --- NIVEL RPG [8] ---
    { id: 'lvl5', name: "Aprendiz", description: "Alcanza el nivel 5.", icon: "📜", unlocked: false, condition: (u) => u.level >= 5 },
    { id: 'lvl10', name: "Aventurero", description: "Alcanza el nivel 10.", icon: "🎒", unlocked: false, condition: (u) => u.level >= 10 },
    { id: 'lvl20', name: "Veterano", description: "Alcanza el nivel 20.", icon: "🎖️", unlocked: false, condition: (u) => u.level >= 20 },
+   { id: 'lvl30', name: "Capitán", description: "Alcanza el nivel 30.", icon: "⭐", unlocked: false, condition: (u) => u.level >= 30 },
+   { id: 'lvl40', name: "Héroe", description: "Alcanza el nivel 40.", icon: "🦸", unlocked: false, condition: (u) => u.level >= 40 },
    { id: 'lvl50', name: "Leyenda", description: "Alcanza el nivel 50.", icon: "👑", unlocked: false, condition: (u) => u.level >= 50 },
- 
-   // --- PROGRAMAS ---
-   { id: 'prog1', name: "Graduado", description: "Completa tu primer programa.", icon: "🎓", unlocked: false, condition: (u) => u.completedProgramIds.length >= 1 },
-   { id: 'prog3', name: "Maestro de Rutinas", description: "Completa 3 programas distintos.", icon: "📚", unlocked: false, condition: (u) => new Set(u.completedProgramIds).size >= 3 },
- 
-   // --- FUERZA ---
+   { id: 'lvl75', name: "Semidiós", description: "Alcanza el nivel 75.", icon: "⚡", unlocked: false, condition: (u) => u.level >= 75 },
+   { id: 'lvl99', name: "Dios del Fitness", description: "Alcanza el nivel 99.", icon: "🪐", unlocked: false, condition: (u) => u.level >= 99 },
+
+   // --- FUERZA TOTAL (Volume Accumulation) [7] ---
    { id: 'kg1k', name: "Hormiga Atómica", description: "Levanta 1,000kg en total.", icon: "🐜", unlocked: false, condition: (u) => u.totalWeightLifted >= 1000 },
    { id: 'kg10k', name: "Coche Compacto", description: "Levanta 10,000kg en total.", icon: "🚗", unlocked: false, condition: (u) => u.totalWeightLifted >= 10000 },
+   { id: 'kg50k', name: "Camión", description: "Levanta 50,000kg en total.", icon: "🚛", unlocked: false, condition: (u) => u.totalWeightLifted >= 50000 },
    { id: 'kg100k', name: "Ballena Azul", description: "Levanta 100,000kg en total.", icon: "🐋", unlocked: false, condition: (u) => u.totalWeightLifted >= 100000 },
+   { id: 'kg250k', name: "Avión Jumbo", description: "Levanta 250,000kg en total.", icon: "✈️", unlocked: false, condition: (u) => u.totalWeightLifted >= 250000 },
+   { id: 'kg500k', name: "Transbordador", description: "Levanta 500,000kg en total.", icon: "🚀", unlocked: false, condition: (u) => u.totalWeightLifted >= 500000 },
+   { id: 'kg1m', name: "Titán Atlas", description: "Levanta 1,000,000kg en total.", icon: "🌐", unlocked: false, condition: (u) => u.totalWeightLifted >= 1000000 },
+
+   // --- TIEMPO INVERTIDO [6] ---
+   { id: 'time60', name: "La Primera Hora", description: "Acumula 60 minutos de entrenamiento.", icon: "⏱️", unlocked: false, condition: (u) => u.totalDurationMinutes >= 60 },
+   { id: 'time300', name: "Jornada Laboral", description: "Acumula 5 horas (300 min) entrenando.", icon: "💼", unlocked: false, condition: (u) => u.totalDurationMinutes >= 300 },
+   { id: 'time1k', name: "Ciclo Solar", description: "Acumula 24 horas (1440 min) entrenando.", icon: "☀️", unlocked: false, condition: (u) => u.totalDurationMinutes >= 1440 },
+   { id: 'time3k', name: "Fin de Semana", description: "Acumula 50 horas (3000 min) entrenando.", icon: "🏖️", unlocked: false, condition: (u) => u.totalDurationMinutes >= 3000 },
+   { id: 'time6k', name: "Maestría 100h", description: "Acumula 100 horas entrenando.", icon: "⏳", unlocked: false, condition: (u) => u.totalDurationMinutes >= 6000 },
+   { id: 'time10k', name: "Dedicación Total", description: "Acumula 160 horas (casi una semana entera).", icon: "🕰️", unlocked: false, condition: (u) => u.totalDurationMinutes >= 10000 },
+
+   // --- PROGRAMAS Y MISIONES [6] ---
+   { id: 'prog1', name: "Graduado", description: "Completa tu primer programa.", icon: "🎓", unlocked: false, condition: (u) => u.completedProgramIds.length >= 1 },
+   { id: 'prog3', name: "Trotamundos", description: "Completa 3 programas distintos.", icon: "🗺️", unlocked: false, condition: (u) => new Set(u.completedProgramIds).size >= 3 },
+   { id: 'prog_home', name: "Héroe Casero", description: "Completa el programa 'Despertar Casero'.", icon: "🏠", unlocked: false, condition: (u) => hasFinishedProgram(u, 'prog_home_beg') },
+   { id: 'prog_gym', name: "Nacido del Hierro", description: "Completa 'Iniciación al Hierro' o 'Guerrero de Hierro'.", icon: "🏗️", unlocked: false, condition: (u) => hasFinishedProgram(u, 'prog_gym_beg') || hasFinishedProgram(u, 'prog_gym_int') },
+   { id: 'prog_cali', name: "Ninja Urbano", description: "Completa 'Calistenia Táctica'.", icon: "🥷", unlocked: false, condition: (u) => hasFinishedProgram(u, 'prog_cali_int') },
+   { id: 'prog_power', name: "Powerlifter", description: "Completa el programa 'Titán de Fuerza'.", icon: "🦍", unlocked: false, condition: (u) => hasFinishedProgram(u, 'prog_power_adv') },
+
+   // --- VOLUMEN DE TRABAJO (Sets/Reps) [6] ---
+   { id: 'reps1k', name: "Mil Repeticiones", description: "Realiza 1,000 repeticiones totales.", icon: "🔢", unlocked: false, condition: (u) => getTotalReps(u) >= 1000 },
+   { id: 'reps5k', name: "Máquina de Reps", description: "Realiza 5,000 repeticiones totales.", icon: "🤖", unlocked: false, condition: (u) => getTotalReps(u) >= 5000 },
+   { id: 'reps10k', name: "Infinito", description: "Realiza 10,000 repeticiones totales.", icon: "♾️", unlocked: false, condition: (u) => getTotalReps(u) >= 10000 },
+   { id: 'sets100', name: "Centenar de Series", description: "Completa 100 series totales.", icon: "🧱", unlocked: false, condition: (u) => getTotalSets(u) >= 100 },
+   { id: 'sets500', name: "Constructor", description: "Completa 500 series totales.", icon: "🔨", unlocked: false, condition: (u) => getTotalSets(u) >= 500 },
+   { id: 'sets1k', name: "Arquitecto Corporal", description: "Completa 1,000 series totales.", icon: "📐", unlocked: false, condition: (u) => getTotalSets(u) >= 1000 },
+
+   // --- HITOS DE SESIÓN (Records Personales) [7] ---
+   { id: 'sesh_heavy', name: "Día Pesado", description: "Levanta más de 5,000kg en una sola sesión.", icon: "🐘", unlocked: false, condition: (u) => getMaxSessionVolume(u) >= 5000 },
+   { id: 'sesh_hulk', name: "Modo Bestia", description: "Levanta más de 10,000kg en una sola sesión.", icon: "💥", unlocked: false, condition: (u) => getMaxSessionVolume(u) >= 10000 },
+   { id: 'sesh_godzilla', name: "Godzilla", description: "Levanta más de 20,000kg en una sola sesión.", icon: "🦖", unlocked: false, condition: (u) => getMaxSessionVolume(u) >= 20000 },
+   { id: 'sesh_long', name: "Resistencia", description: "Entrena más de 60 minutos en una sesión.", icon: "🔋", unlocked: false, condition: (u) => getMaxSessionDuration(u) >= 60 },
+   { id: 'sesh_marathon', name: "Maratón", description: "Entrena más de 90 minutos en una sesión.", icon: "🏃", unlocked: false, condition: (u) => getMaxSessionDuration(u) >= 90 },
+   { id: 'early_bird', name: "Alondra", description: "Completa un entrenamiento entre las 5:00 y las 8:00 AM.", icon: "🌅", unlocked: false, condition: (u) => checkTimeOfDay(u, 5, 8) },
+   { id: 'night_owl', name: "Búho Nocturno", description: "Completa un entrenamiento entre las 22:00 y las 4:00 AM.", icon: "🦉", unlocked: false, condition: (u) => checkTimeOfDay(u, 22, 28) || checkTimeOfDay(u, 0, 4) }, // 22-24h handled by simple logic usually but keeping simple check
 ];
 
 // --- LIBRERÍA DE IMÁGENES (Fuente: Pexels - Fotografía Fitness Real) ---
