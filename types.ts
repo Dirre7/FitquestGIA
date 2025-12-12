@@ -97,6 +97,11 @@ export interface UserState {
   achievements: string[];
   history: WorkoutLog[];
   
+  // Biometrics
+  weight: number; // kg
+  height: number; // cm
+  age: number; // years
+
   // Nuevo: Programa activo
   activeProgram: ActiveProgramProgress | null;
   completedProgramIds: string[]; // IDs de programas terminados

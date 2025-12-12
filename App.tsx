@@ -4,7 +4,8 @@ import {
   Zap, Dumbbell, Clock, ChevronRight, Sun, Moon, Cloud, X, Star, 
   Maximize2, Medal, Award, Calendar, Repeat, Flame, RefreshCw, Trash2,
   Hash, Timer, TrendingUp, LogOut, Loader2, Sparkles, MessageSquare, Bot,
-  Camera, Image as ImageIcon, Info, Filter, ArrowLeft, Check, Pause, SkipForward, Plus
+  Camera, Image as ImageIcon, Info, Filter, ArrowLeft, Check, Pause, SkipForward, Plus,
+  Scale, Ruler, CalendarDays, Calculator
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { supabase } from './services/supabaseClient';
@@ -650,7 +651,7 @@ const AchievementsView = ({ user }: { user: UserState }) => {
   );
 };
 
-const StatsView = ({ user }: { user: UserState }) => {
+const StatsView = ({ user, setUser }: { user: UserState; setUser: (u: UserState) => void }) => {
   // --- Derived Stats Calculations ---
   
   // Basic aggregates
@@ -688,6 +689,24 @@ const StatsView = ({ user }: { user: UserState }) => {
     }));
   }, [user.history]);
 
+  // BMI Calculation
+  const bmi = useMemo(() => {
+    if (user.weight > 0 && user.height > 0) {
+      const heightInMeters = user.height / 100;
+      return (user.weight / (heightInMeters * heightInMeters)).toFixed(1);
+    }
+    return null;
+  }, [user.weight, user.height]);
+
+  const getBmiStatus = (val: number) => {
+    if (val < 18.5) return { label: "Bajo Peso", color: "text-blue-500", bg: "bg-blue-500" };
+    if (val < 25) return { label: "Saludable", color: "text-green-500", bg: "bg-green-500" };
+    if (val < 30) return { label: "Sobrepeso", color: "text-yellow-500", bg: "bg-yellow-500" };
+    return { label: "Obesidad", color: "text-red-500", bg: "bg-red-500" };
+  };
+
+  const bmiStatus = bmi ? getBmiStatus(parseFloat(bmi)) : null;
+
   const StatCard = ({ icon: Icon, title, value, sub, colorClass }: any) => (
     <div className="glass-card p-5 rounded-2xl flex flex-col justify-between hover:scale-[1.02] transition-transform">
       <div className="flex justify-between items-start mb-2">
@@ -710,6 +729,92 @@ const StatsView = ({ user }: { user: UserState }) => {
         <div className="text-xs font-bold text-slate-400 bg-slate-200 dark:bg-slate-800 px-3 py-1 rounded-full">
           Histórico Global
         </div>
+      </div>
+      
+      {/* Biometrics Input Section */}
+      <div className="glass-card p-6 rounded-2xl relative overflow-hidden">
+        <div className="flex items-center gap-2 mb-4 text-slate-500 dark:text-slate-400">
+           <Calculator className="w-5 h-5" />
+           <h3 className="font-bold text-sm uppercase tracking-wider">Datos Corporales</h3>
+        </div>
+
+        <div className="grid grid-cols-3 gap-4 mb-4">
+           {/* Weight Input */}
+           <div className="space-y-1">
+             <label className="text-[10px] uppercase font-bold text-slate-400 ml-1">Peso (kg)</label>
+             <div className="relative">
+               <Scale className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+               <input 
+                 type="number" 
+                 value={user.weight || ''}
+                 onChange={(e) => setUser({...user, weight: parseFloat(e.target.value) || 0})}
+                 placeholder="0"
+                 className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold focus:border-primary-500 outline-none transition-colors"
+               />
+             </div>
+           </div>
+
+           {/* Height Input */}
+           <div className="space-y-1">
+             <label className="text-[10px] uppercase font-bold text-slate-400 ml-1">Altura (cm)</label>
+             <div className="relative">
+               <Ruler className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+               <input 
+                 type="number" 
+                 value={user.height || ''}
+                 onChange={(e) => setUser({...user, height: parseFloat(e.target.value) || 0})}
+                 placeholder="0"
+                 className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold focus:border-primary-500 outline-none transition-colors"
+               />
+             </div>
+           </div>
+
+            {/* Age Input */}
+            <div className="space-y-1">
+             <label className="text-[10px] uppercase font-bold text-slate-400 ml-1">Edad</label>
+             <div className="relative">
+               <CalendarDays className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+               <input 
+                 type="number" 
+                 value={user.age || ''}
+                 onChange={(e) => setUser({...user, age: parseFloat(e.target.value) || 0})}
+                 placeholder="0"
+                 className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold focus:border-primary-500 outline-none transition-colors"
+               />
+             </div>
+           </div>
+        </div>
+
+        {/* BMI Visualization */}
+        {bmi && bmiStatus && (
+           <div className="bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-100 dark:border-slate-700/50 flex items-center justify-between">
+              <div>
+                 <div className="text-[10px] text-slate-400 uppercase font-bold">IMC Estimado</div>
+                 <div className="text-xl font-black text-slate-800 dark:text-white flex items-center gap-2">
+                    {bmi}
+                    <span className={`text-xs px-2 py-0.5 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 ${bmiStatus.color}`}>
+                       {bmiStatus.label}
+                    </span>
+                 </div>
+              </div>
+              
+              {/* Visual Gauge */}
+              <div className="flex gap-1">
+                 {[1,2,3,4].map(i => {
+                    let active = false;
+                    let color = "bg-slate-200 dark:bg-slate-700";
+                    if (bmiStatus.label === "Bajo Peso" && i === 1) { active = true; color = "bg-blue-500"; }
+                    if (bmiStatus.label === "Saludable" && i === 2) { active = true; color = "bg-green-500"; }
+                    if (bmiStatus.label === "Sobrepeso" && i === 3) { active = true; color = "bg-yellow-500"; }
+                    if (bmiStatus.label === "Obesidad" && i === 4) { active = true; color = "bg-red-500"; }
+                    
+                    return (
+                       <div key={i} className={`w-3 h-8 rounded-full ${color} ${active ? 'scale-110 shadow-lg' : 'opacity-40'} transition-all`}></div>
+                    )
+                 })}
+              </div>
+           </div>
+        )}
       </div>
       
       {/* Grid of Stats */}
@@ -1539,7 +1644,7 @@ const App = () => {
              />
            )}
            {view === 'achievements' && <AchievementsView user={user} />}
-           {view === 'stats' && <StatsView user={user} />}
+           {view === 'stats' && <StatsView user={user} setUser={updateUser} />}
            {view === 'profile' && (
              <ProfileView 
                user={user} 

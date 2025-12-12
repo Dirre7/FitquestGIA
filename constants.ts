@@ -11,6 +11,9 @@ export const INITIAL_USER_STATE: UserState = {
   totalDurationMinutes: 0,
   achievements: [],
   history: [],
+  weight: 0,
+  height: 0,
+  age: 0,
   activeProgram: null,
   completedProgramIds: [],
   settings: {
@@ -273,7 +276,7 @@ const gymBegDayA: ExerciseTemplate[] = [
 
 const gymBegDayB: ExerciseTemplate[] = [
   createExercise("Goblet Squat (Mancuerna)", 3, "10-12", 60, "Sujeta una mancuerna pegada al pecho. Haz sentadillas manteniendo el torso muy vertical. Codos por dentro de rodillas."),
-  createExercise("Press Militar Sentado (Mancuernas)", 3, "10", 60, "Siéntate recto. Sube las mancuernas desde los hombros hasta casi tocarse arriba. Controla la bajada."),
+  createExercise("Press Militar Sentado (Mancuernas)", 3, "10", 60, "Siéntate recto. Sube las mancuernas desde los hombros hasta casi tocarse arriba. Controla el retorno."),
   createExercise("Remo en Máquina", 3, "12", 60, "Apoya el pecho en el pad. Tira de los agarres hacia atrás apretando la espalda."),
   createExercise("Plancha", 3, "30 seg", 45, "Codos bajo hombros. Cuerpo recto como una tabla. Aguanta la posición."),
 ];
