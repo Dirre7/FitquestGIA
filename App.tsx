@@ -34,6 +34,7 @@ const ImageWithFallback = ({ src, alt, className, fallbackText }: { src: string,
   const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
+    // URL directa, ya que estamos usando espejos de Pinterest fiables
     setImgSrc(src);
     setHasError(false);
     setIsLoading(true);

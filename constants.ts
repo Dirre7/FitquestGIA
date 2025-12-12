@@ -45,41 +45,41 @@ export const ACHIEVEMENTS: Achievement[] = [
    { id: 'kg100k', name: "Ballena Azul", description: "Levanta 100,000kg en total.", icon: "🐋", unlocked: false, condition: (u) => u.totalWeightLifted >= 100000 },
 ];
 
-// --- LIBRERÍA DE GIFS ILUSTRATIVOS (Fuente: Pinterest CDN - Alta disponibilidad) ---
+// --- LIBRERÍA DE GIFS ILUSTRATIVOS (Enlaces Directos de Pinterest - Estilo Vector) ---
 const GIF_LIBRARY: Record<string, string> = {
   // --- CARDIO & CALENTAMIENTO ---
-  "Jumping Jacks": "https://i.pinimg.com/originals/e8/63/33/e8633367123d57f5c78663d274e1d2c6.gif",
+  "Jumping Jacks": "https://i.pinimg.com/originals/9c/d0/c3/9cd0c39279b94727546387d33703c53d.gif",
   "Mountain Climbers": "https://i.pinimg.com/originals/18/27/be/1827be178c019b1dc6f8a8d8b4a7b748.gif",
-  "Cardio Suave": "https://i.pinimg.com/originals/81/25/30/81253073733230c149d53f65e49527df.gif",
-  "Burpees (sin salto)": "https://i.pinimg.com/originals/d4/06/18/d406180630b5853f58a3627d354d241d.gif",
-  "Burpees": "https://i.pinimg.com/originals/24/27/e6/2427e6564614c27a92fb9c4d96a60341.gif",
+  "Cardio Suave": "https://i.pinimg.com/originals/f4/b0/f3/f4b0f3093fcadd64968e4c46d1767b50.gif", // Generic active
+  "Burpees (sin salto)": "https://i.pinimg.com/originals/17/52/64/175264379963e52292359be61853d9a6.gif",
+  "Burpees": "https://i.pinimg.com/originals/17/52/64/175264379963e52292359be61853d9a6.gif",
 
   // --- PIERNAS (SQUAT PATTERN) ---
-  "Sentadillas al aire": "https://i.pinimg.com/originals/cf/d6/33/cfd633391d4e0220c382377a00f1469e.gif",
-  "Sentadilla Isométrica": "https://i.pinimg.com/originals/b5/1d/72/b51d72477341e98d97746419741f237f.gif", // Wall Sit
-  "Sentadilla con Barra": "https://i.pinimg.com/originals/60/c6/12/60c6126b48439499709d1877f078d494.gif",
-  "Sentadilla": "https://i.pinimg.com/originals/60/c6/12/60c6126b48439499709d1877f078d494.gif",
-  "Goblet Squat (Mancuerna)": "https://i.pinimg.com/originals/b3/b2/e0/b3b2e04313df3133cb6d5673d327885e.gif",
-  "Sentadilla Low Bar": "https://i.pinimg.com/originals/60/c6/12/60c6126b48439499709d1877f078d494.gif",
-  "Sentadilla Frontal": "https://i.pinimg.com/originals/44/2c/6a/442c6a0c0b8f0412e434f40d89243761.gif",
+  "Sentadillas al aire": "https://i.pinimg.com/originals/18/1c/65/181c65790c377d48332a67bc450090be.gif", // Bodyweight Squat
+  "Sentadilla Isométrica": "https://i.pinimg.com/originals/8c/54/22/8c54227f7a934b999d3d3b76233ba05e.gif", // Wall Sit
+  "Sentadilla con Barra": "https://i.pinimg.com/originals/31/58/6a/31586a63273e925d436d33a5932594df.gif",
+  "Sentadilla": "https://i.pinimg.com/originals/31/58/6a/31586a63273e925d436d33a5932594df.gif",
+  "Goblet Squat (Mancuerna)": "https://i.pinimg.com/originals/24/7c/4f/247c4f451f1638c47f9f31835626ae2b.gif", // Placeholder/Generic Squat pattern
+  "Sentadilla Low Bar": "https://i.pinimg.com/originals/31/58/6a/31586a63273e925d436d33a5932594df.gif",
+  "Sentadilla Frontal": "https://i.pinimg.com/originals/31/58/6a/31586a63273e925d436d33a5932594df.gif", // Using barbell squat visual
   "Prensa de Piernas": "https://i.pinimg.com/originals/90/a1/d2/90a1d28362d294025164d1808620df94.gif",
   
   // --- PIERNAS (LUNGE/SINGLE LEG) ---
-  "Zancadas Alternas": "https://i.pinimg.com/originals/22/e1/9b/22e19b882310b8316c02133917812908.gif",
+  "Zancadas Alternas": "https://i.pinimg.com/originals/a0/4e/11/a04e1169622d0b57100b957688223d49.gif",
   "Zancadas Búlgaras": "https://i.pinimg.com/originals/6f/a6/66/6fa66687981504104c35e3b62ae51921.gif",
   "Sentadilla Búlgara": "https://i.pinimg.com/originals/6f/a6/66/6fa66687981504104c35e3b62ae51921.gif",
   "Zancadas con Salto": "https://i.pinimg.com/originals/0f/50/f0/0f50f061e8605202678c13904533037c.gif",
-  "Zancadas con Barra": "https://i.pinimg.com/originals/22/e1/9b/22e19b882310b8316c02133917812908.gif",
+  "Zancadas con Barra": "https://i.pinimg.com/originals/a0/4e/11/a04e1169622d0b57100b957688223d49.gif",
   
   // --- PIERNAS (HINGE/HAMSTRINGS/GLUTES) ---
-  "Puente de Glúteo": "https://i.pinimg.com/originals/47/43/3e/47433ea339189196775b8a514d2a233b.gif",
-  "Puente Glúteo a 1 pierna": "https://i.pinimg.com/originals/8c/19/a6/8c19a6b8f522777174668cb778550cb5.gif",
-  "Peso Muerto Rumano": "https://i.pinimg.com/originals/65/c0/86/65c086036720e1d0f55d31a54c9c10f8.gif",
-  "Peso Muerto": "https://i.pinimg.com/originals/6c/31/ea/6c31eaf25fbb3d2b27a8a91341c88c7a.gif",
-  "Peso Muerto Rumano (Mancuernas)": "https://i.pinimg.com/originals/0f/6c/35/0f6c35c24e6459392e2764b4b2401f81.gif",
-  "Peso Muerto Convencional": "https://i.pinimg.com/originals/6c/31/ea/6c31eaf25fbb3d2b27a8a91341c88c7a.gif",
-  "Peso Muerto Déficit": "https://i.pinimg.com/originals/6c/31/ea/6c31eaf25fbb3d2b27a8a91341c88c7a.gif",
-  "Hip Thrust Pesado": "https://i.pinimg.com/originals/f5/61/52/f56152ec57321d812267dc2b376d8ba9.gif",
+  "Puente de Glúteo": "https://i.pinimg.com/originals/82/3d/74/823d74c0df2033488730873a248a3900.gif",
+  "Puente Glúteo a 1 pierna": "https://i.pinimg.com/originals/82/3d/74/823d74c0df2033488730873a248a3900.gif", // Single leg var
+  "Peso Muerto Rumano": "https://i.pinimg.com/originals/27/9d/21/279d211029c36209b19e992923bc6043.gif",
+  "Peso Muerto": "https://i.pinimg.com/originals/27/9d/21/279d211029c36209b19e992923bc6043.gif",
+  "Peso Muerto Rumano (Mancuernas)": "https://i.pinimg.com/originals/27/9d/21/279d211029c36209b19e992923bc6043.gif",
+  "Peso Muerto Convencional": "https://i.pinimg.com/originals/27/9d/21/279d211029c36209b19e992923bc6043.gif",
+  "Peso Muerto Déficit": "https://i.pinimg.com/originals/27/9d/21/279d211029c36209b19e992923bc6043.gif",
+  "Hip Thrust Pesado": "https://i.pinimg.com/originals/82/3d/74/823d74c0df2033488730873a248a3900.gif",
   "Curl Femoral": "https://i.pinimg.com/originals/23/e8/62/23e86207038e1a106c642646399088ba.gif",
   "Curl Femoral Tumbado": "https://i.pinimg.com/originals/23/e8/62/23e86207038e1a106c642646399088ba.gif",
   
@@ -90,64 +90,64 @@ const GIF_LIBRARY: Record<string, string> = {
   "Elevación Gemelo 1 pierna": "https://i.pinimg.com/originals/24/7c/4f/247c4f451f1638c47f9f31835626ae2b.gif",
 
   // --- EMPUJE (PECHO/HOMBROS/TRICEPS) ---
-  "Flexiones (o rodillas)": "https://i.pinimg.com/originals/ff/15/3c/ff153c3e80931235b2e3c03164a06789.gif",
-  "Flexiones Diamante (o cerradas)": "https://i.pinimg.com/originals/d2/88/4a/d2884a869752b02381e4b3014631252d.gif",
-  "Flexiones Explosivas": "https://i.pinimg.com/originals/18/d0/26/18d026330084478d10b8003923c72b2c.gif",
+  "Flexiones (o rodillas)": "https://i.pinimg.com/originals/3f/b3/66/3fb366a0bc9a96e952672373007997ca.gif",
+  "Flexiones Diamante (o cerradas)": "https://i.pinimg.com/originals/3f/b3/66/3fb366a0bc9a96e952672373007997ca.gif",
+  "Flexiones Explosivas": "https://i.pinimg.com/originals/3f/b3/66/3fb366a0bc9a96e952672373007997ca.gif", 
   "Flexiones declinadas": "https://i.pinimg.com/originals/a0/0a/63/a00a631f49646b97669d0d38b555819e.gif",
   
-  "Press de Banca": "https://i.pinimg.com/originals/5b/c2/f0/5bc2f00a5833481231be4d852a3a0c0a.gif",
+  "Press de Banca": "https://i.pinimg.com/originals/03/49/74/034974249a43a0492823a07ac02e3b2e.gif",
   "Press Banca Inclinado": "https://i.pinimg.com/originals/f3/ae/92/f3ae920b66311b5186b5b5c98d67566d.gif",
-  "Press Banca Competición": "https://i.pinimg.com/originals/5b/c2/f0/5bc2f00a5833481231be4d852a3a0c0a.gif",
-  "Press Banca Agarre Estrecho": "https://i.pinimg.com/originals/5b/c2/f0/5bc2f00a5833481231be4d852a3a0c0a.gif",
+  "Press Banca Competición": "https://i.pinimg.com/originals/03/49/74/034974249a43a0492823a07ac02e3b2e.gif",
+  "Press Banca Agarre Estrecho": "https://i.pinimg.com/originals/03/49/74/034974249a43a0492823a07ac02e3b2e.gif",
   "Press de Pecho en Máquina": "https://i.pinimg.com/originals/82/38/c4/8238c437340d8628043657b98d363f03.gif",
   "Press Inclinado Mancuernas": "https://i.pinimg.com/originals/8a/0a/1c/8a0a1c7784f186060c1d100913c32918.gif",
   
   "Fondos en silla": "https://i.pinimg.com/originals/f4/04/b8/f404b8686d63e9089025170d1d6a6665.gif",
-  "Fondos Lastrados": "https://i.pinimg.com/originals/2e/ef/0e/2eef0eb5006b5278dfc9f1a0293126be.gif",
+  "Fondos Lastrados": "https://i.pinimg.com/originals/2e/ef/0e/2eef0eb5006b5278dfc9f1a0293126be.gif", 
   "Fondos en Máquina o Banco": "https://i.pinimg.com/originals/f4/04/b8/f404b8686d63e9089025170d1d6a6665.gif",
   "Fondos en Paralelas (o Sillas)": "https://i.pinimg.com/originals/2e/ef/0e/2eef0eb5006b5278dfc9f1a0293126be.gif",
   
-  "Press Militar Mancuernas": "https://i.pinimg.com/originals/fa/73/0d/fa730d1d7826d9c6e39552b01438914b.gif",
+  "Press Militar Mancuernas": "https://i.pinimg.com/originals/39/10/25/3910252677d27e997e3fc22790938484.gif",
   "Press Militar": "https://i.pinimg.com/originals/fa/73/0d/fa730d1d7826d9c6e39552b01438914b.gif",
-  "Press Militar Sentado (Mancuernas)": "https://i.pinimg.com/originals/8a/92/75/8a9275086e33e4c45b721869f20c159c.gif",
+  "Press Militar Sentado (Mancuernas)": "https://i.pinimg.com/originals/39/10/25/3910252677d27e997e3fc22790938484.gif",
   "Press Militar Estricto": "https://i.pinimg.com/originals/fa/73/0d/fa730d1d7826d9c6e39552b01438914b.gif",
-  "Pino contra pared (Hold)": "https://i.pinimg.com/originals/8a/92/75/8a9275086e33e4c45b721869f20c159c.gif",
+  "Pino contra pared (Hold)": "https://i.pinimg.com/originals/39/10/25/3910252677d27e997e3fc22790938484.gif", 
   
   "Aperturas Mancuernas": "https://i.pinimg.com/originals/e5/23/0f/e5230f37902d184088a70c804f553f17.gif",
-  "Elevaciones Laterales": "https://i.pinimg.com/originals/e8/51/d0/e851d02e3b231163273e5d36e2f17042.gif",
-  "Extensión de Tríceps Polea": "https://i.pinimg.com/originals/93/29/73/9329739077c444f9c66ec963134372e9.gif",
-  "Extensión Tríceps": "https://i.pinimg.com/originals/93/29/73/9329739077c444f9c66ec963134372e9.gif",
+  "Elevaciones Laterales": "https://i.pinimg.com/originals/8c/52/fd/8c52fd64d3d758d4d732ba06d4e8b39b.gif",
+  "Extensión de Tríceps Polea": "https://i.pinimg.com/originals/df/06/f0/df06f0237bf363574d7dfc920bd7d526.gif",
+  "Extensión Tríceps": "https://i.pinimg.com/originals/df/06/f0/df06f0237bf363574d7dfc920bd7d526.gif",
 
   // --- TRACCIÓN (ESPALDA/BICEPS) ---
-  "Remo con mochila/agua": "https://i.pinimg.com/originals/1d/13/2a/1d132ac6cb0a463a55855734563a9483.gif", 
-  "Remo con Barra": "https://i.pinimg.com/originals/0f/08/94/0f089403b9b4661726a45778a48b594b.gif",
+  "Remo con mochila/agua": "https://i.pinimg.com/originals/f3/79/b9/f379b9409b533e4987dc344600d43a6d.gif", 
+  "Remo con Barra": "https://i.pinimg.com/originals/f3/79/b9/f379b9409b533e4987dc344600d43a6d.gif",
   "Remo en Máquina": "https://i.pinimg.com/originals/a0/62/16/a0621681a54728f3d13215266cb2264a.gif",
   "Remo Gironda": "https://i.pinimg.com/originals/a0/62/16/a0621681a54728f3d13215266cb2264a.gif",
-  "Remo Pendlay": "https://i.pinimg.com/originals/0f/08/94/0f089403b9b4661726a45778a48b594b.gif",
-  "Remo puerta con toalla": "https://i.pinimg.com/originals/a0/62/16/a0621681a54728f3d13215266cb2264a.gif",
+  "Remo Pendlay": "https://i.pinimg.com/originals/f3/79/b9/f379b9409b533e4987dc344600d43a6d.gif",
+  "Remo puerta con toalla": "https://i.pinimg.com/originals/a0/62/16/a0621681a54728f3d13215266cb2264a.gif", 
 
-  "Dominadas": "https://i.pinimg.com/originals/f3/9d/1f/f39d1f3e098807d0f9836f6d0a7c4f69.gif",
-  "Dominadas (o Remo invertido mesa)": "https://i.pinimg.com/originals/f3/9d/1f/f39d1f3e098807d0f9836f6d0a7c4f69.gif",
-  "Dominadas Lastradas": "https://i.pinimg.com/originals/f3/9d/1f/f39d1f3e098807d0f9836f6d0a7c4f69.gif",
-  "Chin ups": "https://i.pinimg.com/originals/85/3e/26/853e26b13564c74f26034177263b8214.gif",
+  "Dominadas": "https://i.pinimg.com/originals/a5/d6/39/a5d639b7dfdf8309fc3df8992d99742f.gif",
+  "Dominadas (o Remo invertido mesa)": "https://i.pinimg.com/originals/a5/d6/39/a5d639b7dfdf8309fc3df8992d99742f.gif",
+  "Dominadas Lastradas": "https://i.pinimg.com/originals/a5/d6/39/a5d639b7dfdf8309fc3df8992d99742f.gif",
+  "Chin ups": "https://i.pinimg.com/originals/a5/d6/39/a5d639b7dfdf8309fc3df8992d99742f.gif",
   "Jalón al Pecho": "https://i.pinimg.com/originals/11/44/14/1144143a5342a8489849547d21c431df.gif",
 
-  "Face Pull": "https://i.pinimg.com/originals/a0/62/16/a0621681a54728f3d13215266cb2264a.gif",
+  "Face Pull": "https://i.pinimg.com/originals/a0/62/16/a0621681a54728f3d13215266cb2264a.gif", 
 
-  "Curl de Bíceps Barra": "https://i.pinimg.com/originals/19/33/2e/19332ea7000d2350849319e728468b4c.gif",
-  "Curl Barra Z": "https://i.pinimg.com/originals/19/33/2e/19332ea7000d2350849319e728468b4c.gif",
-  "Curl Martillo": "https://i.pinimg.com/originals/19/33/2e/19332ea7000d2350849319e728468b4c.gif",
-  "Curl de Bíceps Máquina": "https://i.pinimg.com/originals/19/33/2e/19332ea7000d2350849319e728468b4c.gif", 
+  "Curl de Bíceps Barra": "https://i.pinimg.com/originals/d4/73/46/d47346618e7b3da2774900a0b9a9c299.gif",
+  "Curl Barra Z": "https://i.pinimg.com/originals/d4/73/46/d47346618e7b3da2774900a0b9a9c299.gif",
+  "Curl Martillo": "https://i.pinimg.com/originals/d4/73/46/d47346618e7b3da2774900a0b9a9c299.gif", // Hammer curl visual
+  "Curl de Bíceps Máquina": "https://i.pinimg.com/originals/d4/73/46/d47346618e7b3da2774900a0b9a9c299.gif", 
 
   // --- CORE & VARIOS ---
-  "Plancha Abdominal": "https://i.pinimg.com/originals/39/3a/0b/393a0b59c402b80145c26b911760c78a.gif",
-  "Plancha": "https://i.pinimg.com/originals/39/3a/0b/393a0b59c402b80145c26b911760c78a.gif",
-  "Plancha con lastre": "https://i.pinimg.com/originals/39/3a/0b/393a0b59c402b80145c26b911760c78a.gif",
-  "Superman": "https://i.pinimg.com/originals/30/a2/12/30a212264c399b17325608b63e803f26.gif",
-  "Superman Hold": "https://i.pinimg.com/originals/30/a2/12/30a212264c399b17325608b63e803f26.gif",
-  "Crunch Abdominal": "https://i.pinimg.com/originals/f8/f4/04/f8f404434220e8b2b71216694e924a66.gif",
-  "Leg Raises colgado (o suelo)": "https://i.pinimg.com/originals/f8/f4/04/f8f404434220e8b2b71216694e924a66.gif",
-  "L-Sit (o progresión)": "https://i.pinimg.com/originals/39/3a/0b/393a0b59c402b80145c26b911760c78a.gif",
+  "Plancha Abdominal": "https://i.pinimg.com/originals/14/c2/22/14c222bf0997d9bc263e8df31737ed97.gif",
+  "Plancha": "https://i.pinimg.com/originals/14/c2/22/14c222bf0997d9bc263e8df31737ed97.gif",
+  "Plancha con lastre": "https://i.pinimg.com/originals/14/c2/22/14c222bf0997d9bc263e8df31737ed97.gif",
+  "Superman": "https://i.pinimg.com/originals/f4/b0/f3/f4b0f3093fcadd64968e4c46d1767b50.gif", // Core generic
+  "Superman Hold": "https://i.pinimg.com/originals/f4/b0/f3/f4b0f3093fcadd64968e4c46d1767b50.gif",
+  "Crunch Abdominal": "https://i.pinimg.com/originals/f4/b0/f3/f4b0f3093fcadd64968e4c46d1767b50.gif",
+  "Leg Raises colgado (o suelo)": "https://i.pinimg.com/originals/f4/b0/f3/f4b0f3093fcadd64968e4c46d1767b50.gif",
+  "L-Sit (o progresión)": "https://i.pinimg.com/originals/14/c2/22/14c222bf0997d9bc263e8df31737ed97.gif", // Plank visual for static hold
 };
 
 // Función para obtener el GIF correspondiente
@@ -159,7 +159,7 @@ const getExerciseGif = (name: string) => {
   const partialMatch = Object.keys(GIF_LIBRARY).find(key => name.includes(key) || key.includes(name));
   if (partialMatch) return GIF_LIBRARY[partialMatch];
   
-  // 3. Fallback visual limpio con el nombre del ejercicio (si no hay GIF específico)
+  // 3. Fallback visual limpio
   return `https://placehold.co/600x400/f8fafc/64748b?text=${encodeURIComponent(name)}`;
 };
 
