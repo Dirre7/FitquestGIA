@@ -564,7 +564,11 @@ const StatsView = ({ user }: { user: UserState }) => {
   // Calculate from history
   const historyStats = useMemo(() => {
     const logs = user.history || [];
-    const totalMinutes = logs.reduce((acc, log) => acc + log.durationMinutes, 0);
+    // Use explicit total duration if available, else sum from logs (fallback for old users)
+    const totalMinutes = user.totalDurationMinutes !== undefined 
+      ? user.totalDurationMinutes 
+      : logs.reduce((acc, log) => acc + log.durationMinutes, 0);
+    
     const totalXP = logs.reduce((acc, log) => acc + log.xpEarned, 0);
     
     // Safely sum sets/reps (handling legacy data where they might be undefined)
@@ -572,7 +576,7 @@ const StatsView = ({ user }: { user: UserState }) => {
     const totalReps = logs.reduce((acc, log) => acc + (log.totalReps || 0), 0);
     
     return { totalMinutes, totalXP, totalSets, totalReps };
-  }, [user.history]);
+  }, [user.history, user.totalDurationMinutes]);
 
   // Chart Data: Last 10 sessions for cleaner charts
   const historyData = useMemo(() => {
@@ -959,12 +963,17 @@ const ActiveWorkoutView = ({
       return acc + ex.setsLog.reduce((sAcc, set) => sAcc + (set.completed ? set.reps : 0), 0);
     }, 0);
 
+    // IMPROVED TIME CALCULATION: Ensure at least 1 minute is logged if any time passed
+    // Old: Math.floor(timer/60) -> 59s became 0 min
+    // New: Math.max(1, Math.round(timer/60)) -> 30s+ becomes 1 min, <30s becomes 1 min (minimum effort rewarded)
+    const durationMinutes = Math.max(1, Math.round(timer / 60));
+
     finishDay({
       id: Date.now().toString(),
       date: new Date().toISOString(),
       programTitle: program.title,
       dayTitle: dayData.title,
-      durationMinutes: Math.floor(timer / 60),
+      durationMinutes: durationMinutes,
       totalVolume: totalVol,
       totalSets,
       totalReps,
@@ -1321,6 +1330,7 @@ export default function App() {
         ...prev,
         completedWorkouts: prev.completedWorkouts + 1,
         totalWeightLifted: prev.totalWeightLifted + log.totalVolume,
+        totalDurationMinutes: (prev.totalDurationMinutes || 0) + log.durationMinutes, // Explicitly accumulate time
         history: newHistory,
         // Reset active program if done, else increment day and clear log
         activeProgram: isProgramComplete ? null : {

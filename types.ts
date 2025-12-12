@@ -93,6 +93,7 @@ export interface UserState {
   nextLevelXP: number;
   completedWorkouts: number;
   totalWeightLifted: number;
+  totalDurationMinutes: number; // Nuevo: Tiempo total acumulado explícito
   achievements: string[];
   history: WorkoutLog[];
   

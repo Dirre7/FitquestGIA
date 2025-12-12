@@ -8,6 +8,7 @@ export const INITIAL_USER_STATE: UserState = {
   nextLevelXP: 500,
   completedWorkouts: 0,
   totalWeightLifted: 0,
+  totalDurationMinutes: 0,
   achievements: [],
   history: [],
   activeProgram: null,
