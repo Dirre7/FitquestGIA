@@ -3,11 +3,14 @@ import { UserState } from "../types";
 
 // Helper to get advice based on user stats
 export const getAiCoachAdvice = async (user: UserState, query: string): Promise<string> => {
-  if (!process.env.API_KEY) {
-    return "Error: API Key no configurada. Por favor verifica tu configuración.";
+  // Use process.env.API_KEY exclusively as per guidelines
+  const apiKey = process.env.API_KEY;
+
+  if (!apiKey) {
+    return "Error: API Key no configurada. Asegúrate de añadir API_KEY en las variables de entorno.";
   }
 
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const ai = new GoogleGenAI({ apiKey: apiKey });
   
   const systemPrompt = `
     Eres "FitQuest Coach", un entrenador personal experto y motivador en una aplicación gamificada.
