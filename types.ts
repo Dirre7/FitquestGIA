@@ -50,6 +50,7 @@ export interface Program {
   schedule: ProgramDay[]; 
   xpRewardFinish: number; // XP al terminar el programa entero
   xpRewardDay: number; // XP por día completado
+  estimatedKcal: number; // Total Kcal estimated for the whole program
 }
 
 export interface Achievement {
@@ -71,6 +72,7 @@ export interface WorkoutLog {
   totalReps?: number; // Total de repeticiones completadas (opcional para retrocompatibilidad)
   durationMinutes: number;
   xpEarned: number;
+  kcalBurned: number; // New: Calories burned in this session
 }
 
 // Estado de progreso del programa activo
@@ -93,7 +95,8 @@ export interface UserState {
   nextLevelXP: number;
   completedWorkouts: number;
   totalWeightLifted: number;
-  totalDurationMinutes: number; // Nuevo: Tiempo total acumulado explícito
+  totalDurationMinutes: number;
+  totalKcalBurned: number; // New: Total historical calories
   achievements: string[];
   history: WorkoutLog[];
   

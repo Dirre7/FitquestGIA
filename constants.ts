@@ -9,6 +9,7 @@ export const INITIAL_USER_STATE: UserState = {
   completedWorkouts: 0,
   totalWeightLifted: 0,
   totalDurationMinutes: 0,
+  totalKcalBurned: 0,
   achievements: [],
   history: [],
   weight: 0,
@@ -391,6 +392,7 @@ export const PROGRAMS: Program[] = [
     daysPerWeek: 3,
     xpRewardFinish: 1000,
     xpRewardDay: 150,
+    estimatedKcal: 3600, // ~300 per session * 12 sessions
     schedule: buildHomeProgram()
   },
   {
@@ -403,6 +405,7 @@ export const PROGRAMS: Program[] = [
     daysPerWeek: 3,
     xpRewardFinish: 1200,
     xpRewardDay: 160,
+    estimatedKcal: 4200, // ~350 per session * 12 sessions
     schedule: buildGymBegProgram()
   },
   {
@@ -415,6 +418,7 @@ export const PROGRAMS: Program[] = [
     daysPerWeek: 4,
     xpRewardFinish: 3000,
     xpRewardDay: 250,
+    estimatedKcal: 9600, // ~400 per session * 24 sessions
     schedule: buildGymProgram()
   },
   {
@@ -427,6 +431,7 @@ export const PROGRAMS: Program[] = [
     daysPerWeek: 4,
     xpRewardFinish: 3200,
     xpRewardDay: 260,
+    estimatedKcal: 9000, // ~375 per session * 24 sessions
     schedule: buildCaliProgram()
   },
   {
@@ -439,6 +444,7 @@ export const PROGRAMS: Program[] = [
     daysPerWeek: 5,
     xpRewardFinish: 5000,
     xpRewardDay: 350,
+    estimatedKcal: 18000, // ~450 per session * 40 sessions
     schedule: buildAdvProgram()
   },
   {
@@ -451,6 +457,7 @@ export const PROGRAMS: Program[] = [
     daysPerWeek: 4,
     xpRewardFinish: 5500,
     xpRewardDay: 380,
+    estimatedKcal: 16000, // ~500 per session * 32 sessions
     schedule: buildPowerProgram()
   }
 ];

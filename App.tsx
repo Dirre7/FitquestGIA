@@ -590,6 +590,10 @@ const ProgramsView = ({ user, startProgram, continueProgram, abandonProgram }: {
                     <Repeat className="w-4 h-4" />
                     {prog.daysPerWeek} días/sem
                   </div>
+                  <div className="flex items-center gap-1 text-orange-500">
+                    <Flame className="w-4 h-4" />
+                    {prog.estimatedKcal} Kcal Total
+                  </div>
                   <div className="flex items-center gap-1 text-yellow-600 dark:text-yellow-400">
                     <Zap className="w-4 h-4" />
                     +{prog.xpRewardFinish} XP Final
@@ -719,8 +723,12 @@ const StatsView = ({ user, setUser }: { user: UserState; setUser: (u: UserState)
     const totalSets = logs.reduce((acc, log) => acc + (log.totalSets || 0), 0);
     const totalReps = logs.reduce((acc, log) => acc + (log.totalReps || 0), 0);
     
-    return { totalMinutes, totalXP, totalSets, totalReps };
-  }, [user.history, user.totalDurationMinutes]);
+    const totalKcal = user.totalKcalBurned !== undefined
+      ? user.totalKcalBurned
+      : logs.reduce((acc, log) => acc + (log.kcalBurned || 0), 0);
+
+    return { totalMinutes, totalXP, totalSets, totalReps, totalKcal };
+  }, [user.history, user.totalDurationMinutes, user.totalKcalBurned]);
 
   // Chart Data: Last 10 sessions for cleaner charts
   const historyData = useMemo(() => {
@@ -881,6 +889,13 @@ const StatsView = ({ user, setUser }: { user: UserState; setUser: (u: UserState)
           colorClass="bg-green-500 text-green-500"
         />
         <StatCard 
+          icon={Flame} 
+          title="Calorías" 
+          value={historyStats.totalKcal > 1000 ? `${(historyStats.totalKcal/1000).toFixed(1)}k` : historyStats.totalKcal} 
+          sub="Energía quemada"
+          colorClass="bg-red-500 text-red-500"
+        />
+        <StatCard 
           icon={Timer} 
           title="Tiempo" 
           value={historyStats.totalMinutes > 60 ? `${(historyStats.totalMinutes/60).toFixed(1)}h` : `${historyStats.totalMinutes}m`} 
@@ -893,13 +908,6 @@ const StatsView = ({ user, setUser }: { user: UserState; setUser: (u: UserState)
           value={historyStats.totalSets} 
           sub="Completadas"
           colorClass="bg-purple-500 text-purple-500"
-        />
-         <StatCard 
-          icon={Repeat} 
-          title="Repeticiones" 
-          value={historyStats.totalReps > 1000 ? `${(historyStats.totalReps/1000).toFixed(1)}k` : historyStats.totalReps} 
-          sub="Movimientos"
-          colorClass="bg-pink-500 text-pink-500"
         />
          <StatCard 
           icon={Zap} 
@@ -1048,6 +1056,11 @@ const ProfileView = ({
               <div className="text-right">
                 <span className="text-yellow-600 dark:text-yellow-400 font-bold">+{log.xpEarned} XP</span>
                 <div className="text-[10px] text-slate-400">{new Date(log.date).toLocaleDateString()}</div>
+                {log.kcalBurned && (
+                  <div className="text-[10px] text-orange-500 font-bold flex items-center justify-end gap-1 mt-1">
+                    <Flame className="w-3 h-3" /> {log.kcalBurned} Kcal
+                  </div>
+                )}
               </div>
             </div>
           ))
@@ -1269,9 +1282,12 @@ const ActiveWorkoutView: React.FC<{
     }, 0);
 
     // IMPROVED TIME CALCULATION: Ensure at least 1 minute is logged if any time passed
-    // Old: Math.floor(timer/60) -> 59s became 0 min
-    // New: Math.max(1, Math.round(timer/60)) -> 30s+ becomes 1 min, <30s becomes 1 min (minimum effort rewarded)
     const durationMinutes = Math.max(1, Math.round(timer / 60));
+
+    // CALORIE CALCULATION:
+    // Estimate based on the program's total calories divided by total sessions
+    // Fallback logic if needed, but this ensures consistency with the promise.
+    const avgKcalPerSession = Math.round(program.estimatedKcal / program.schedule.length);
 
     finishDay({
       id: Date.now().toString(),
@@ -1282,7 +1298,8 @@ const ActiveWorkoutView: React.FC<{
       totalVolume: totalVol,
       totalSets,
       totalReps,
-      xpEarned: program.xpRewardDay
+      xpEarned: program.xpRewardDay,
+      kcalBurned: avgKcalPerSession
     });
   };
 
@@ -1638,6 +1655,10 @@ const App = () => {
     nextUser.completedWorkouts += 1;
     nextUser.totalWeightLifted += log.totalVolume;
     nextUser.totalDurationMinutes = (nextUser.totalDurationMinutes || 0) + log.durationMinutes;
+    // Update total kcal burnt if log has it
+    if (log.kcalBurned) {
+      nextUser.totalKcalBurned = (nextUser.totalKcalBurned || 0) + log.kcalBurned;
+    }
     nextUser.currentXP += log.xpEarned;
     
     if (nextUser.activeProgram) {
