@@ -816,16 +816,16 @@ const ProfileView = ({
   );
 };
 
-const ActiveWorkoutView = ({ 
+const ActiveWorkoutView: React.FC<{
+  user: UserState;
+  finishDay: (log: WorkoutLog) => void;
+  abortWorkout: () => void;
+  updateProgress: (exercises: ActiveExerciseState[], timer: number, dayIndex: number) => void;
+}> = ({ 
   user,
   finishDay,
   abortWorkout,
   updateProgress
-}: { 
-  user: UserState;
-  finishDay: (log: WorkoutLog) => void;
-  abortWorkout: () => void;
-  updateProgress: (exercises: ActiveExerciseState[], timer: number) => void;
 }) => {
   const activeProgData = user.activeProgram;
   const program = PROGRAMS.find(p => p.id === activeProgData?.programId);
@@ -887,7 +887,8 @@ const ActiveWorkoutView = ({
   useEffect(() => {
     const saveState = () => {
       if (exercisesRef.current.length > 0) {
-        updateProgress(exercisesRef.current, timerRef.current);
+        // Pass currentDayIndex to validate saving in parent
+        updateProgress(exercisesRef.current, timerRef.current, currentDayIndex);
       }
     };
 
@@ -898,7 +899,7 @@ const ActiveWorkoutView = ({
       clearInterval(intervalId);
       saveState();
     };
-  }, [updateProgress]); // updateProgress is stable via useCallback in App
+  }, [updateProgress, currentDayIndex]); // updateProgress is stable via useCallback in App
 
 
   if (!program || !dayData) return (
@@ -941,7 +942,7 @@ const ActiveWorkoutView = ({
 
     setExercises(newExs);
     // Immediate save on interaction
-    updateProgress(newExs, timer);
+    updateProgress(newExs, timer, currentDayIndex);
   };
 
   const tryFinishWorkout = () => {
@@ -1287,9 +1288,12 @@ export default function App() {
     });
   };
 
-  const updateWorkoutProgress = useCallback((exercises: ActiveExerciseState[], timer: number) => {
+  const updateWorkoutProgress = useCallback((exercises: ActiveExerciseState[], timer: number, dayIndex: number) => {
     setUser(prev => {
       if (!prev.activeProgram) return prev;
+      // Guard clause: If the update comes from a previous day (race condition/cleanup), ignore it
+      if (prev.activeProgram.currentDayIndex !== dayIndex) return prev; 
+      
       return {
         ...prev,
         activeProgram: {
@@ -1402,6 +1406,7 @@ export default function App() {
       <main className="max-w-4xl mx-auto px-4 pt-6 pb-24">
         {isWorkoutViewValid ? (
           <ActiveWorkoutView 
+            key={user.activeProgram?.currentDayIndex ?? 'active-workout'} // Force remount on day change
             user={user} 
             finishDay={finishDay} 
             abortWorkout={() => setView('training')}
