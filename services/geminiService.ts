@@ -1,6 +1,14 @@
 import { GoogleGenAI } from "@google/genai";
 import { UserState } from "../types";
 
+// Declaración local para evitar conflictos si @types/node no se carga globalmente en el frontend
+declare const process: {
+  env: {
+    API_KEY?: string;
+    [key: string]: string | undefined;
+  };
+};
+
 // Helper to get advice based on user stats
 export const getAiCoachAdvice = async (user: UserState, query: string): Promise<string> => {
   // Use process.env.API_KEY exclusively as per guidelines
