@@ -4,14 +4,14 @@ import {
   Zap, Dumbbell, Clock, ChevronRight, Sun, Moon, Cloud, X, Star, 
   Maximize2, Medal, Award, Calendar, Repeat, Flame, RefreshCw, Trash2,
   Hash, Timer, TrendingUp, LogOut, Loader2, Sparkles, MessageSquare, Bot,
-  Camera, Image as ImageIcon, Info, Filter, ArrowLeft, Check, Pause, SkipForward
+  Camera, Image as ImageIcon, Info
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { supabase } from './services/supabaseClient';
 import { getAiCoachAdvice } from './services/geminiService';
 import { AuthView } from './components/AuthView';
 import { INITIAL_USER_STATE, PROGRAMS, ACHIEVEMENTS } from './constants';
-import { UserState, Program, ViewState, ActiveExerciseState, WorkoutLog, ActiveProgramProgress, SetLog, Difficulty, LocationType } from './types';
+import { UserState, Program, ViewState, ActiveExerciseState, WorkoutLog, ActiveProgramProgress, SetLog, Difficulty } from './types';
 
 // --- Shared Components ---
 
@@ -421,29 +421,6 @@ const DashboardView = ({ user, setView }: { user: UserState; setView: (v: ViewSt
   );
 };
 
-interface FilterBadgeProps {
-  label: string;
-  active: boolean;
-  onClick: () => void;
-}
-
-const FilterBadge: React.FC<FilterBadgeProps> = ({ 
-  label, 
-  active, 
-  onClick 
-}) => (
-  <button 
-    onClick={onClick}
-    className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all whitespace-nowrap ${
-      active 
-        ? 'bg-primary-500 text-white border-primary-500 shadow-lg shadow-primary-500/20' 
-        : 'bg-white/50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-primary-400'
-    }`}
-  >
-    {label}
-  </button>
-);
-
 const ProgramsView = ({ user, startProgram, continueProgram, abandonProgram }: { 
   user: UserState; 
   startProgram: (p: Program) => void;
@@ -601,6 +578,320 @@ const ProgramsView = ({ user, startProgram, continueProgram, abandonProgram }: {
   );
 };
 
+const AchievementsView = ({ user }: { user: UserState }) => {
+  const unlockedIds = user.achievements || [];
+
+  // Sort: Unlocked first
+  const sortedAchievements = useMemo(() => {
+    return [...ACHIEVEMENTS].sort((a, b) => {
+      const isUnlockedA = unlockedIds.includes(a.id);
+      const isUnlockedB = unlockedIds.includes(b.id);
+      // If A is unlocked and B is not, A goes first (-1)
+      if (isUnlockedA && !isUnlockedB) return -1;
+      // If B is unlocked and A is not, B goes first (1)
+      if (!isUnlockedA && isUnlockedB) return 1;
+      // Keep original order otherwise
+      return 0;
+    });
+  }, [unlockedIds]);
+  
+  return (
+    <div className="space-y-6 pb-28 animate-fade-in">
+      <div className="flex items-center justify-between px-1">
+        <h2 className="text-2xl font-bold">Salón de la Fama</h2>
+        <div className="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 px-3 py-1 rounded-full text-sm font-bold border border-yellow-200 dark:border-yellow-700">
+          {unlockedIds.length} / {ACHIEVEMENTS.length}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+        {sortedAchievements.map(ach => {
+          const isUnlocked = unlockedIds.includes(ach.id);
+          return (
+            <div 
+              key={ach.id} 
+              className={`glass-card p-4 rounded-xl flex flex-col items-center text-center transition-all duration-300 ${
+                isUnlocked 
+                  ? 'border-2 border-yellow-400 bg-yellow-50/50 dark:bg-yellow-900/10 shadow-lg scale-100 opacity-100' 
+                  : 'border-2 border-transparent opacity-50 grayscale scale-95 hover:opacity-70'
+              }`}
+            >
+              <div className="text-4xl mb-3 relative">
+                {ach.icon}
+                {!isUnlocked && <Lock className="w-6 h-6 absolute -bottom-1 -right-1 text-slate-500" />}
+              </div>
+              <h4 className={`font-bold text-sm mb-1 ${isUnlocked ? 'text-slate-800 dark:text-white' : 'text-slate-500'}`}>{ach.name}</h4>
+              <p className="text-[10px] text-slate-500 leading-tight">{ach.description}</p>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+const StatsView = ({ user }: { user: UserState }) => {
+  // --- Derived Stats Calculations ---
+  
+  // Basic aggregates
+  const totalWorkouts = user.completedWorkouts;
+  const totalWeight = user.totalWeightLifted;
+  
+  // Calculate from history
+  const historyStats = useMemo(() => {
+    const logs = user.history || [];
+    // Use explicit total duration if available, else sum from logs (fallback for old users)
+    const totalMinutes = user.totalDurationMinutes !== undefined 
+      ? user.totalDurationMinutes 
+      : logs.reduce((acc, log) => acc + log.durationMinutes, 0);
+    
+    const totalXP = logs.reduce((acc, log) => acc + log.xpEarned, 0);
+    
+    // Safely sum sets/reps (handling legacy data where they might be undefined)
+    const totalSets = logs.reduce((acc, log) => acc + (log.totalSets || 0), 0);
+    const totalReps = logs.reduce((acc, log) => acc + (log.totalReps || 0), 0);
+    
+    return { totalMinutes, totalXP, totalSets, totalReps };
+  }, [user.history, user.totalDurationMinutes]);
+
+  // Chart Data: Last 10 sessions for cleaner charts
+  const historyData = useMemo(() => {
+    const safeHistory = Array.isArray(user.history) ? user.history : [];
+    if (safeHistory.length === 0) return [];
+    
+    // Last 10 sessions reversed to show chronologically left to right
+    return [...safeHistory].slice(0, 10).reverse().map(h => ({
+      date: new Date(h.date).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' }),
+      xp: h.xpEarned,
+      weight: h.totalVolume,
+      min: h.durationMinutes
+    }));
+  }, [user.history]);
+
+  const StatCard = ({ icon: Icon, title, value, sub, colorClass }: any) => (
+    <div className="glass-card p-5 rounded-2xl flex flex-col justify-between hover:scale-[1.02] transition-transform">
+      <div className="flex justify-between items-start mb-2">
+        <div className={`p-2 rounded-lg ${colorClass} bg-opacity-10 text-opacity-100`}>
+          <Icon className={`w-5 h-5 ${colorClass.replace('bg-', 'text-')}`} />
+        </div>
+      </div>
+      <div>
+        <div className="text-2xl font-bold text-slate-800 dark:text-white">{value}</div>
+        <div className="text-xs font-bold text-slate-500 uppercase tracking-wide">{title}</div>
+        {sub && <div className="text-[10px] text-slate-400 mt-1">{sub}</div>}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="space-y-6 pb-28 animate-fade-in">
+      <div className="flex items-center justify-between px-1">
+        <h2 className="text-2xl font-bold">Estadísticas</h2>
+        <div className="text-xs font-bold text-slate-400 bg-slate-200 dark:bg-slate-800 px-3 py-1 rounded-full">
+          Histórico Global
+        </div>
+      </div>
+      
+      {/* Grid of Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <StatCard 
+          icon={Dumbbell} 
+          title="Peso Total" 
+          value={totalWeight > 1000 ? `${(totalWeight/1000).toFixed(1)}t` : `${totalWeight}kg`} 
+          sub="Volumen movido"
+          colorClass="bg-blue-500 text-blue-500"
+        />
+        <StatCard 
+          icon={Activity} 
+          title="Sesiones" 
+          value={totalWorkouts} 
+          sub="Entrenamientos"
+          colorClass="bg-green-500 text-green-500"
+        />
+        <StatCard 
+          icon={Timer} 
+          title="Tiempo" 
+          value={historyStats.totalMinutes > 60 ? `${(historyStats.totalMinutes/60).toFixed(1)}h` : `${historyStats.totalMinutes}m`} 
+          sub="Inv. en salud"
+          colorClass="bg-orange-500 text-orange-500"
+        />
+         <StatCard 
+          icon={Hash} 
+          title="Series" 
+          value={historyStats.totalSets} 
+          sub="Completadas"
+          colorClass="bg-purple-500 text-purple-500"
+        />
+         <StatCard 
+          icon={Repeat} 
+          title="Repeticiones" 
+          value={historyStats.totalReps > 1000 ? `${(historyStats.totalReps/1000).toFixed(1)}k` : historyStats.totalReps} 
+          sub="Movimientos"
+          colorClass="bg-pink-500 text-pink-500"
+        />
+         <StatCard 
+          icon={Zap} 
+          title="XP Total" 
+          value={user.currentXP + (user.level * 500)} // Rough estimate of lifetime XP or use precise if tracked
+          sub="Nivel actual"
+          colorClass="bg-yellow-500 text-yellow-500"
+        />
+      </div>
+
+      {historyData.length === 0 ? (
+          <div className="glass-card p-12 rounded-2xl flex flex-col items-center justify-center text-center opacity-80 border-dashed border-2 border-slate-300 dark:border-slate-700">
+            <BarChart2 className="w-16 h-16 text-slate-300 mb-4" />
+            <h3 className="text-lg font-bold text-slate-500">Sin datos suficientes</h3>
+            <p className="text-slate-400">Completa tu primera misión para ver gráficos detallados.</p>
+          </div>
+      ) : (
+        <div className="space-y-6">
+          {/* Volume Chart */}
+          <div className="glass-card p-6 rounded-2xl">
+            <h3 className="text-sm font-semibold mb-6 text-slate-500 flex items-center">
+              <TrendingUp className="w-4 h-4 mr-2" /> Progreso de Carga (Últimas 10 sesiones)
+            </h3>
+            <div className="h-64 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={historyData}>
+                  <defs>
+                    <linearGradient id="colorVol" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#14b8a6" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#14b8a6" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.1} />
+                  <XAxis dataKey="date" tick={{fontSize: 10}} axisLine={false} tickLine={false} dy={10} />
+                  <YAxis tick={{fontSize: 10}} axisLine={false} tickLine={false} width={30} tickFormatter={(val) => `${(val/1000).toFixed(0)}k`} />
+                  <Tooltip 
+                      contentStyle={{ backgroundColor: user.settings.darkMode ? '#1e293b' : '#fff', borderRadius: '8px', border: 'none' }} 
+                      itemStyle={{ color: '#14b8a6' }}
+                      formatter={(val: number) => [`${val} kg`, "Volumen"]}
+                  />
+                  <Area type="monotone" dataKey="weight" stroke="#14b8a6" strokeWidth={3} fillOpacity={1} fill="url(#colorVol)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+           {/* XP & Time Chart */}
+           <div className="glass-card p-6 rounded-2xl">
+            <h3 className="text-sm font-semibold mb-6 text-slate-500 flex items-center">
+              <Clock className="w-4 h-4 mr-2" /> Tiempo por Sesión (min)
+            </h3>
+            <div className="h-64 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={historyData}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.1} />
+                  <XAxis dataKey="date" tick={{fontSize: 10}} axisLine={false} tickLine={false} dy={10} />
+                  <Tooltip 
+                      contentStyle={{ backgroundColor: user.settings.darkMode ? '#1e293b' : '#fff', borderRadius: '8px', border: 'none' }} 
+                      itemStyle={{ color: '#8b5cf6' }}
+                      formatter={(val: number) => [`${val} min`, "Duración"]}
+                  />
+                  <Bar dataKey="min" fill="#8b5cf6" radius={[4, 4, 0, 0]} barSize={20} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const ProfileView = ({ 
+  user, 
+  setUser, 
+  toggleTheme,
+  signOut
+}: { 
+  user: UserState; 
+  setUser: React.Dispatch<React.SetStateAction<UserState>>;
+  toggleTheme: () => void;
+  signOut: () => void;
+}) => {
+  const [showAvatarModal, setShowAvatarModal] = useState(false);
+
+  return (
+    <div className="space-y-6 pb-28 max-w-2xl mx-auto animate-fade-in">
+      <h2 className="text-2xl font-bold px-1">Perfil</h2>
+      
+      <div className="glass-card p-6 rounded-2xl space-y-6">
+        <div className="flex flex-col items-center relative">
+          <div className="relative group cursor-pointer" onClick={() => setShowAvatarModal(true)}>
+            <div className="w-24 h-24 rounded-full border-4 border-primary-500 mb-4 bg-slate-200 overflow-hidden relative group-hover:brightness-75 transition-all">
+                <ImageWithFallback src={user.avatar} alt="profile" className="w-full h-full object-cover" />
+            </div>
+            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity mb-4">
+              <Camera className="w-8 h-8 text-white drop-shadow-lg" />
+            </div>
+            <div className="absolute -bottom-0 right-0 bg-primary-600 rounded-full p-1.5 border-2 border-white dark:border-slate-800 mb-4">
+               <Camera className="w-3 h-3 text-white" />
+            </div>
+          </div>
+          
+          <input 
+            value={user.name} 
+            onChange={(e) => setUser({...user, name: e.target.value})}
+            className="text-center font-bold text-xl bg-transparent border-b border-transparent hover:border-slate-300 focus:border-primary-500 focus:outline-none transition-colors"
+          />
+          <span className="text-slate-500 text-sm mt-1">Guerrero Nivel {user.level}</span>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <button onClick={toggleTheme} className="p-4 bg-slate-50 dark:bg-slate-700 rounded-xl flex items-center justify-center space-x-2 hover:bg-slate-100 dark:hover:bg-slate-600 transition-colors">
+            {user.settings.darkMode ? <Moon className="w-5 h-5"/> : <Sun className="w-5 h-5"/>}
+            <span className="text-sm font-medium">Tema</span>
+          </button>
+          <button onClick={signOut} className="p-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-xl flex items-center justify-center space-x-2 hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors">
+            <LogOut className="w-5 h-5"/>
+            <span className="text-sm font-medium">Cerrar Sesión</span>
+          </button>
+        </div>
+        
+        <div className="pt-4 border-t border-slate-200 dark:border-slate-700 text-center">
+          <p className="text-xs text-slate-400">Tus datos se guardan en la nube automáticamente.</p>
+        </div>
+      </div>
+
+      <h3 className="text-lg font-bold px-1">Historial de Batallas</h3>
+      <div className="space-y-3">
+        {(user.history || []).length === 0 ? (
+          <div className="text-slate-400 text-center py-8 flex flex-col items-center">
+            <Activity className="w-12 h-12 mb-2 opacity-20" />
+            <p>No hay entrenamientos aún.</p>
+          </div>
+        ) : (
+          (user.history || []).map(log => (
+            <div key={log.id} className="glass-card p-4 rounded-xl flex justify-between items-center transition-transform hover:scale-[1.01]">
+              <div>
+                <h4 className="font-bold text-sm">{log.programTitle}</h4>
+                <div className="text-xs font-bold text-primary-600 dark:text-primary-400 mb-1">{log.dayTitle}</div>
+                <div className="text-xs text-slate-500 flex space-x-3">
+                  <span className="flex items-center"><Clock className="w-3 h-3 mr-1"/> {log.durationMinutes} min</span>
+                  <span className="flex items-center"><Dumbbell className="w-3 h-3 mr-1"/> {log.totalVolume} kg</span>
+                </div>
+              </div>
+              <div className="text-right">
+                <span className="text-yellow-600 dark:text-yellow-400 font-bold">+{log.xpEarned} XP</span>
+                <div className="text-[10px] text-slate-400">{new Date(log.date).toLocaleDateString()}</div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Avatar Modal */}
+      <AvatarSelectionModal 
+        isOpen={showAvatarModal} 
+        onClose={() => setShowAvatarModal(false)}
+        onSelect={(url) => setUser({...user, avatar: url})}
+      />
+    </div>
+  );
+};
+
 const ActiveWorkoutView: React.FC<{
   user: UserState;
   finishDay: (log: WorkoutLog) => void;
@@ -623,9 +914,6 @@ const ActiveWorkoutView: React.FC<{
   const [exercises, setExercises] = useState<ActiveExerciseState[]>([]);
   const [timer, setTimer] = useState(0);
   const [expandedEx, setExpandedEx] = useState<string | null>(null);
-  
-  // Rest Timer State
-  const [restTimer, setRestTimer] = useState<{ remaining: number; total: number } | null>(null);
 
   // Use refs to track latest state for interval saving without re-running effects
   const exercisesRef = useRef(exercises);
@@ -670,20 +958,6 @@ const ActiveWorkoutView: React.FC<{
     }, 1000);
     return () => clearInterval(interval);
   }, []);
-  
-  // Rest Timer Logic
-  useEffect(() => {
-    if (!restTimer || restTimer.remaining <= 0) return;
-    
-    const id = setInterval(() => {
-      setRestTimer(prev => {
-        if (!prev || prev.remaining <= 1) return null;
-        return { ...prev, remaining: prev.remaining - 1 };
-      });
-    }, 1000);
-    
-    return () => clearInterval(id);
-  }, [restTimer]);
 
   // ROBUST AUTO-SAVE: Runs every 10 seconds
   useEffect(() => {
@@ -725,7 +999,6 @@ const ActiveWorkoutView: React.FC<{
   const toggleSetComplete = (exIndex: number, setIndex: number) => {
     const newExs = [...exercises];
     const currentSet = newExs[exIndex].setsLog[setIndex];
-    const ex = newExs[exIndex];
     
     // Validar input básico
     if (!currentSet.completed && (currentSet.reps === 0)) {
@@ -736,35 +1009,17 @@ const ActiveWorkoutView: React.FC<{
     currentSet.completed = !currentSet.completed;
     
     // Check if exercise is fully complete
-    ex.isFullyCompleted = ex.setsLog.every(s => s.completed);
+    newExs[exIndex].isFullyCompleted = newExs[exIndex].setsLog.every(s => s.completed);
     
     // Auto-expand next exercise if complete
-    if (ex.isFullyCompleted && exIndex < newExs.length - 1 && currentSet.completed) {
+    if (newExs[exIndex].isFullyCompleted && exIndex < newExs.length - 1 && currentSet.completed) {
       setExpandedEx(newExs[exIndex + 1].id);
-    }
-
-    // --- REST TIMER LOGIC ---
-    if (currentSet.completed) {
-      // Logic: Start rest if it's NOT the last set of the exercise
-      // Also ensure restSeconds is defined, otherwise default to 60s
-      const isLastSet = setIndex === ex.setsLog.length - 1;
-      
-      if (!isLastSet) {
-        const restTime = ex.restSeconds > 0 ? ex.restSeconds : 60;
-        setRestTimer({ remaining: restTime, total: restTime });
-      }
-    } else {
-      // If user unchecks the set, maybe we cancel the rest timer?
-      // Optional, but feels cleaner
-      setRestTimer(null);
     }
 
     setExercises(newExs);
     // Immediate save on interaction
     updateProgress(newExs, timer, currentDayIndex);
   };
-
-  const skipRest = () => setRestTimer(null);
 
   const tryFinishWorkout = () => {
     const allComplete = exercises.every(ex => ex.isFullyCompleted);
@@ -810,7 +1065,7 @@ const ActiveWorkoutView: React.FC<{
   };
 
   return (
-    <div className="flex flex-col space-y-4 pb-20 animate-fade-in relative">
+    <div className="flex flex-col space-y-4 pb-20 animate-fade-in">
       {/* Header */}
       <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-4 flex items-center justify-between z-10 border border-slate-100 dark:border-slate-700">
         <div>
@@ -928,51 +1183,6 @@ const ActiveWorkoutView: React.FC<{
         })}
       </div>
 
-      {/* Floating Rest Timer */}
-      {restTimer && (
-        <div className="fixed bottom-24 left-4 right-4 z-50 animate-bounce-in">
-           <div className="liquid-glass dark:bg-slate-900/90 text-white p-4 rounded-2xl flex items-center justify-between border-2 border-primary-500/50 shadow-2xl shadow-primary-500/20 backdrop-blur-xl">
-              <div className="flex items-center gap-4">
-                 <div className="relative w-12 h-12 flex items-center justify-center">
-                    <svg className="w-full h-full transform -rotate-90">
-                      <circle
-                        cx="24"
-                        cy="24"
-                        r="20"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                        fill="transparent"
-                        className="text-slate-700"
-                      />
-                      <circle
-                        cx="24"
-                        cy="24"
-                        r="20"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                        fill="transparent"
-                        strokeDasharray={125}
-                        strokeDashoffset={125 - (125 * restTimer.remaining) / restTimer.total}
-                        className="text-primary-400 transition-all duration-1000 ease-linear"
-                      />
-                    </svg>
-                    <span className="absolute text-xs font-bold">{restTimer.remaining}s</span>
-                 </div>
-                 <div>
-                    <p className="text-xs font-bold text-primary-300 uppercase tracking-widest">Descanso</p>
-                    <p className="text-sm text-slate-300">Recupérate, guerrero...</p>
-                 </div>
-              </div>
-              <button 
-                onClick={skipRest}
-                className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-xl transition-colors font-bold text-sm"
-              >
-                Saltar <SkipForward className="w-4 h-4" />
-              </button>
-           </div>
-        </div>
-      )}
-
       {/* Footer */}
       <div className="p-4 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
         <button 
@@ -983,229 +1193,6 @@ const ActiveWorkoutView: React.FC<{
           TERMINAR ENTRENAMIENTO
         </button>
       </div>
-    </div>
-  );
-};
-
-const AchievementsView = ({ user }: { user: UserState }) => {
-  const unlockedIds = user.achievements || [];
-
-  return (
-    <div className="space-y-6 pb-28 animate-fade-in">
-      <h2 className="text-2xl font-bold px-1">Galería de Trofeos</h2>
-      
-      <div className="grid grid-cols-1 gap-4">
-        {ACHIEVEMENTS.map(ach => {
-          const isUnlocked = unlockedIds.includes(ach.id);
-          return (
-            <div 
-              key={ach.id} 
-              className={`glass-card p-4 rounded-xl flex items-center gap-4 border-2 transition-all ${
-                isUnlocked 
-                  ? 'border-yellow-400 bg-yellow-50/50 dark:bg-yellow-900/10' 
-                  : 'border-transparent opacity-60 grayscale'
-              }`}
-            >
-              <div className={`w-16 h-16 rounded-full flex items-center justify-center text-3xl shadow-inner ${
-                isUnlocked ? 'bg-white dark:bg-slate-800' : 'bg-slate-200 dark:bg-slate-700'
-              }`}>
-                {isUnlocked ? ach.icon : <Lock className="w-6 h-6 text-slate-400" />}
-              </div>
-              
-              <div className="flex-1 min-w-0">
-                <h3 className={`font-bold ${isUnlocked ? 'text-slate-900 dark:text-white' : 'text-slate-500'}`}>
-                  {ach.name}
-                </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400">{ach.description}</p>
-                {isUnlocked && (
-                  <span className="text-[10px] font-bold text-yellow-600 dark:text-yellow-400 uppercase tracking-wider mt-1 block">
-                    ¡Desbloqueado!
-                  </span>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-};
-
-const StatsView = ({ user }: { user: UserState }) => {
-  const history = [...(user.history || [])].reverse(); // Oldest first for charts
-  
-  // Prepare chart data (last 7 workouts or grouped by week - keeping it simple: last 10 workouts volume)
-  const chartData = history.slice(-10).map((log, i) => ({
-    name: new Date(log.date).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit' }),
-    volume: log.totalVolume,
-    duration: log.durationMinutes
-  }));
-
-  return (
-    <div className="space-y-6 pb-28 animate-fade-in">
-      <h2 className="text-2xl font-bold px-1">Estadísticas de Combate</h2>
-
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="glass-card p-5 rounded-2xl flex flex-col items-center justify-center text-center">
-          <Dumbbell className="w-8 h-8 text-blue-500 mb-2" />
-          <span className="text-2xl font-black">{(user.totalWeightLifted / 1000).toFixed(1)}k</span>
-          <span className="text-xs text-slate-500 font-bold uppercase">Kilos Totales</span>
-        </div>
-        <div className="glass-card p-5 rounded-2xl flex flex-col items-center justify-center text-center">
-          <Activity className="w-8 h-8 text-green-500 mb-2" />
-          <span className="text-2xl font-black">{user.completedWorkouts}</span>
-          <span className="text-xs text-slate-500 font-bold uppercase">Sesiones</span>
-        </div>
-        <div className="glass-card p-5 rounded-2xl flex flex-col items-center justify-center text-center">
-          <Clock className="w-8 h-8 text-orange-500 mb-2" />
-          <span className="text-2xl font-black">{Math.floor(user.totalDurationMinutes / 60)}h</span>
-          <span className="text-xs text-slate-500 font-bold uppercase">Tiempo Total</span>
-        </div>
-        <div className="glass-card p-5 rounded-2xl flex flex-col items-center justify-center text-center">
-          <Zap className="w-8 h-8 text-purple-500 mb-2" />
-          <span className="text-2xl font-black">{user.level}</span>
-          <span className="text-xs text-slate-500 font-bold uppercase">Nivel Actual</span>
-        </div>
-      </div>
-
-      {/* Chart */}
-      <div className="glass-card p-6 rounded-2xl">
-        <h3 className="text-sm font-bold text-slate-500 uppercase mb-4">Volumen Reciente (kg)</h3>
-        <div className="h-64 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={chartData}>
-              <defs>
-                <linearGradient id="colorVol" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8}/>
-                  <stop offset="95%" stopColor="#8884d8" stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.1} />
-              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10}} />
-              <YAxis hide />
-              <Tooltip 
-                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-              />
-              <Area type="monotone" dataKey="volume" stroke="#8884d8" fillOpacity={1} fill="url(#colorVol)" strokeWidth={3} />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-      
-      {/* History List */}
-      <div>
-        <h3 className="text-sm font-bold text-slate-500 uppercase mb-4 px-1">Historial Reciente</h3>
-        <div className="space-y-3">
-          {[...history].reverse().slice(0, 5).map(log => (
-            <div key={log.id} className="glass-card p-4 rounded-xl flex justify-between items-center">
-              <div>
-                <h4 className="font-bold text-sm text-slate-800 dark:text-white">{log.dayTitle}</h4>
-                <p className="text-xs text-slate-500">{new Date(log.date).toLocaleDateString()}</p>
-              </div>
-              <div className="text-right">
-                <div className="font-bold text-primary-600">+{log.xpEarned} XP</div>
-                <div className="text-xs text-slate-400">{log.totalVolume} kg</div>
-              </div>
-            </div>
-          ))}
-          {history.length === 0 && (
-             <p className="text-center text-slate-400 text-sm py-4">Aún no hay historial.</p>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const ProfileView = ({ 
-  user, 
-  setUser, 
-  toggleTheme, 
-  signOut 
-}: { 
-  user: UserState; 
-  setUser: React.Dispatch<React.SetStateAction<UserState>>;
-  toggleTheme: () => void;
-  signOut: () => void;
-}) => {
-  const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
-
-  return (
-    <div className="space-y-6 pb-28 animate-fade-in">
-      <h2 className="text-2xl font-bold px-1">Perfil de Guerrero</h2>
-
-      {/* Avatar Card */}
-      <div className="glass-card p-6 rounded-2xl flex flex-col items-center text-center relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-r from-primary-500 to-secondary-500 opacity-20"></div>
-        
-        <div className="relative mt-4 mb-4">
-           <img src={user.avatar} alt="Avatar" className="w-24 h-24 rounded-full border-4 border-white dark:border-slate-800 shadow-xl object-cover bg-slate-200" />
-           <button 
-            onClick={() => setIsAvatarModalOpen(true)}
-            className="absolute bottom-0 right-0 p-2 bg-slate-900 text-white rounded-full shadow-lg hover:scale-110 transition-transform"
-           >
-             <Camera className="w-4 h-4" />
-           </button>
-        </div>
-        
-        <h3 className="text-xl font-black text-slate-900 dark:text-white">{user.name}</h3>
-        <p className="text-primary-600 font-bold mb-6">Nivel {user.level}</p>
-
-        {/* XP Progress */}
-        <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-4 relative overflow-hidden mb-2">
-           <div 
-            className="absolute top-0 left-0 h-full bg-gradient-to-r from-primary-500 to-secondary-500" 
-            style={{ width: `${(user.currentXP / user.nextLevelXP) * 100}%` }}
-           ></div>
-        </div>
-        <div className="w-full flex justify-between text-xs text-slate-500 font-bold uppercase">
-          <span>{user.currentXP} XP</span>
-          <span>{user.nextLevelXP} XP</span>
-        </div>
-      </div>
-
-      {/* Settings List */}
-      <div className="glass-card rounded-2xl overflow-hidden">
-        <div className="p-4 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-             <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg text-indigo-500">
-               {user.settings.darkMode ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
-             </div>
-             <div>
-               <h4 className="font-bold text-sm">Modo Oscuro</h4>
-               <p className="text-xs text-slate-500">Interfaz adaptable</p>
-             </div>
-          </div>
-          <button 
-            onClick={toggleTheme}
-            className={`w-12 h-6 rounded-full transition-colors relative ${user.settings.darkMode ? 'bg-primary-500' : 'bg-slate-300'}`}
-          >
-            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${user.settings.darkMode ? 'left-7' : 'left-1'}`}></div>
-          </button>
-        </div>
-
-        <div className="p-4 flex items-center justify-between cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
-          <div className="flex items-center gap-3">
-             <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg text-red-500">
-               <LogOut className="w-5 h-5" />
-             </div>
-             <div>
-               <h4 className="font-bold text-sm text-red-500">Cerrar Sesión</h4>
-               <p className="text-xs text-slate-500">Volver a la pantalla de acceso</p>
-             </div>
-          </div>
-          <button onClick={signOut} className="text-xs font-bold bg-red-50 dark:bg-red-900/20 text-red-500 px-3 py-1 rounded-lg">
-             Salir
-          </button>
-        </div>
-      </div>
-
-      <AvatarSelectionModal 
-        isOpen={isAvatarModalOpen} 
-        onClose={() => setIsAvatarModalOpen(false)} 
-        onSelect={(url) => setUser(prev => ({ ...prev, avatar: url }))} 
-      />
     </div>
   );
 };
