@@ -427,12 +427,23 @@ const ProgramsView = ({ user, startProgram, continueProgram, abandonProgram }: {
   continueProgram: () => void;
   abandonProgram: () => void;
 }) => {
+  // Sort programs: active one first
+  const sortedPrograms = useMemo(() => {
+    return [...PROGRAMS].sort((a, b) => {
+      const isActiveA = user.activeProgram?.programId === a.id;
+      const isActiveB = user.activeProgram?.programId === b.id;
+      if (isActiveA) return -1;
+      if (isActiveB) return 1;
+      return 0;
+    });
+  }, [user.activeProgram?.programId]);
+
   return (
     <div className="space-y-6 pb-28 animate-fade-in">
       <h2 className="text-2xl font-bold px-1">Programas Disponibles</h2>
       
       <div className="grid grid-cols-1 gap-6">
-        {PROGRAMS.map(prog => {
+        {sortedPrograms.map(prog => {
           const isActive = user.activeProgram?.programId === prog.id;
           const isLocked = user.activeProgram && !isActive; // Lock others if one is active
 
@@ -520,6 +531,20 @@ const ProgramsView = ({ user, startProgram, continueProgram, abandonProgram }: {
 
 const AchievementsView = ({ user }: { user: UserState }) => {
   const unlockedIds = user.achievements || [];
+
+  // Sort: Unlocked first
+  const sortedAchievements = useMemo(() => {
+    return [...ACHIEVEMENTS].sort((a, b) => {
+      const isUnlockedA = unlockedIds.includes(a.id);
+      const isUnlockedB = unlockedIds.includes(b.id);
+      // If A is unlocked and B is not, A goes first (-1)
+      if (isUnlockedA && !isUnlockedB) return -1;
+      // If B is unlocked and A is not, B goes first (1)
+      if (!isUnlockedA && isUnlockedB) return 1;
+      // Keep original order otherwise
+      return 0;
+    });
+  }, [unlockedIds]);
   
   return (
     <div className="space-y-6 pb-28 animate-fade-in">
@@ -531,7 +556,7 @@ const AchievementsView = ({ user }: { user: UserState }) => {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-        {ACHIEVEMENTS.map(ach => {
+        {sortedAchievements.map(ach => {
           const isUnlocked = unlockedIds.includes(ach.id);
           return (
             <div 
