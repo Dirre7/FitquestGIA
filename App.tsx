@@ -827,7 +827,7 @@ const ProfileView = ({
   signOut
 }: { 
   user: UserState; 
-  setUser: React.Dispatch<React.SetStateAction<UserState>>;
+  setUser: (newState: UserState) => void; 
   toggleTheme: () => void;
   signOut: () => void;
 }) => {
