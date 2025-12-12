@@ -238,6 +238,16 @@ const DashboardView = ({ user, setView }: { user: UserState; setView: (v: ViewSt
   const [aiAdvice, setAiAdvice] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
 
+  // Helper para el título del rango
+  const getRankTitle = (level: number) => {
+    if (level >= 50) return "Leyenda Viviente";
+    if (level >= 30) return "Maestro Fitness";
+    if (level >= 20) return "Veterano de Hierro";
+    if (level >= 10) return "Guerrero Élite";
+    if (level >= 5) return "Aventurero";
+    return "Novato";
+  };
+
   const handleConsultAi = async () => {
     setAiLoading(true);
     setAiAdvice(null);
@@ -253,14 +263,69 @@ const DashboardView = ({ user, setView }: { user: UserState; setView: (v: ViewSt
 
   return (
     <div className="space-y-6 pb-28 animate-fade-in">
+      
+      {/* Profile Summary Card - Redesigned */}
+      <div className="relative overflow-hidden rounded-3xl bg-slate-900 text-white shadow-2xl p-6 border border-slate-800 group">
+        {/* Background decorations */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 animate-pulse"></div>
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-secondary-500/10 rounded-full blur-[60px] translate-y-1/2 -translate-x-1/2"></div>
+
+        <div className="relative z-10 flex items-center gap-6">
+          {/* Avatar & Level */}
+          <div className="relative shrink-0">
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-slate-800 shadow-xl overflow-hidden bg-slate-700">
+               <ImageWithFallback src={user.avatar} alt="Avatar" className="w-full h-full object-cover" />
+            </div>
+            
+            {/* Big Level Badge */}
+            <div className="absolute -bottom-2 -right-2 sm:-bottom-3 sm:-right-3 flex flex-col items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-amber-400 via-orange-500 to-amber-600 text-white shadow-lg border-4 border-slate-900 transform rotate-6 hover:rotate-0 transition-transform cursor-pointer group-hover:scale-110 duration-300">
+               <span className="text-[8px] sm:text-[10px] font-bold uppercase leading-none opacity-80 text-amber-100 shadow-black drop-shadow-md">Lvl</span>
+               <span className="text-xl sm:text-2xl font-black leading-none drop-shadow-md">{user.level}</span>
+            </div>
+          </div>
+
+          {/* Info */}
+          <div className="flex-1 min-w-0 pt-2">
+             <div className="flex items-center gap-2 mb-1">
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 border border-slate-700 text-primary-400 uppercase tracking-wider shadow-sm">
+                  {getRankTitle(user.level)}
+                </span>
+             </div>
+             <h3 className="text-2xl sm:text-3xl font-black tracking-tight truncate mb-3 text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-300 drop-shadow-sm">
+               {user.name}
+             </h3>
+
+             {/* XP Bar */}
+             <div className="relative">
+                <div className="flex justify-between text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-wider">
+                   <span>XP {user.currentXP}</span>
+                   <span>{user.nextLevelXP} Meta</span>
+                </div>
+                <div className="h-4 w-full bg-slate-800 rounded-full overflow-hidden border border-slate-700 relative shadow-inner">
+                   {/* Striped background for empty part */}
+                   <div className="absolute inset-0 opacity-10 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.1)_25%,rgba(255,255,255,0.1)_50%,transparent_50%,transparent_75%,rgba(255,255,255,0.1)_75%,rgba(255,255,255,0.1)_100%)] bg-[length:10px_10px]"></div>
+                   
+                   {/* Fill */}
+                   <div 
+                     className="h-full bg-gradient-to-r from-primary-600 to-primary-400 shadow-[0_0_15px_rgba(20,184,166,0.6)] relative transition-all duration-1000 ease-out"
+                     style={{ width: `${Math.min(100, (user.currentXP / user.nextLevelXP) * 100)}%` }}
+                   >
+                      <div className="absolute inset-0 bg-white/20"></div>
+                   </div>
+                </div>
+             </div>
+          </div>
+        </div>
+      </div>
+
       {/* Active Program Banner */}
       {activeProgram && activeProgress ? (
          <div 
           onClick={() => setView('training')}
-          className="relative overflow-hidden rounded-3xl bg-slate-900 text-white shadow-xl shadow-primary-900/20 cursor-pointer group"
+          className="relative overflow-hidden rounded-3xl bg-slate-900 text-white shadow-xl shadow-primary-900/20 cursor-pointer group border border-slate-800"
         >
           {/* Background Gradient & Decoration */}
-          <div className="absolute inset-0 bg-gradient-to-br from-primary-900 to-slate-900 opacity-90 z-0"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-primary-900/80 to-slate-900 opacity-90 z-0"></div>
           <div className="absolute -right-10 -bottom-10 w-48 h-48 bg-primary-500 rounded-full blur-[80px] opacity-30 z-0"></div>
           
           <div className="relative z-10 p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -361,24 +426,6 @@ const DashboardView = ({ user, setView }: { user: UserState; setView: (v: ViewSt
               </button>
             </div>
           )}
-        </div>
-      </div>
-
-      {/* Profile Summary */}
-      <div className="glass-card rounded-2xl p-6 flex items-center gap-4">
-        <div className="relative shrink-0">
-          <img src={user.avatar} alt="Avatar" className="w-16 h-16 rounded-full border-2 border-primary-500 object-cover bg-slate-200" />
-          <div className="absolute -bottom-1 -right-1 bg-primary-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-            Lvl {user.level}
-          </div>
-        </div>
-        <div className="flex-1 min-w-0">
-          <h3 className="font-bold text-lg truncate">{user.name}</h3>
-          <div className="flex justify-between text-xs text-slate-500 mb-1">
-            <span>XP Actual</span>
-            <span>{user.currentXP}/{user.nextLevelXP}</span>
-          </div>
-          <ProgressBar current={user.currentXP} max={user.nextLevelXP} />
         </div>
       </div>
 
