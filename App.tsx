@@ -5,7 +5,7 @@ import {
   Maximize2, Medal, Award, Calendar, Repeat, Flame, RefreshCw, Trash2,
   Hash, Timer, TrendingUp, LogOut, Loader2, Sparkles, MessageSquare, Bot,
   Camera, Image as ImageIcon, Info, Filter, ArrowLeft, Check, Pause, SkipForward, Plus,
-  Scale, Ruler, CalendarDays, Calculator, LayoutGrid
+  Scale, Ruler, CalendarDays, Calculator, LayoutGrid, ChevronLeft, MoreHorizontal, Settings
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { supabase } from './services/supabaseClient';
@@ -536,12 +536,12 @@ const ProgramsView = ({ user, startProgram, continueProgram, abandonProgram }: {
           </p>
           <button 
             onClick={() => startProgram(featuredProgram)}
-            className="w-fit bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-xl font-bold transition-colors shadow-lg shadow-orange-500/30"
+            className="w-fit bg-primary-500 hover:bg-primary-600 text-white px-6 py-3 rounded-xl font-bold transition-colors shadow-lg shadow-primary-500/30"
           >
             Ver entrenamientos
           </button>
           <div className="flex gap-2 mt-4">
-             {[1,2,3,4].map(i => <div key={i} className={`w-2 h-2 rounded-full ${i === 1 ? 'bg-orange-500' : 'bg-slate-600'}`}></div>)}
+             {[1,2,3,4].map(i => <div key={i} className={`w-2 h-2 rounded-full ${i === 1 ? 'bg-primary-500' : 'bg-slate-600'}`}></div>)}
           </div>
         </div>
       </div>
@@ -552,7 +552,7 @@ const ProgramsView = ({ user, startProgram, continueProgram, abandonProgram }: {
            <button 
              key={label}
              className={`px-5 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition-colors border border-transparent
-               ${idx === 0 ? 'bg-slate-800 text-orange-500 border-orange-500/30' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}
+               ${idx === 0 ? 'bg-slate-800 text-primary-500 border-primary-500/30' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}
              `}
            >
              {label}
@@ -578,7 +578,7 @@ const ProgramsView = ({ user, startProgram, continueProgram, abandonProgram }: {
             <div key={difficulty}>
               <div className="flex justify-between items-end mb-4 px-1">
                  <h2 className="text-xl font-bold text-white">{sectionTitle}</h2>
-                 <button className="text-orange-500 text-sm font-bold hover:underline">Ver todos</button>
+                 <button className="text-primary-500 text-sm font-bold hover:underline">Ver todos</button>
               </div>
 
               <div className="grid gap-4">
@@ -596,7 +596,7 @@ const ProgramsView = ({ user, startProgram, continueProgram, abandonProgram }: {
                         else startProgram(prog);
                       }}
                       className={`relative bg-slate-800 rounded-2xl overflow-hidden h-28 flex cursor-pointer transition-transform active:scale-95 group border border-slate-700 hover:border-slate-600
-                        ${isActive ? 'ring-2 ring-orange-500' : ''}
+                        ${isActive ? 'ring-2 ring-primary-500' : ''}
                         ${user.activeProgram && !isActive ? 'opacity-50 grayscale' : ''}
                       `}
                     >
@@ -607,7 +607,7 @@ const ProgramsView = ({ user, startProgram, continueProgram, abandonProgram }: {
                           
                           {isActive && (
                             <div className="mt-2 flex items-center gap-4">
-                                <div className="flex items-center gap-1 text-orange-500 text-xs font-bold">
+                                <div className="flex items-center gap-1 text-primary-500 text-xs font-bold">
                                    <Play className="w-3 h-3 fill-current" /> Continuar
                                 </div>
                                 <button 
@@ -981,99 +981,240 @@ const StatsView = ({ user, setUser }: { user: UserState; setUser: (u: UserState)
   );
 };
 
-const ProfileView = ({ 
-  user, 
-  setUser, 
-  toggleTheme,
-  signOut
-}: { 
+const ProfileView = ({ user, setUser, toggleTheme, signOut }: { 
   user: UserState; 
-  setUser: (newState: UserState) => void; 
+  setUser: (u: UserState) => void;
   toggleTheme: () => void;
   signOut: () => void;
 }) => {
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [newName, setNewName] = useState(user.name);
   const [showAvatarModal, setShowAvatarModal] = useState(false);
 
+  const saveName = () => {
+    setUser({ ...user, name: newName });
+    setIsEditingName(false);
+  };
+
   return (
-    <div className="space-y-6 pb-28 max-w-2xl mx-auto animate-fade-in">
-      <h2 className="text-2xl font-bold px-1">Perfil</h2>
-      
-      <div className="glass-card p-6 rounded-2xl space-y-6">
-        <div className="flex flex-col items-center relative">
-          <div className="relative group cursor-pointer" onClick={() => setShowAvatarModal(true)}>
-            <div className="w-24 h-24 rounded-full border-4 border-primary-500 mb-4 bg-slate-200 overflow-hidden relative group-hover:brightness-75 transition-all">
-                <ImageWithFallback src={user.avatar} alt="profile" className="w-full h-full object-cover" />
-            </div>
-            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity mb-4">
-              <Camera className="w-8 h-8 text-white drop-shadow-lg" />
-            </div>
-            <div className="absolute -bottom-0 right-0 bg-primary-600 rounded-full p-1.5 border-2 border-white dark:border-slate-800 mb-4">
-               <Camera className="w-3 h-3 text-white" />
-            </div>
-          </div>
+    <div className="space-y-6 pb-28 animate-fade-in">
+       <h2 className="text-2xl font-bold px-1">Perfil</h2>
+       
+       {/* Avatar & Name Section */}
+       <div className="glass-card p-6 rounded-2xl flex flex-col items-center text-center relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-r from-primary-500/20 to-secondary-500/20"></div>
           
-          <input 
-            value={user.name} 
-            onChange={(e) => setUser({...user, name: e.target.value})}
-            className="text-center font-bold text-xl bg-transparent border-b border-transparent hover:border-slate-300 focus:border-primary-500 focus:outline-none transition-colors"
-          />
-          <span className="text-slate-500 text-sm mt-1">Guerrero Nivel {user.level}</span>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <button onClick={toggleTheme} className="p-4 bg-slate-50 dark:bg-slate-700 rounded-xl flex items-center justify-center space-x-2 hover:bg-slate-100 dark:hover:bg-slate-600 transition-colors">
-            {user.settings.darkMode ? <Moon className="w-5 h-5"/> : <Sun className="w-5 h-5"/>}
-            <span className="text-sm font-medium">Tema</span>
-          </button>
-          <button onClick={signOut} className="p-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-xl flex items-center justify-center space-x-2 hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors">
-            <LogOut className="w-5 h-5"/>
-            <span className="text-sm font-medium">Cerrar Sesión</span>
-          </button>
-        </div>
-        
-        <div className="pt-4 border-t border-slate-200 dark:border-slate-700 text-center">
-          <p className="text-xs text-slate-400">Tus datos se guardan en la nube automáticamente.</p>
-        </div>
-      </div>
-
-      <h3 className="text-lg font-bold px-1">Historial de Batallas</h3>
-      <div className="space-y-3">
-        {(user.history || []).length === 0 ? (
-          <div className="text-slate-400 text-center py-8 flex flex-col items-center">
-            <Activity className="w-12 h-12 mb-2 opacity-20" />
-            <p>No hay entrenamientos aún.</p>
+          <div className="relative mb-4">
+             <div className="w-28 h-28 rounded-full border-4 border-white dark:border-slate-800 shadow-xl overflow-hidden bg-slate-200">
+               <ImageWithFallback src={user.avatar} alt="Avatar" className="w-full h-full object-cover" />
+             </div>
+             <button 
+               onClick={() => setShowAvatarModal(true)}
+               className="absolute bottom-0 right-0 bg-primary-500 text-white p-2 rounded-full shadow-lg hover:bg-primary-600 transition-colors"
+             >
+                <Camera className="w-4 h-4" />
+             </button>
           </div>
-        ) : (
-          (user.history || []).map(log => (
-            <div key={log.id} className="glass-card p-4 rounded-xl flex justify-between items-center transition-transform hover:scale-[1.01]">
-              <div>
-                <h4 className="font-bold text-sm">{log.programTitle}</h4>
-                <div className="text-xs font-bold text-primary-600 dark:text-primary-400 mb-1">{log.dayTitle}</div>
-                <div className="text-xs text-slate-500 flex space-x-3">
-                  <span className="flex items-center"><Clock className="w-3 h-3 mr-1"/> {log.durationMinutes} min</span>
-                  <span className="flex items-center"><Dumbbell className="w-3 h-3 mr-1"/> {log.totalVolume} kg</span>
-                </div>
-              </div>
-              <div className="text-right">
-                <span className="text-yellow-600 dark:text-yellow-400 font-bold">+{log.xpEarned} XP</span>
-                <div className="text-[10px] text-slate-400">{new Date(log.date).toLocaleDateString()}</div>
-                {log.kcalBurned && (
-                  <div className="text-[10px] text-orange-500 font-bold flex items-center justify-end gap-1 mt-1">
-                    <Flame className="w-3 h-3" /> {log.kcalBurned} Kcal
-                  </div>
-                )}
-              </div>
+
+          {isEditingName ? (
+            <div className="flex gap-2 items-center mb-1">
+               <input 
+                 type="text" 
+                 value={newName} 
+                 onChange={(e) => setNewName(e.target.value)}
+                 className="bg-slate-100 dark:bg-slate-700 px-3 py-1 rounded-lg text-lg font-bold text-center w-full max-w-[200px]"
+                 autoFocus
+               />
+               <button onClick={saveName} className="p-2 bg-green-500 text-white rounded-lg"><Check className="w-4 h-4" /></button>
             </div>
-          ))
-        )}
+          ) : (
+            <h3 className="text-2xl font-black flex items-center gap-2 mb-1">
+               {user.name} 
+               <button onClick={() => setIsEditingName(true)} className="text-slate-400 hover:text-primary-500"><Settings className="w-4 h-4" /></button>
+            </h3>
+          )}
+          
+          <p className="text-sm text-slate-500 font-bold uppercase tracking-wider mb-6">Nivel {user.level} • {user.currentXP} XP</p>
+
+          <div className="grid grid-cols-2 gap-4 w-full">
+             <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl">
+                <div className="text-xs text-slate-500 font-bold uppercase">Entrenamientos</div>
+                <div className="text-xl font-black text-slate-800 dark:text-white">{user.completedWorkouts}</div>
+             </div>
+             <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl">
+                <div className="text-xs text-slate-500 font-bold uppercase">Peso Total</div>
+                <div className="text-xl font-black text-slate-800 dark:text-white">{(user.totalWeightLifted/1000).toFixed(1)}k</div>
+             </div>
+          </div>
+       </div>
+
+       {/* Settings Section */}
+       <div className="space-y-2">
+          <h4 className="text-sm font-bold text-slate-500 px-1 uppercase">Ajustes</h4>
+          
+          <div className="glass-card p-4 rounded-xl flex items-center justify-between">
+             <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-lg ${user.settings.darkMode ? 'bg-slate-700 text-yellow-400' : 'bg-yellow-100 text-yellow-600'}`}>
+                   {user.settings.darkMode ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+                </div>
+                <div>
+                   <div className="font-bold text-sm">Modo Oscuro</div>
+                   <div className="text-xs text-slate-500">Cambiar apariencia</div>
+                </div>
+             </div>
+             <button 
+               onClick={toggleTheme}
+               className={`w-12 h-6 rounded-full p-1 transition-colors ${user.settings.darkMode ? 'bg-primary-500' : 'bg-slate-300'}`}
+             >
+                <div className={`w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${user.settings.darkMode ? 'translate-x-6' : 'translate-x-0'}`}></div>
+             </button>
+          </div>
+
+          <button 
+             onClick={signOut}
+             className="w-full glass-card p-4 rounded-xl flex items-center gap-3 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors"
+          >
+             <div className="p-2 rounded-lg bg-red-100 dark:bg-red-900/30 text-red-500">
+                <LogOut className="w-5 h-5" />
+             </div>
+             <div className="text-left">
+                <div className="font-bold text-sm">Cerrar Sesión</div>
+                <div className="text-xs text-red-400">Salir de tu cuenta</div>
+             </div>
+          </button>
+       </div>
+       
+       <AvatarSelectionModal 
+         isOpen={showAvatarModal} 
+         onClose={() => setShowAvatarModal(false)}
+         onSelect={(url) => setUser({...user, avatar: url})}
+       />
+    </div>
+  );
+};
+
+// --- New Exercise Logger Modal Component (Matches Screenshot 4) ---
+const ExerciseLoggerModal = ({ 
+  exercise, 
+  onSave, 
+  onClose 
+}: { 
+  exercise: ActiveExerciseState, 
+  onSave: (setsLog: SetLog[]) => void, 
+  onClose: () => void 
+}) => {
+  const [localSets, setLocalSets] = useState<SetLog[]>(JSON.parse(JSON.stringify(exercise.setsLog)));
+
+  const handleAddSet = () => {
+    const lastSet = localSets[localSets.length - 1];
+    setLocalSets([...localSets, {
+      setNumber: localSets.length + 1,
+      weight: lastSet ? lastSet.weight : 0,
+      reps: lastSet ? lastSet.reps : 0,
+      completed: false
+    }]);
+  };
+
+  const handleUpdateSet = (index: number, field: 'reps' | 'weight', value: number) => {
+    const newSets = [...localSets];
+    newSets[index] = { ...newSets[index], [field]: value };
+    // Auto-complete if values are entered? Let's leave manual completion for flexibility
+    // But since this is a modal, "Guardar" implies completion. 
+    // In screenshot style, user enters numbers. We assume they did them if they save.
+    // We'll mark them as completed when Saving if they have valid values.
+    setLocalSets(newSets);
+  };
+
+  const handleSave = () => {
+    // Mark sets with data as completed automatically when saving from this modal
+    const processedSets = localSets.map(s => ({
+      ...s,
+      completed: (s.reps > 0 && s.weight >= 0) ? true : s.completed
+    }));
+    onSave(processedSets);
+  };
+
+  return (
+    <div className="fixed inset-0 z-[150] bg-slate-900 text-white flex flex-col animate-fade-in">
+      {/* Header */}
+      <div className="flex justify-between items-center p-4 bg-slate-900 border-b border-slate-800">
+        <button onClick={onClose} className="text-primary-500 font-bold text-lg">Cancelar</button>
+        <h2 className="font-bold text-lg">Configurar Ejercicio</h2>
+        <button onClick={handleSave} className="text-primary-500 font-bold text-lg">Guardar</button>
       </div>
 
-      {/* Avatar Modal */}
-      <AvatarSelectionModal 
-        isOpen={showAvatarModal} 
-        onClose={() => setShowAvatarModal(false)}
-        onSelect={(url) => setUser({...user, avatar: url})}
-      />
+      <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-slate-900">
+        
+        {/* Exercise Info Card */}
+        <div className="flex gap-4 items-center">
+          <div className="w-24 h-24 rounded-xl overflow-hidden bg-white shrink-0">
+             <ImageWithFallback src={exercise.image} alt={exercise.name} className="w-full h-full object-cover" />
+          </div>
+          <div className="flex-1">
+             <h1 className="text-2xl font-bold leading-tight mb-1">{exercise.name}</h1>
+             <div className="text-slate-400 text-sm flex flex-wrap gap-2">
+               <span>Pectorales, Antebrazo, Tríceps</span> {/* Hardcoded for demo/screenshot match, ideally dynamic */}
+             </div>
+          </div>
+          <Info className="text-slate-500 w-6 h-6" />
+        </div>
+
+        {/* Tabs (Visual only for now) */}
+        <div className="flex gap-2">
+           <button className="bg-slate-800 text-white px-4 py-2 rounded-full text-sm font-bold border border-transparent">Reps y carga <ChevronRight className="inline w-3 h-3 ml-1 rotate-90"/></button>
+           <button className="bg-slate-900 text-slate-500 border border-slate-800 px-4 py-2 rounded-full text-sm font-bold flex items-center gap-1"><Timer className="w-3 h-3" /> 01:00</button>
+           <button className="bg-slate-900 text-slate-500 border border-slate-800 px-4 py-2 rounded-full text-sm font-bold">+ Notas</button>
+        </div>
+
+        <div className="bg-primary-500/10 p-2 rounded-lg text-primary-500 text-xs font-bold uppercase tracking-wider mb-2">high load</div>
+
+        {/* Sets List */}
+        <div className="space-y-3">
+           {localSets.map((set, idx) => (
+             <div key={idx} className="bg-slate-800 p-3 rounded-xl flex items-center justify-between">
+                <div className="flex items-center gap-4 flex-1">
+                   <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center font-bold text-slate-300 text-sm">
+                     {set.setNumber}
+                   </div>
+                   
+                   <div className="flex items-center gap-2">
+                      <input 
+                        type="number" 
+                        value={set.reps || ''}
+                        onChange={(e) => handleUpdateSet(idx, 'reps', Number(e.target.value))}
+                        placeholder="0"
+                        className="bg-transparent text-white font-bold text-xl w-12 text-center focus:outline-none border-b border-slate-700 focus:border-primary-500"
+                      />
+                      <span className="text-slate-500 font-bold">reps</span>
+                   </div>
+
+                   <div className="w-px h-8 bg-slate-700 mx-2"></div>
+
+                   <div className="flex items-center gap-2">
+                      <input 
+                        type="number" 
+                        value={set.weight || ''}
+                        onChange={(e) => handleUpdateSet(idx, 'weight', Number(e.target.value))}
+                        placeholder="0"
+                        className="bg-transparent text-white font-bold text-xl w-16 text-center focus:outline-none border-b border-slate-700 focus:border-primary-500"
+                      />
+                      <span className="text-slate-500 font-bold">kg</span>
+                   </div>
+                </div>
+             </div>
+           ))}
+        </div>
+
+        {/* Add Set Button */}
+        <button 
+          onClick={handleAddSet}
+          className="w-full py-4 flex items-center justify-center gap-2 text-primary-500 font-bold bg-primary-500/10 rounded-xl hover:bg-primary-500/20 transition-colors"
+        >
+           <Plus className="w-5 h-5 bg-primary-500 text-slate-900 rounded-full p-0.5" />
+           Agregar serie
+        </button>
+
+      </div>
     </div>
   );
 };
@@ -1091,37 +1232,25 @@ const ActiveWorkoutView: React.FC<{
 }) => {
   const activeProgData = user.activeProgram;
   const program = PROGRAMS.find(p => p.id === activeProgData?.programId);
-
-  // Derivar el día actual
   const currentDayIndex = activeProgData?.currentDayIndex || 0;
   const dayData = program?.schedule[currentDayIndex];
   
-  // State Local para la sesión
   const [exercises, setExercises] = useState<ActiveExerciseState[]>([]);
   const [timer, setTimer] = useState(0);
-  const [expandedEx, setExpandedEx] = useState<string | null>(null);
+  const [selectedExerciseIndex, setSelectedExerciseIndex] = useState<number | null>(null); // New state for modal
   
-  // Rest Timer State
-  const [restTimer, setRestTimer] = useState<{ remaining: number; total: number } | null>(null);
-
-  // Use refs to track latest state for interval saving without re-running effects
   const exercisesRef = useRef(exercises);
   const timerRef = useRef(timer);
 
-  // Sync refs with state
   useEffect(() => { exercisesRef.current = exercises; }, [exercises]);
   useEffect(() => { timerRef.current = timer; }, [timer]);
 
-  // Inicializar estado (o recuperar del log guardado)
   useEffect(() => {
     if (!dayData) return;
-
-    // Si tenemos un log parcial válido y reciente, lo usamos
     if (activeProgData?.currentDayLog && activeProgData.currentDayLog.exercises.length > 0) {
       setExercises(activeProgData.currentDayLog.exercises);
       setTimer(activeProgData.currentDayLog.timer);
     } else {
-      // Inicializar desde cero (nuevo día o nuevo programa)
       const initialExercises: ActiveExerciseState[] = dayData.exercises.map(template => ({
         ...template,
         isFullyCompleted: false,
@@ -1133,161 +1262,57 @@ const ActiveWorkoutView: React.FC<{
         }))
       }));
       setExercises(initialExercises);
-      // Expandir el primero automáticamente
-      if(initialExercises.length > 0) setExpandedEx(initialExercises[0].id);
-      else setExpandedEx(null);
       setTimer(0);
     }
   }, [dayData?.id, activeProgData?.startedAt]); 
 
-  // Timer: Runs every second
   useEffect(() => {
-    const interval = setInterval(() => {
-      setTimer(t => t + 1);
-    }, 1000);
+    const interval = setInterval(() => { setTimer(t => t + 1); }, 1000);
     return () => clearInterval(interval);
   }, []);
   
-  // Rest Timer Logic
-  useEffect(() => {
-    if (!restTimer || restTimer.remaining <= 0) return;
-    
-    const id = setInterval(() => {
-      setRestTimer(prev => {
-        if (!prev || prev.remaining <= 1) return null;
-        return { ...prev, remaining: prev.remaining - 1 };
-      });
-    }, 1000);
-    
-    return () => clearInterval(id);
-  }, [restTimer]);
-
-  // ROBUST AUTO-SAVE: Runs every 10 seconds
   useEffect(() => {
     const saveState = () => {
       if (exercisesRef.current.length > 0) {
-        // Pass currentDayIndex to validate saving in parent
         updateProgress(exercisesRef.current, timerRef.current, currentDayIndex);
       }
     };
-
     const intervalId = setInterval(saveState, 10000);
-
-    // Save on unmount/cleanup to ensure latest state is captured when leaving the view
     return () => {
       clearInterval(intervalId);
       saveState();
     };
-  }, [updateProgress, currentDayIndex]); // updateProgress is stable via useCallback in App
+  }, [updateProgress, currentDayIndex]);
 
+  if (!program || !dayData) return <div className="p-4 text-white">Error cargando entrenamiento.</div>;
 
-  if (!program || !dayData) return (
-    <div className="flex flex-col items-center justify-center h-full p-6 text-center">
-      <div className="text-red-500 mb-4"><X className="w-12 h-12" /></div>
-      <h3 className="text-xl font-bold mb-2">Error de Programa</h3>
-      <p className="text-slate-500 mb-4">No se pudo cargar la información del entrenamiento activo.</p>
-      <button onClick={abortWorkout} className="px-6 py-2 bg-slate-200 rounded-lg font-bold">Volver</button>
-    </div>
-  );
-
-  const handleSetChange = (exIndex: number, setIndex: number, field: 'weight' | 'reps', value: number) => {
+  const handleSaveSets = (setsLog: SetLog[]) => {
+    if (selectedExerciseIndex === null) return;
+    
     const newExs = [...exercises];
-    newExs[exIndex].setsLog[setIndex] = {
-      ...newExs[exIndex].setsLog[setIndex],
-      [field]: value
-    };
-    setExercises(newExs);
-  };
-
-  const handleAddSet = (exIndex: number) => {
-    const newExs = [...exercises];
-    const currentEx = newExs[exIndex];
-    const previousSet = currentEx.setsLog[currentEx.setsLog.length - 1];
-
-    const newSet: SetLog = {
-      setNumber: currentEx.setsLog.length + 1,
-      weight: previousSet ? previousSet.weight : 0, // Copy previous weight for UX
-      reps: previousSet ? previousSet.reps : 0,     // Copy previous reps for UX
-      completed: false
-    };
-
-    currentEx.setsLog.push(newSet);
-    // Since we added a new set, the exercise is definitely not fully completed anymore
-    currentEx.isFullyCompleted = false;
-
+    newExs[selectedExerciseIndex].setsLog = setsLog;
+    // Check completion status based on sets
+    // A set is 'complete' if it has reps > 0 (handled in modal). 
+    // Exercise is complete if all intended sets have data.
+    const completedSetsCount = setsLog.filter(s => s.completed).length;
+    newExs[selectedExerciseIndex].isFullyCompleted = completedSetsCount >= newExs[selectedExerciseIndex].targetSets;
+    
     setExercises(newExs);
     updateProgress(newExs, timer, currentDayIndex);
+    setSelectedExerciseIndex(null); // Close modal
   };
-
-  const toggleSetComplete = (exIndex: number, setIndex: number) => {
-    const newExs = [...exercises];
-    const currentSet = newExs[exIndex].setsLog[setIndex];
-    const ex = newExs[exIndex];
-    
-    // Validar input básico
-    if (!currentSet.completed && (currentSet.reps === 0)) {
-      alert("Introduce las repeticiones realizadas antes de marcar la serie.");
-      return;
-    }
-
-    currentSet.completed = !currentSet.completed;
-    
-    // Check if exercise is fully complete
-    ex.isFullyCompleted = ex.setsLog.every(s => s.completed);
-    
-    // Auto-expand next exercise if complete
-    if (ex.isFullyCompleted && exIndex < newExs.length - 1 && currentSet.completed) {
-      setExpandedEx(newExs[exIndex + 1].id);
-    }
-
-    // --- REST TIMER LOGIC ---
-    if (currentSet.completed) {
-      // Logic: Start rest if it's NOT the last set of the exercise
-      // Also ensure restSeconds is defined, otherwise default to 60s
-      const isLastSet = setIndex === ex.setsLog.length - 1;
-      
-      if (!isLastSet) {
-        const restTime = ex.restSeconds > 0 ? ex.restSeconds : 60;
-        setRestTimer({ remaining: restTime, total: restTime });
-      }
-    } else {
-      // If user unchecks the set, maybe we cancel the rest timer?
-      // Optional, but feels cleaner
-      setRestTimer(null);
-    }
-
-    setExercises(newExs);
-    // Immediate save on interaction
-    updateProgress(newExs, timer, currentDayIndex);
-  };
-
-  const skipRest = () => setRestTimer(null);
 
   const tryFinishWorkout = () => {
     const allComplete = exercises.every(ex => ex.isFullyCompleted);
     if (!allComplete) {
-      alert("Debes completar todas las series de todos los ejercicios para terminar el día.");
-      return;
+      const confirmFinish = window.confirm("No has completado todos los ejercicios. ¿Terminar de todas formas?");
+      if (!confirmFinish) return;
     }
 
-    const totalVol = exercises.reduce((acc, ex) => {
-      return acc + ex.setsLog.reduce((sAcc, set) => sAcc + (set.weight * set.reps), 0);
-    }, 0);
-
-    const totalSets = exercises.reduce((acc, ex) => {
-      return acc + ex.setsLog.filter(s => s.completed).length;
-    }, 0);
-
-    const totalReps = exercises.reduce((acc, ex) => {
-      return acc + ex.setsLog.reduce((sAcc, set) => sAcc + (set.completed ? set.reps : 0), 0);
-    }, 0);
-
-    // IMPROVED TIME CALCULATION: Ensure at least 1 minute is logged if any time passed
+    const totalVol = exercises.reduce((acc, ex) => acc + ex.setsLog.reduce((sAcc, set) => sAcc + (set.weight * set.reps), 0), 0);
+    const totalSets = exercises.reduce((acc, ex) => acc + ex.setsLog.filter(s => s.completed).length, 0);
+    const totalReps = exercises.reduce((acc, ex) => acc + ex.setsLog.reduce((sAcc, set) => sAcc + (set.completed ? set.reps : 0), 0), 0);
     const durationMinutes = Math.max(1, Math.round(timer / 60));
-
-    // CALORIE CALCULATION:
-    // Estimate based on the program's total calories divided by total sessions
-    // Fallback logic if needed, but this ensures consistency with the promise.
     const avgKcalPerSession = Math.round(program.estimatedKcal / program.schedule.length);
 
     finishDay({
@@ -1306,201 +1331,103 @@ const ActiveWorkoutView: React.FC<{
 
   const formatTime = (s: number) => {
     const mins = Math.floor(s / 60);
-    const secs = s % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+    // const secs = s % 60; // Not needed for clean display in screenshot style usually, but lets keep minutes
+    return `${mins} min`;
   };
 
+  // --- Render Modal if Active ---
+  if (selectedExerciseIndex !== null) {
+    return (
+      <ExerciseLoggerModal 
+        exercise={exercises[selectedExerciseIndex]}
+        onSave={handleSaveSets}
+        onClose={() => setSelectedExerciseIndex(null)}
+      />
+    );
+  }
+
+  // --- Render Main List (Screenshot 3 style) ---
   return (
-    <div className="flex flex-col space-y-4 pb-20 animate-fade-in relative">
-      {/* Header */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-4 flex items-center justify-between z-10 border border-slate-100 dark:border-slate-700">
-        <div>
-          <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wider">{program.title}</h2>
-          <h1 className="text-xl font-black text-slate-800 dark:text-white leading-none">{dayData.title}</h1>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="font-mono text-xl font-bold text-primary-600">{formatTime(timer)}</div>
-          <button onClick={abortWorkout} className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-colors">
-            <X className="w-6 h-6" />
-          </button>
-        </div>
+    <div className="min-h-screen bg-slate-900 text-white pb-20 animate-fade-in relative">
+      
+      {/* Top Bar */}
+      <div className="p-4 flex items-center justify-between sticky top-0 bg-slate-900 z-10">
+         <button onClick={abortWorkout} className="flex items-center text-primary-500 font-bold">
+            <ChevronLeft className="w-6 h-6" /> Atrás
+         </button>
+         <div className="text-white font-bold">{/* Optional Center Title */}</div>
+         <div className="w-6"></div> {/* Spacer */}
       </div>
 
-      {/* Exercises Content */}
-      <div className="space-y-4">
-        {exercises.map((ex, exIdx) => {
-          const isExpanded = expandedEx === ex.id;
-          return (
-            <div key={ex.id} className={`bg-white dark:bg-slate-800 rounded-xl shadow-sm border-l-4 transition-all duration-300 ${ex.isFullyCompleted ? 'border-green-500 opacity-80' : 'border-primary-500'}`}>
-              
-              {/* Card Header */}
-              <div 
-                className="p-4 flex items-center gap-4 cursor-pointer"
-                onClick={() => setExpandedEx(isExpanded ? null : ex.id)}
-              >
-                {/* Miniatura solo cuando está cerrado, para no duplicar */}
-                {!isExpanded && (
-                  <div className="w-12 h-12 rounded-lg bg-white overflow-hidden shrink-0 border border-slate-100 dark:border-slate-700">
-                    <ImageWithFallback src={ex.image} alt={ex.name} className="w-full h-full object-cover" />
-                  </div>
-                )}
-                
-                <div className="flex-1 min-w-0">
-                  <h3 className={`font-bold text-lg truncate ${ex.isFullyCompleted ? 'text-green-600 line-through' : ''}`}>{ex.name}</h3>
-                  <div className="text-xs text-slate-500 flex gap-2">
-                    <span>{ex.setsLog.filter(s => s.completed).length}/{ex.setsLog.length} Series</span>
-                    <span>• Meta: {ex.targetReps} reps</span>
-                  </div>
-                </div>
-                <div>
-                   {ex.isFullyCompleted ? <CheckCircle className="w-6 h-6 text-green-500" /> : <ChevronRight className={`w-5 h-5 text-slate-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />}
-                </div>
-              </div>
-
-              {/* Expanded Details */}
-              {isExpanded && (
-                <div className="p-4 pt-0 border-t border-slate-100 dark:border-slate-700">
-                   
-                   {/* Description & Image Section - Fondo adaptativo y texto legible */}
-                   <div className="flex flex-col sm:flex-row gap-4 mt-4 mb-6 bg-slate-50 dark:bg-slate-700/30 p-4 rounded-xl border border-slate-100 dark:border-slate-700 shadow-inner">
-                     <div className="sm:w-1/3 flex items-center justify-center rounded-lg min-h-[160px] overflow-hidden bg-black/5 dark:bg-black/20">
-                        <ImageWithFallback src={ex.image} alt={ex.name} className="w-full h-40 object-cover rounded-lg" fallbackText={ex.name} />
-                     </div>
-                     <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Info className="w-4 h-4 text-primary-500" />
-                          <h4 className="font-bold text-sm text-primary-600 dark:text-primary-400 uppercase tracking-wide">Técnica</h4>
-                        </div>
-                        <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">{ex.description}</p>
-                     </div>
-                   </div>
-
-                   {/* Sets Table */}
-                   <div className="grid grid-cols-10 gap-2 mb-2 text-[10px] uppercase font-bold text-slate-400 text-center">
-                     <div className="col-span-2">Serie</div>
-                     <div className="col-span-3">Kg</div>
-                     <div className="col-span-3">Reps</div>
-                     <div className="col-span-2">Hecho</div>
-                   </div>
-                   
-                   <div className="space-y-2">
-                     {ex.setsLog.map((set, sIdx) => (
-                       <div key={sIdx} className={`grid grid-cols-10 gap-2 items-center ${set.completed ? 'opacity-50' : ''}`}>
-                         <div className="col-span-2 flex justify-center">
-                           <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-xs font-bold">
-                             {set.setNumber}
-                           </div>
-                         </div>
-                         <div className="col-span-3">
-                           <input 
-                              type="number" 
-                              placeholder="0"
-                              className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded p-2 text-center font-mono text-sm focus:border-primary-500 outline-none"
-                              value={set.weight || ''}
-                              onChange={(e) => handleSetChange(exIdx, sIdx, 'weight', Number(e.target.value))}
-                              disabled={set.completed}
-                           />
-                         </div>
-                         <div className="col-span-3">
-                            <input 
-                              type="number" 
-                              placeholder="0"
-                              className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded p-2 text-center font-mono text-sm focus:border-primary-500 outline-none"
-                              value={set.reps || ''}
-                              onChange={(e) => handleSetChange(exIdx, sIdx, 'reps', Number(e.target.value))}
-                              disabled={set.completed}
-                           />
-                         </div>
-                         <div className="col-span-2 flex justify-center">
-                           <button 
-                            onClick={() => toggleSetComplete(exIdx, sIdx)}
-                            className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all active:scale-90 ${set.completed ? 'bg-green-500 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-400 hover:bg-slate-300'}`}
-                           >
-                             <CheckCircle className="w-5 h-5" />
-                           </button>
-                         </div>
-                       </div>
-                     ))}
-                   </div>
-
-                   {/* Add Set Button */}
-                   <div className="mt-4 pt-2 border-t border-dashed border-slate-200 dark:border-slate-700">
-                      <button 
-                        onClick={() => handleAddSet(exIdx)}
-                        className="w-full py-2 bg-slate-100 dark:bg-slate-700/50 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors"
-                      >
-                        <Plus className="w-4 h-4" />
-                        Añadir Serie
-                      </button>
-                   </div>
-                </div>
-              )}
+      {/* Header Content */}
+      <div className="px-4 mb-6">
+         <h1 className="text-3xl font-black text-white mb-4">{dayData.title}</h1>
+         
+         <div className="flex items-center gap-6 text-sm font-bold text-white mb-6">
+            <div className="flex items-center gap-2">
+               <Clock className="w-5 h-5 text-primary-500" />
+               <span>{formatTime(timer)}</span>
             </div>
-          );
-        })}
+            <div className="flex items-center gap-2">
+               <Flame className="w-5 h-5 text-primary-500" />
+               <span>489 kcal</span> {/* Hardcoded/Estimated for visual match */}
+            </div>
+            <div className="flex items-center gap-2">
+               <Dumbbell className="w-5 h-5 text-primary-500" />
+               <span>{exercises.reduce((acc,ex) => acc + ex.setsLog.reduce((s, set) => s + set.weight * set.reps, 0), 0)} kg</span>
+            </div>
+         </div>
+
+         <button 
+           onClick={tryFinishWorkout}
+           className="w-full bg-primary-500 text-white font-bold py-4 rounded-full shadow-lg shadow-primary-500/20 active:scale-95 transition-transform"
+         >
+           Terminar Entrenamiento
+         </button>
       </div>
 
-      {/* Full Screen Blocking Rest Timer */}
-      {restTimer && (
-        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-slate-900/95 backdrop-blur-sm animate-fade-in p-4">
-           <div className="text-center space-y-8 relative">
-              
-              {/* Animated Rings */}
-              <div className="relative w-64 h-64 mx-auto flex items-center justify-center">
-                 <div className="absolute inset-0 border-4 border-slate-700 rounded-full"></div>
-                 <svg className="absolute inset-0 w-full h-full transform -rotate-90">
-                    <circle
-                      cx="128"
-                      cy="128"
-                      r="126" // approx
-                      stroke="currentColor"
-                      strokeWidth="8"
-                      fill="transparent"
-                      strokeDasharray={792} // 2 * pi * r
-                      strokeDashoffset={792 - (792 * restTimer.remaining) / restTimer.total}
-                      className="text-primary-500 transition-all duration-1000 ease-linear"
-                    />
-                 </svg>
-                 <div className="text-6xl font-black text-white flex flex-col items-center">
-                    {restTimer.remaining}
-                    <span className="text-sm font-bold text-slate-400 uppercase tracking-widest mt-2">Segundos</span>
-                 </div>
+      {/* Exercises List Header */}
+      <div className="px-4 flex justify-between items-center mb-4">
+         <h2 className="text-xl font-bold text-white">Ejercicios</h2>
+         <button className="text-primary-500 font-bold text-sm">Añadir</button>
+      </div>
+
+      {/* Exercises List */}
+      <div className="px-4 space-y-3">
+         {exercises.map((ex, idx) => (
+           <div 
+             key={ex.id}
+             onClick={() => setSelectedExerciseIndex(idx)}
+             className="bg-slate-800 rounded-xl p-3 flex items-center gap-4 active:bg-slate-700 transition-colors cursor-pointer border border-transparent hover:border-slate-700"
+           >
+              {/* Image */}
+              <div className="w-20 h-20 bg-white rounded-lg overflow-hidden shrink-0">
+                 <ImageWithFallback src={ex.image} alt={ex.name} className="w-full h-full object-cover" />
               </div>
 
-              <div className="space-y-4">
-                <h3 className="text-2xl font-bold text-white">Recuperando Energía...</h3>
-                <p className="text-slate-400 max-w-xs mx-auto">Toma aire. La fuerza se construye en el descanso.</p>
+              {/* Content */}
+              <div className="flex-1 min-w-0">
+                 <h3 className="font-bold text-white text-md leading-tight mb-1 truncate">{ex.name}</h3>
+                 <p className="text-slate-400 text-sm mb-2">
+                    {ex.setsLog.length} series • {ex.targetReps} reps • {ex.setsLog[0]?.weight || 0} kg
+                 </p>
+                 <span className="text-primary-500 text-[10px] uppercase font-bold tracking-wider bg-primary-500/10 px-2 py-1 rounded">high load</span>
               </div>
 
-              <div className="flex gap-4 justify-center pt-8">
-                 <button 
-                   onClick={() => setRestTimer(prev => prev ? ({...prev, remaining: prev.remaining + 30, total: prev.total + 30}) : null)}
-                   className="px-6 py-3 rounded-xl bg-slate-800 text-white font-bold border border-slate-700 hover:bg-slate-700 transition-colors"
-                 >
-                   +30s
-                 </button>
-                 <button 
-                   onClick={skipRest}
-                   className="px-8 py-3 rounded-xl bg-primary-600 hover:bg-primary-500 text-white font-bold shadow-lg shadow-primary-500/20 transition-all active:scale-95 flex items-center gap-2"
-                 >
-                   <SkipForward className="w-5 h-5" />
-                   Saltar
-                 </button>
+              {/* Status Icon */}
+              <div className="pr-2">
+                 {ex.isFullyCompleted ? (
+                    <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center">
+                       <Check className="w-4 h-4 text-white" />
+                    </div>
+                 ) : (
+                    <ChevronRight className="text-slate-500" />
+                 )}
               </div>
            </div>
-        </div>
-      )}
-
-      {/* Footer */}
-      <div className="p-4 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
-        <button 
-          onClick={tryFinishWorkout}
-          className="w-full bg-gradient-to-r from-primary-600 to-primary-500 text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-primary-500/30 transition-all flex items-center justify-center gap-2"
-        >
-          <Award className="w-6 h-6" />
-          TERMINAR ENTRENAMIENTO
-        </button>
+         ))}
       </div>
+
     </div>
   );
 };
@@ -1702,7 +1629,7 @@ const App = () => {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 transition-colors duration-300 font-sans selection:bg-primary-500/30">
       <main className="max-w-md mx-auto min-h-screen relative shadow-2xl bg-white/50 dark:bg-slate-900/50">
-        <div className="p-4 pt-6">
+        <div className={view === 'active-workout' ? '' : 'p-4 pt-6'}>
            {view === 'dashboard' && <DashboardView user={user} setView={setView} />}
            {view === 'training' && (
              <ProgramsView 
