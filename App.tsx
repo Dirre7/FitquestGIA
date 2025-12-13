@@ -606,8 +606,19 @@ const ProgramsView = ({ user, startProgram, continueProgram, abandonProgram }: {
                           <p className="text-slate-400 text-xs font-medium">{subTitle}</p>
                           
                           {isActive && (
-                            <div className="mt-2 flex items-center gap-1 text-orange-500 text-xs font-bold">
-                               <Play className="w-3 h-3 fill-current" /> Continuar
+                            <div className="mt-2 flex items-center gap-4">
+                                <div className="flex items-center gap-1 text-orange-500 text-xs font-bold">
+                                   <Play className="w-3 h-3 fill-current" /> Continuar
+                                </div>
+                                <button 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    abandonProgram();
+                                  }}
+                                  className="flex items-center gap-1 text-red-500 text-xs font-bold hover:text-red-400 px-2 py-1 rounded hover:bg-red-500/10 transition-colors"
+                                >
+                                   <Trash2 className="w-3 h-3" /> Abandonar
+                                </button>
                             </div>
                           )}
                           {user.activeProgram && !isActive && (
