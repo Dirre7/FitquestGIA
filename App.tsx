@@ -5,7 +5,7 @@ import {
   Maximize2, Medal, Award, Calendar, Repeat, Flame, RefreshCw, Trash2,
   Hash, Timer, TrendingUp, LogOut, Loader2, Sparkles, MessageSquare, Bot,
   Camera, Image as ImageIcon, Info, Filter, ArrowLeft, Check, Pause, SkipForward, Plus,
-  Scale, Ruler, CalendarDays, Calculator
+  Scale, Ruler, CalendarDays, Calculator, LayoutGrid
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { supabase } from './services/supabaseClient';
@@ -495,157 +495,147 @@ const ProgramsView = ({ user, startProgram, continueProgram, abandonProgram }: {
   continueProgram: () => void;
   abandonProgram: () => void;
 }) => {
-  const [difficultyFilter, setDifficultyFilter] = useState<Difficulty | 'All'>('All');
-
-  // Filter and Sort programs
-  const filteredPrograms = useMemo(() => {
-    let progs = [...PROGRAMS];
-    
-    // Filter
-    if (difficultyFilter !== 'All') {
-      progs = progs.filter(p => p.difficulty === difficultyFilter);
-    }
-
-    // Sort: active one first
-    return progs.sort((a, b) => {
-      const isActiveA = user.activeProgram?.programId === a.id;
-      const isActiveB = user.activeProgram?.programId === b.id;
-      if (isActiveA) return -1;
-      if (isActiveB) return 1;
-      return 0;
+  // Use "Despertar Casero" or first program as featured
+  const featuredProgram = PROGRAMS.find(p => p.id === 'prog_home_beg') || PROGRAMS[0];
+  
+  // Group programs by difficulty to mimic "Categories" from the screenshot
+  const programsByDifficulty = useMemo(() => {
+    const groups: Record<string, Program[]> = {
+      [Difficulty.BEGINNER]: [],
+      [Difficulty.INTERMEDIATE]: [],
+      [Difficulty.ADVANCED]: [],
+    };
+    PROGRAMS.forEach(p => {
+      if (groups[p.difficulty]) groups[p.difficulty].push(p);
     });
-  }, [user.activeProgram?.programId, difficultyFilter]);
+    return groups;
+  }, []);
 
   return (
-    <div className="space-y-6 pb-28 animate-fade-in">
-      <div className="flex items-center justify-between px-1">
-        <h2 className="text-2xl font-bold">Programas Disponibles</h2>
+    <div className="space-y-8 pb-28 animate-fade-in text-white">
+      
+      {/* 1. HERO BANNER */}
+      <div className="relative w-full aspect-[4/3] sm:aspect-[2/1] bg-slate-900 rounded-3xl overflow-hidden shadow-2xl">
+        <div className="absolute inset-0 bg-gradient-to-r from-black via-black/60 to-transparent z-10"></div>
+        {/* Featured Image */}
+        <div className="absolute inset-y-0 right-0 w-3/4">
+           {/* Fallback image that represents full body/fitness */}
+           <img 
+            src="https://images.pexels.com/photos/1552249/pexels-photo-1552249.jpeg?auto=compress&cs=tinysrgb&w=800" 
+            alt="Hero" 
+            className="w-full h-full object-cover object-top opacity-80"
+          />
+        </div>
+        
+        <div className="absolute inset-0 z-20 p-6 flex flex-col justify-center max-w-[70%]">
+          <h1 className="text-3xl sm:text-4xl font-black mb-2 leading-tight">
+            {featuredProgram.title}
+          </h1>
+          <p className="text-slate-300 text-sm mb-6 line-clamp-3">
+             {featuredProgram.description}
+          </p>
+          <button 
+            onClick={() => startProgram(featuredProgram)}
+            className="w-fit bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-xl font-bold transition-colors shadow-lg shadow-orange-500/30"
+          >
+            Ver entrenamientos
+          </button>
+          <div className="flex gap-2 mt-4">
+             {[1,2,3,4].map(i => <div key={i} className={`w-2 h-2 rounded-full ${i === 1 ? 'bg-orange-500' : 'bg-slate-600'}`}></div>)}
+          </div>
+        </div>
       </div>
 
-      {/* Filter UI - Chips */}
-      <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide no-scrollbar">
-         <button 
-           onClick={() => setDifficultyFilter('All')}
-           className={`px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap border ${
-             difficultyFilter === 'All' 
-               ? 'bg-slate-900 text-white border-slate-900 dark:bg-white dark:text-slate-900 dark:border-white' 
-               : 'bg-white dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700'
-           }`}
-         >
-           Todos
-         </button>
-         {Object.values(Difficulty).map(diff => (
+      {/* 2. CHIP FILTERS */}
+      <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide no-scrollbar">
+         {['Frecuencia', 'Objetivo', 'Nivel', 'Duración', 'Equipo'].map((label, idx) => (
            <button 
-             key={diff}
-             onClick={() => setDifficultyFilter(diff)}
-             className={`px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap border ${
-               difficultyFilter === diff 
-                 ? 'bg-primary-500 text-white border-primary-500 shadow-lg shadow-primary-500/30' 
-                 : 'bg-white dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700 hover:border-primary-300'
-           }`}
+             key={label}
+             className={`px-5 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition-colors border border-transparent
+               ${idx === 0 ? 'bg-slate-800 text-orange-500 border-orange-500/30' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}
+             `}
            >
-             {diff}
+             {label}
            </button>
          ))}
       </div>
       
-      <div className="grid grid-cols-1 gap-6">
-        {filteredPrograms.length > 0 ? (
-          filteredPrograms.map(prog => {
-          const isActive = user.activeProgram?.programId === prog.id;
-          const isLocked = user.activeProgram && !isActive; // Lock others if one is active
+      {/* 3. CATEGORIES & HORIZONTAL CARDS */}
+      <div className="space-y-8">
+        {/* Fixed TS error: explicitly type the map arguments to avoid 'unknown' */}
+        {Object.entries(programsByDifficulty).map(([difficulty, progs]: [string, Program[]]) => {
+          if (progs.length === 0) return null;
+          
+          // Map Difficulty to a catchy title like in the screenshot
+          let sectionTitle = "Entrenamientos";
+          let subTitle = "Mejora tu nivel";
+          
+          if (difficulty === Difficulty.BEGINNER) { sectionTitle = "Perder Peso & Inicio"; subTitle = "Rutinas de adaptación"; }
+          else if (difficulty === Difficulty.INTERMEDIATE) { sectionTitle = "Hipertrofia"; subTitle = "Aumentar Masa Muscular"; }
+          else if (difficulty === Difficulty.ADVANCED) { sectionTitle = "Definición Extrema"; subTitle = "Intensidad Máxima"; }
 
           return (
-            <div key={prog.id} className={`glass-card rounded-2xl overflow-hidden relative transition-all duration-300 ${isLocked ? 'opacity-60 grayscale' : 'hover:shadow-xl'}`}>
-              {/* Header Image/Color */}
-              <div className={`h-32 relative ${
-                prog.difficulty === 'Principiante' ? 'bg-emerald-800' :
-                prog.difficulty === 'Intermedio' ? 'bg-blue-800' : 'bg-red-900'
-              }`}>
-                <div className="absolute inset-0 bg-black/30"></div>
-                <div className="absolute bottom-4 left-4 right-4">
-                  <div className="flex justify-between items-end">
-                    <h3 className="text-white font-bold text-xl shadow-sm">{prog.title}</h3>
-                    <div className="flex gap-2">
-                       <span className="text-[10px] bg-white/20 text-white px-2 py-1 rounded backdrop-blur-md uppercase font-bold">
-                        {prog.location}
-                      </span>
-                      <span className="text-[10px] bg-white/20 text-white px-2 py-1 rounded backdrop-blur-md uppercase font-bold">
-                        {prog.difficulty}
-                      </span>
-                    </div>
-                  </div>
-                </div>
+            <div key={difficulty}>
+              <div className="flex justify-between items-end mb-4 px-1">
+                 <h2 className="text-xl font-bold text-white">{sectionTitle}</h2>
+                 <button className="text-orange-500 text-sm font-bold hover:underline">Ver todos</button>
               </div>
-              
-              <div className="p-5 space-y-4">
-                <p className="text-sm text-slate-600 dark:text-slate-300">{prog.description}</p>
-                
-                <div className="flex items-center gap-4 text-xs font-bold text-slate-500 dark:text-slate-400">
-                  <div className="flex items-center gap-1">
-                    <Calendar className="w-4 h-4" />
-                    {prog.durationWeeks} Semanas
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Repeat className="w-4 h-4" />
-                    {prog.daysPerWeek} días/sem
-                  </div>
-                  <div className="flex items-center gap-1 text-orange-500">
-                    <Flame className="w-4 h-4" />
-                    {prog.estimatedKcal} Kcal Total
-                  </div>
-                  <div className="flex items-center gap-1 text-yellow-600 dark:text-yellow-400">
-                    <Zap className="w-4 h-4" />
-                    +{prog.xpRewardFinish} XP Final
-                  </div>
-                </div>
 
-                <div className="pt-2">
-                  {isActive ? (
-                    <div className="space-y-3">
-                      <button 
-                        onClick={continueProgram}
-                        className="w-full bg-primary-600 hover:bg-primary-500 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 animate-pulse"
-                      >
-                        <Play className="w-5 h-5" fill="currentColor" />
-                        CONTINUAR PROGRAMA
-                      </button>
-                      <button 
-                        onClick={abandonProgram}
-                        className="w-full flex items-center justify-center gap-2 text-xs font-bold text-red-400 hover:text-red-500 py-2 transition-colors border border-transparent hover:border-red-200 dark:hover:border-red-900/30 rounded-lg"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        Abandonar programa actual
-                      </button>
-                    </div>
-                  ) : isLocked ? (
-                    <button disabled className="w-full bg-slate-200 dark:bg-slate-700 text-slate-400 py-3 rounded-xl font-bold flex items-center justify-center gap-2 cursor-not-allowed">
-                      <Lock className="w-4 h-4" />
-                      OTRO PROGRAMA ACTIVO
-                    </button>
-                  ) : (
-                    <button 
-                      onClick={() => startProgram(prog)}
-                      className="w-full bg-slate-900 dark:bg-white dark:text-slate-900 text-white hover:opacity-90 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all active:scale-95"
+              <div className="grid gap-4">
+                {progs.map(prog => {
+                  const isActive = user.activeProgram?.programId === prog.id;
+                  // Get first exercise image of first day as thumbnail, or generic
+                  const thumb = prog.schedule[0]?.exercises[0]?.image || "https://images.pexels.com/photos/841130/pexels-photo-841130.jpeg";
+
+                  return (
+                    <div 
+                      key={prog.id}
+                      onClick={() => {
+                        if (user.activeProgram && !isActive) return; // Locked logic
+                        if (isActive) continueProgram();
+                        else startProgram(prog);
+                      }}
+                      className={`relative bg-slate-800 rounded-2xl overflow-hidden h-28 flex cursor-pointer transition-transform active:scale-95 group border border-slate-700 hover:border-slate-600
+                        ${isActive ? 'ring-2 ring-orange-500' : ''}
+                        ${user.activeProgram && !isActive ? 'opacity-50 grayscale' : ''}
+                      `}
                     >
-                      Comenzar Aventura
-                    </button>
-                  )}
-                </div>
+                       {/* Text Content Left */}
+                       <div className="flex-1 p-5 flex flex-col justify-center z-10">
+                          <h3 className="text-lg font-bold text-white leading-tight mb-1">{prog.title}</h3>
+                          <p className="text-slate-400 text-xs font-medium">{subTitle}</p>
+                          
+                          {isActive && (
+                            <div className="mt-2 flex items-center gap-1 text-orange-500 text-xs font-bold">
+                               <Play className="w-3 h-3 fill-current" /> Continuar
+                            </div>
+                          )}
+                          {user.activeProgram && !isActive && (
+                             <div className="mt-2 flex items-center gap-1 text-slate-500 text-xs font-bold">
+                               <Lock className="w-3 h-3" /> Bloqueado
+                            </div>
+                          )}
+                       </div>
+
+                       {/* Image Right (Cutout style simulation) */}
+                       <div className="w-1/3 relative overflow-hidden">
+                          {/* Diagonal mask effect */}
+                          <div className="absolute inset-0 bg-gradient-to-r from-slate-800 via-transparent to-transparent z-10"></div>
+                          <img 
+                            src={thumb} 
+                            alt={prog.title} 
+                            className="w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-500"
+                          />
+                       </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           );
-        })
-        ) : (
-           <div className="glass-card p-8 rounded-2xl flex flex-col items-center justify-center text-center opacity-70">
-            <div className="bg-slate-100 dark:bg-slate-800 p-4 rounded-full mb-3">
-               <Trophy className="w-8 h-8 text-slate-400" />
-            </div>
-            <p className="text-slate-500 font-medium">No hay programas disponibles con esta dificultad.</p>
-            <button onClick={() => setDifficultyFilter('All')} className="text-primary-500 text-sm font-bold mt-2">Ver todos</button>
-          </div>
-        )}
+        })}
       </div>
+
     </div>
   );
 };
