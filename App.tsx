@@ -5,7 +5,7 @@ import {
   Maximize2, Medal, Award, Calendar, Repeat, Flame, RefreshCw, Trash2,
   Hash, Timer, TrendingUp, LogOut, Loader2, Sparkles, MessageSquare, Bot,
   Camera, Image as ImageIcon, Info, Filter, ArrowLeft, Check, Pause, SkipForward, Plus,
-  Scale, Ruler, CalendarDays, Calculator, LayoutGrid, ChevronLeft, MoreHorizontal, Settings
+  Scale, Ruler, CalendarDays, Calculator, LayoutGrid, ChevronLeft, MoreHorizontal, Settings, MapPin
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { supabase } from './services/supabaseClient';
@@ -24,6 +24,23 @@ const ProgressBar = ({ current, max, colorClass = "bg-primary-500" }: { current:
         className={`h-full ${colorClass} transition-all duration-1000 ease-out`} 
         style={{ width: `${percentage}%` }}
       />
+    </div>
+  );
+};
+
+// Toast Notification Component
+const Toast = ({ message, type = 'success', onClose }: { message: string, type?: 'success' | 'error', onClose: () => void }) => {
+  useEffect(() => {
+    const timer = setTimeout(onClose, 3000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  return (
+    <div className={`fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 animate-bounce-in ${
+      type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+    }`}>
+      {type === 'success' ? <CheckCircle className="w-5 h-5" /> : <X className="w-5 h-5" />}
+      <span className="font-bold text-sm">{message}</span>
     </div>
   );
 };
@@ -140,6 +157,66 @@ const LevelUpModal = ({ level, onClose }: { level: number, onClose: () => void }
   </div>
 );
 
+const WorkoutCompleteModal = ({ log, isProgramFinish, isWeekFinish, onClose }: { log: WorkoutLog, isProgramFinish: boolean, isWeekFinish: boolean, onClose: () => void }) => {
+  let title = "¡MISIÓN CUMPLIDA!";
+  let Icon = CheckCircle;
+  
+  if (isProgramFinish) {
+    title = "¡PROGRAMA COMPLETADO!";
+    Icon = Trophy;
+  } else if (isWeekFinish) {
+    title = "¡SEMANA COMPLETADA!";
+    Icon = Medal;
+  }
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+      <div className="bg-slate-900 border border-slate-700 p-8 rounded-3xl shadow-2xl max-w-sm w-full text-center relative overflow-hidden animate-bounce-in">
+        {/* Background Effects */}
+        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-green-500/10 to-transparent pointer-events-none"></div>
+        
+        <div className="relative z-10">
+          <div className="mx-auto w-24 h-24 bg-green-500 rounded-full flex items-center justify-center mb-6 shadow-lg shadow-green-500/40 animate-pulse">
+            <Icon className="w-12 h-12 text-white" />
+          </div>
+          
+          <h2 className="text-3xl font-black text-white mb-1 leading-tight">{title}</h2>
+          <p className="text-slate-400 text-sm mb-8 uppercase tracking-widest font-bold">{log.dayTitle}</p>
+          
+          <div className="grid grid-cols-2 gap-4 mb-8">
+             <div className="bg-slate-800/50 p-4 rounded-2xl border border-slate-700 flex flex-col items-center">
+                <span className="text-xs text-slate-500 font-bold uppercase mb-1">XP Ganada</span>
+                <span className="text-2xl font-black text-yellow-400 flex items-center gap-1">
+                   <Zap className="w-4 h-4 fill-current" /> +{log.xpEarned}
+                </span>
+             </div>
+             <div className="bg-slate-800/50 p-4 rounded-2xl border border-slate-700 flex flex-col items-center">
+                <span className="text-xs text-slate-500 font-bold uppercase mb-1">Tiempo</span>
+                <span className="text-2xl font-black text-white">{log.durationMinutes}m</span>
+             </div>
+             <div className="bg-slate-800/50 p-4 rounded-2xl border border-slate-700 flex flex-col items-center">
+                <span className="text-xs text-slate-500 font-bold uppercase mb-1">Volumen</span>
+                <span className="text-2xl font-black text-blue-400">{log.totalVolume}kg</span>
+             </div>
+             <div className="bg-slate-800/50 p-4 rounded-2xl border border-slate-700 flex flex-col items-center">
+                <span className="text-xs text-slate-500 font-bold uppercase mb-1">Calorías</span>
+                <span className="text-2xl font-black text-orange-400">{log.kcalBurned}</span>
+             </div>
+          </div>
+
+          <button 
+            onClick={onClose}
+            className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-white font-bold py-4 rounded-2xl shadow-lg shadow-green-500/20 transition-all active:scale-95 text-lg"
+          >
+            CONTINUAR AVENTURA
+          </button>
+        </div>
+      </div>
+      <Confetti />
+    </div>
+  );
+};
+
 const AvatarSelectionModal = ({ isOpen, onClose, onSelect }: { isOpen: boolean, onClose: () => void, onSelect: (url: string) => void }) => {
   const [customUrl, setCustomUrl] = useState('');
   
@@ -227,6 +304,481 @@ const AvatarSelectionModal = ({ isOpen, onClose, onSelect }: { isOpen: boolean, 
 };
 
 // --- Sub-Views ---
+
+const ExerciseLoggerModal = ({ exercise, onSave, onClose }: { exercise: ActiveExerciseState, onSave: (sets: SetLog[]) => void, onClose: () => void }) => {
+  const [sets, setSets] = useState<SetLog[]>(exercise.setsLog);
+
+  const updateSet = (index: number, field: keyof SetLog, value: any) => {
+    const newSets = [...sets];
+    newSets[index] = { ...newSets[index], [field]: value };
+    setSets(newSets);
+  };
+
+  const handleSave = () => {
+    onSave(sets);
+  };
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center sm:p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+       <div className="bg-slate-900 w-full max-w-lg sm:rounded-3xl rounded-t-3xl border border-slate-700 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+          {/* Header */}
+          <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-800/50">
+             <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-white rounded-lg overflow-hidden shrink-0">
+                  <ImageWithFallback src={exercise.image} alt={exercise.name} className="w-full h-full object-cover" />
+                </div>
+                <div>
+                   <h3 className="text-white font-bold">{exercise.name}</h3>
+                   <p className="text-xs text-slate-400">{exercise.targetSets} Series x {exercise.targetReps} Reps</p>
+                </div>
+             </div>
+             <button onClick={onClose} className="p-2 bg-slate-800 rounded-full text-slate-400 hover:text-white"><X className="w-5 h-5"/></button>
+          </div>
+
+          {/* Body */}
+          <div className="p-4 overflow-y-auto flex-1 space-y-4">
+             {/* Technique Tip */}
+             <div className="bg-blue-500/10 border border-blue-500/20 p-3 rounded-xl flex gap-3">
+                <Info className="w-5 h-5 text-blue-400 shrink-0" />
+                <p className="text-xs text-blue-200">{exercise.description}</p>
+             </div>
+
+             {/* Sets Header */}
+             <div className="grid grid-cols-10 gap-2 text-xs font-bold text-slate-500 uppercase text-center mb-1">
+                <div className="col-span-2">Set</div>
+                <div className="col-span-3">kg</div>
+                <div className="col-span-3">Reps</div>
+                <div className="col-span-2">Done</div>
+             </div>
+
+             {/* Sets Rows */}
+             {sets.map((set, i) => (
+                <div key={i} className={`grid grid-cols-10 gap-2 items-center p-2 rounded-xl transition-colors ${set.completed ? 'bg-green-500/20 border border-green-500/30' : 'bg-slate-800 border border-slate-700'}`}>
+                   <div className="col-span-2 text-center font-bold text-slate-400">#{set.setNumber}</div>
+                   <div className="col-span-3">
+                      <input 
+                        type="number" 
+                        value={set.weight || ''} 
+                        placeholder="0"
+                        onChange={(e) => updateSet(i, 'weight', parseFloat(e.target.value) || 0)}
+                        className="w-full bg-slate-900 border border-slate-700 rounded-lg py-2 text-center text-white font-bold focus:border-primary-500 focus:outline-none"
+                      />
+                   </div>
+                   <div className="col-span-3">
+                      <input 
+                        type="number" 
+                        value={set.reps || ''} 
+                        placeholder="0"
+                        onChange={(e) => updateSet(i, 'reps', parseFloat(e.target.value) || 0)}
+                        className="w-full bg-slate-900 border border-slate-700 rounded-lg py-2 text-center text-white font-bold focus:border-primary-500 focus:outline-none"
+                      />
+                   </div>
+                   <div className="col-span-2 flex justify-center">
+                      <button 
+                        onClick={() => updateSet(i, 'completed', !set.completed)}
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${set.completed ? 'bg-green-500 text-white shadow-lg shadow-green-500/30' : 'bg-slate-700 text-slate-500 hover:bg-slate-600'}`}
+                      >
+                         <Check className="w-5 h-5" />
+                      </button>
+                   </div>
+                </div>
+             ))}
+          </div>
+
+          {/* Footer */}
+          <div className="p-4 border-t border-slate-800 bg-slate-900">
+             <button 
+               onClick={handleSave}
+               className="w-full py-4 bg-primary-500 hover:bg-primary-400 text-white font-bold rounded-xl shadow-lg shadow-primary-500/20 active:scale-95 transition-all"
+             >
+               Guardar Series
+             </button>
+          </div>
+       </div>
+    </div>
+  );
+};
+
+const ProgramsView = ({ user, startProgram, continueProgram, abandonProgram }: { user: UserState, startProgram: (p: Program) => void, continueProgram: () => void, abandonProgram: () => void }) => {
+  const [filter, setFilter] = useState<'ALL' | Difficulty>('ALL');
+  
+  const filteredPrograms = PROGRAMS.filter(p => filter === 'ALL' || p.difficulty === filter);
+  const activeProgram = user.activeProgram ? PROGRAMS.find(p => p.id === user.activeProgram!.programId) : null;
+
+  return (
+    <div className="space-y-6 pb-24 animate-fade-in">
+       <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-black text-slate-900 dark:text-white">Entrenamiento</h2>
+       </div>
+
+       {/* Active Program Banner */}
+       {activeProgram && (
+         <div className="relative overflow-hidden rounded-3xl bg-slate-900 text-white shadow-xl shadow-primary-900/20 border border-slate-800 p-6">
+            <div className="absolute top-0 right-0 p-4">
+               <span className="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-full uppercase tracking-wider animate-pulse">En Curso</span>
+            </div>
+            <h3 className="text-2xl font-black italic mb-2">{activeProgram.title}</h3>
+            <p className="text-slate-400 text-sm mb-6 max-w-[80%]">
+               Día {user.activeProgram!.currentDayIndex + 1} de {activeProgram.schedule.length}
+            </p>
+            
+            <div className="flex gap-3">
+               <button onClick={continueProgram} className="flex-1 bg-primary-500 text-white font-bold py-3 rounded-xl shadow-lg hover:bg-primary-400 transition-colors flex items-center justify-center gap-2">
+                  <Play className="w-5 h-5 fill-current" /> Continuar
+               </button>
+               <button onClick={abandonProgram} className="px-4 py-3 bg-slate-800 text-slate-400 hover:text-red-400 rounded-xl font-bold border border-slate-700 transition-colors">
+                  <Trash2 className="w-5 h-5" />
+               </button>
+            </div>
+         </div>
+       )}
+
+       {/* Filters */}
+       <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+          {['ALL', Difficulty.BEGINNER, Difficulty.INTERMEDIATE, Difficulty.ADVANCED].map((f) => (
+             <button 
+               key={f}
+               onClick={() => setFilter(f as any)}
+               className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
+                  filter === f 
+                  ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900' 
+                  : 'bg-white text-slate-600 border border-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400'
+               }`}
+             >
+                {f === 'ALL' ? 'Todos' : f}
+             </button>
+          ))}
+       </div>
+
+       {/* Programs Grid */}
+       <div className="space-y-4">
+          {filteredPrograms.map(program => {
+             const isCompleted = user.completedProgramIds.includes(program.id);
+             const isActive = user.activeProgram?.programId === program.id;
+             
+             return (
+               <div key={program.id} className={`glass-card p-5 rounded-2xl border-2 transition-all hover:scale-[1.01] ${isActive ? 'border-primary-500 ring-2 ring-primary-500/20' : 'border-transparent'}`}>
+                  <div className="flex justify-between items-start mb-3">
+                     <div>
+                        {isCompleted && <span className="text-[10px] font-bold bg-yellow-400 text-yellow-900 px-2 py-0.5 rounded-full mb-2 inline-block">COMPLETADO</span>}
+                        <h3 className="text-lg font-bold text-slate-900 dark:text-white leading-tight">{program.title}</h3>
+                        <div className="flex gap-2 mt-1">
+                           <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${
+                              program.difficulty === Difficulty.BEGINNER ? 'border-green-500 text-green-600' :
+                              program.difficulty === Difficulty.INTERMEDIATE ? 'border-orange-500 text-orange-600' :
+                              'border-red-500 text-red-600'
+                           }`}>
+                              {program.difficulty}
+                           </span>
+                           <span className="text-[10px] font-bold px-1.5 py-0.5 rounded border border-slate-300 text-slate-500 flex items-center gap-1">
+                              <MapPin className="w-3 h-3" /> {program.location}
+                           </span>
+                        </div>
+                     </div>
+                     <div className="text-right">
+                        <span className="block text-xl font-black text-primary-500">{program.daysPerWeek}d/sem</span>
+                        <span className="text-xs text-slate-400">{program.durationWeeks} semanas</span>
+                     </div>
+                  </div>
+                  
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 line-clamp-2">{program.description}</p>
+                  
+                  <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-700">
+                     <div className="flex flex-col">
+                        <span className="text-[10px] text-slate-400 uppercase font-bold">Recompensa Final</span>
+                        <span className="text-sm font-bold text-yellow-500 flex items-center gap-1">
+                           <Trophy className="w-4 h-4" /> {program.xpRewardFinish} XP
+                        </span>
+                     </div>
+                     
+                     {!isActive && (
+                        <button 
+                           onClick={() => startProgram(program)}
+                           disabled={!!user.activeProgram}
+                           className="px-5 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg font-bold text-sm hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+                        >
+                           {user.activeProgram ? 'En curso otro' : 'Empezar'}
+                        </button>
+                     )}
+                  </div>
+               </div>
+             );
+          })}
+       </div>
+    </div>
+  );
+};
+
+const AchievementsView = ({ user }: { user: UserState }) => {
+   const unlockedCount = user.achievements.length;
+   const totalCount = ACHIEVEMENTS.length;
+   const progress = (unlockedCount / totalCount) * 100;
+
+   return (
+      <div className="space-y-6 pb-24 animate-fade-in">
+         <div>
+            <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-2">Sala de Trofeos</h2>
+            <div className="flex items-center gap-2 text-sm text-slate-500">
+               <ProgressBar current={unlockedCount} max={totalCount} />
+               <span className="font-bold whitespace-nowrap">{unlockedCount} / {totalCount}</span>
+            </div>
+         </div>
+
+         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {ACHIEVEMENTS.map(ach => {
+               const isUnlocked = user.achievements.includes(ach.id);
+               return (
+                  <div key={ach.id} className={`p-4 rounded-xl border-2 flex items-center gap-4 transition-all ${
+                     isUnlocked 
+                     ? 'bg-yellow-50 dark:bg-yellow-900/10 border-yellow-400 dark:border-yellow-600/50' 
+                     : 'bg-slate-50 dark:bg-slate-800 border-transparent opacity-60 grayscale'
+                  }`}>
+                     <div className="text-3xl shrink-0 filter drop-shadow-sm">{ach.icon}</div>
+                     <div>
+                        <h4 className={`font-bold text-sm ${isUnlocked ? 'text-slate-900 dark:text-white' : 'text-slate-500'}`}>{ach.name}</h4>
+                        <p className="text-xs text-slate-500 leading-tight">{ach.description}</p>
+                     </div>
+                     {isUnlocked && <CheckCircle className="w-5 h-5 text-green-500 ml-auto shrink-0" />}
+                  </div>
+               );
+            })}
+         </div>
+      </div>
+   );
+};
+
+const StatsView = ({ user, setUser }: { user: UserState, setUser: (u: UserState) => void }) => {
+   // Calculate chart data from history
+   const chartData = useMemo(() => {
+      // Group by date, accumulate volume/duration
+      const dataMap = new Map<string, {date: string, volume: number, duration: number}>();
+      
+      [...user.history]
+        .sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+        .forEach(log => {
+           const dateStr = new Date(log.date).toLocaleDateString(undefined, {month: 'short', day: 'numeric'});
+           const existing = dataMap.get(dateStr) || { date: dateStr, volume: 0, duration: 0 };
+           existing.volume += log.totalVolume;
+           existing.duration += log.durationMinutes;
+           dataMap.set(dateStr, existing);
+        });
+      
+      // Take last 7 entries for cleaner chart
+      return Array.from(dataMap.values()).slice(-7);
+   }, [user.history]);
+
+   const [editingBio, setEditingBio] = useState(false);
+   const [weight, setWeight] = useState(user.weight);
+   const [height, setHeight] = useState(user.height);
+
+   const saveBio = () => {
+      setUser({ ...user, weight, height });
+      setEditingBio(false);
+   };
+
+   return (
+      <div className="space-y-6 pb-24 animate-fade-in">
+         <h2 className="text-2xl font-black text-slate-900 dark:text-white">Estadísticas</h2>
+         
+         {/* Summary Grid */}
+         <div className="grid grid-cols-2 gap-3">
+            <div className="glass-card p-4 rounded-2xl">
+               <div className="text-slate-400 text-xs font-bold uppercase mb-1">Volumen Total</div>
+               <div className="text-2xl font-black text-blue-500">{(user.totalWeightLifted / 1000).toFixed(1)} <span className="text-sm text-slate-500">ton</span></div>
+            </div>
+            <div className="glass-card p-4 rounded-2xl">
+               <div className="text-slate-400 text-xs font-bold uppercase mb-1">Tiempo Total</div>
+               <div className="text-2xl font-black text-indigo-500">{Math.floor(user.totalDurationMinutes / 60)} <span className="text-sm text-slate-500">h</span> {user.totalDurationMinutes % 60} <span className="text-sm text-slate-500">m</span></div>
+            </div>
+            <div className="glass-card p-4 rounded-2xl">
+               <div className="text-slate-400 text-xs font-bold uppercase mb-1">Calorías</div>
+               <div className="text-2xl font-black text-orange-500">{(user.totalKcalBurned / 1000).toFixed(1)} <span className="text-sm text-slate-500">kCal</span></div>
+            </div>
+            <div className="glass-card p-4 rounded-2xl">
+               <div className="text-slate-400 text-xs font-bold uppercase mb-1">Entrenamientos</div>
+               <div className="text-2xl font-black text-green-500">{user.completedWorkouts}</div>
+            </div>
+         </div>
+
+         {/* Charts */}
+         <div className="glass-card p-4 rounded-2xl">
+            <h3 className="font-bold text-slate-700 dark:text-white mb-4 flex items-center gap-2">
+               <Activity className="w-4 h-4 text-primary-500" /> Volumen Reciente (kg)
+            </h3>
+            <div className="h-48 w-full">
+               {chartData.length > 0 ? (
+                 <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={chartData}>
+                       <defs>
+                          <linearGradient id="colorVol" x1="0" y1="0" x2="0" y2="1">
+                             <stop offset="5%" stopColor="#14b8a6" stopOpacity={0.3}/>
+                             <stop offset="95%" stopColor="#14b8a6" stopOpacity={0}/>
+                          </linearGradient>
+                       </defs>
+                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" opacity={0.2} />
+                       <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#94a3b8'}} />
+                       <YAxis hide />
+                       <Tooltip 
+                          contentStyle={{backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff'}}
+                          itemStyle={{color: '#fff'}}
+                       />
+                       <Area type="monotone" dataKey="volume" stroke="#14b8a6" strokeWidth={3} fillOpacity={1} fill="url(#colorVol)" />
+                    </AreaChart>
+                 </ResponsiveContainer>
+               ) : (
+                 <div className="h-full flex items-center justify-center text-slate-400 text-xs">Sin datos recientes</div>
+               )}
+            </div>
+         </div>
+
+         {/* Biometrics */}
+         <div className="glass-card p-6 rounded-2xl">
+            <div className="flex justify-between items-center mb-4">
+               <h3 className="font-bold text-slate-700 dark:text-white flex items-center gap-2">
+                  <User className="w-4 h-4 text-primary-500" /> Biometría
+               </h3>
+               {!editingBio ? (
+                  <button onClick={() => setEditingBio(true)} className="text-xs font-bold text-primary-500">Editar</button>
+               ) : (
+                  <button onClick={saveBio} className="text-xs font-bold text-green-500">Guardar</button>
+               )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-6">
+               <div className="flex flex-col gap-1">
+                  <label className="text-xs font-bold text-slate-400 uppercase">Peso (kg)</label>
+                  {editingBio ? (
+                     <input type="number" value={weight} onChange={e => setWeight(parseFloat(e.target.value))} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-lg w-full font-bold" />
+                  ) : (
+                     <span className="text-2xl font-black text-slate-800 dark:text-white">{user.weight || '--'}</span>
+                  )}
+               </div>
+               <div className="flex flex-col gap-1">
+                  <label className="text-xs font-bold text-slate-400 uppercase">Altura (cm)</label>
+                  {editingBio ? (
+                     <input type="number" value={height} onChange={e => setHeight(parseFloat(e.target.value))} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-lg w-full font-bold" />
+                  ) : (
+                     <span className="text-2xl font-black text-slate-800 dark:text-white">{user.height || '--'}</span>
+                  )}
+               </div>
+            </div>
+            
+            {/* IMC Calculation just for fun */}
+            {user.weight > 0 && user.height > 0 && (
+               <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
+                  <span className="text-sm font-bold text-slate-500">IMC Estimado</span>
+                  <span className="font-bold text-slate-800 dark:text-white">
+                     {(user.weight / ((user.height/100) ** 2)).toFixed(1)}
+                  </span>
+               </div>
+            )}
+         </div>
+      </div>
+   );
+};
+
+const ProfileView = ({ user, setUser, toggleTheme, signOut }: { user: UserState, setUser: (u: UserState) => void, toggleTheme: () => void, signOut: () => void }) => {
+   const [showAvatarModal, setShowAvatarModal] = useState(false);
+   const [editingName, setEditingName] = useState(false);
+   const [name, setName] = useState(user.name);
+
+   const handleNameSave = () => {
+      setUser({ ...user, name });
+      setEditingName(false);
+   };
+
+   return (
+      <div className="space-y-6 pb-24 animate-fade-in">
+         {/* Header */}
+         <div className="text-center pt-4">
+            <div className="relative inline-block">
+               <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-white dark:border-slate-700 shadow-2xl mb-4 bg-slate-200">
+                  <ImageWithFallback src={user.avatar} alt="Avatar" className="w-full h-full object-cover" />
+               </div>
+               <button 
+                  onClick={() => setShowAvatarModal(true)}
+                  className="absolute bottom-4 right-0 p-2 bg-primary-500 text-white rounded-full shadow-lg hover:scale-110 transition-transform"
+               >
+                  <Camera className="w-4 h-4" />
+               </button>
+            </div>
+            
+            <div className="flex items-center justify-center gap-2 mb-1">
+               {editingName ? (
+                  <div className="flex gap-2">
+                     <input 
+                        value={name} 
+                        onChange={e => setName(e.target.value)} 
+                        className="bg-transparent border-b border-slate-300 dark:border-slate-600 text-center font-black text-xl w-40 focus:outline-none"
+                        autoFocus
+                     />
+                     <button onClick={handleNameSave} className="text-green-500"><Check className="w-5 h-5" /></button>
+                  </div>
+               ) : (
+                  <>
+                     <h2 className="text-2xl font-black text-slate-900 dark:text-white">{user.name}</h2>
+                     <button onClick={() => setEditingName(true)} className="text-slate-400 hover:text-slate-600"><Settings className="w-4 h-4" /></button>
+                  </>
+               )}
+            </div>
+            <p className="text-primary-500 font-bold uppercase text-xs tracking-widest">Nivel {user.level}</p>
+         </div>
+
+         {/* Options */}
+         <div className="space-y-3">
+            <div className="glass-card p-4 rounded-xl flex items-center justify-between">
+               <div className="flex items-center gap-3">
+                  {user.settings.darkMode ? <Moon className="w-5 h-5 text-indigo-400" /> : <Sun className="w-5 h-5 text-orange-400" />}
+                  <span className="font-bold text-slate-700 dark:text-slate-200">Modo Oscuro</span>
+               </div>
+               <button 
+                  onClick={toggleTheme}
+                  className={`w-12 h-6 rounded-full p-1 transition-colors ${user.settings.darkMode ? 'bg-indigo-500' : 'bg-slate-300'}`}
+               >
+                  <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${user.settings.darkMode ? 'translate-x-6' : ''}`} />
+               </button>
+            </div>
+
+            <button 
+               onClick={signOut}
+               className="w-full glass-card p-4 rounded-xl flex items-center gap-3 text-red-500 font-bold hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors"
+            >
+               <LogOut className="w-5 h-5" />
+               Cerrar Sesión
+            </button>
+         </div>
+
+         {/* History Preview */}
+         <div>
+            <h3 className="font-bold text-slate-900 dark:text-white mb-3 ml-1">Historial Reciente</h3>
+            <div className="space-y-3">
+               {[...user.history].reverse().slice(0, 5).map(log => (
+                  <div key={log.id} className="glass-card p-4 rounded-xl flex justify-between items-center">
+                     <div>
+                        <h4 className="font-bold text-slate-800 dark:text-white text-sm">{log.dayTitle}</h4>
+                        <p className="text-xs text-slate-500">{new Date(log.date).toLocaleDateString()}</p>
+                     </div>
+                     <div className="text-right">
+                        <span className="block font-bold text-green-500 text-sm">+{log.xpEarned} XP</span>
+                        <span className="text-xs text-slate-400">{log.totalVolume} kg</span>
+                     </div>
+                  </div>
+               ))}
+               {user.history.length === 0 && (
+                  <p className="text-center text-slate-400 text-sm py-4">Aún no hay historial.</p>
+               )}
+            </div>
+         </div>
+
+         {/* Avatar Modal */}
+         <AvatarSelectionModal 
+            isOpen={showAvatarModal}
+            onClose={() => setShowAvatarModal(false)}
+            onSelect={(url) => setUser({...user, avatar: url})}
+         />
+      </div>
+   );
+};
 
 const DashboardView = ({ user, setView }: { user: UserState; setView: (v: ViewState) => void }) => {
   const activeProgram = user.activeProgram ? PROGRAMS.find(p => p.id === user.activeProgram!.programId) : null;
@@ -492,736 +1044,6 @@ const DashboardView = ({ user, setView }: { user: UserState; setView: (v: ViewSt
   );
 };
 
-const ProgramsView = ({ user, startProgram, continueProgram, abandonProgram }: { 
-  user: UserState; 
-  startProgram: (p: Program) => void;
-  continueProgram: () => void;
-  abandonProgram: () => void;
-}) => {
-  // Use "Despertar Casero" or first program as featured
-  const featuredProgram = PROGRAMS.find(p => p.id === 'prog_home_beg') || PROGRAMS[0];
-  
-  // Group programs by difficulty to mimic "Categories" from the screenshot
-  const programsByDifficulty = useMemo(() => {
-    const groups: Record<string, Program[]> = {
-      [Difficulty.BEGINNER]: [],
-      [Difficulty.INTERMEDIATE]: [],
-      [Difficulty.ADVANCED]: [],
-    };
-    PROGRAMS.forEach(p => {
-      if (groups[p.difficulty]) groups[p.difficulty].push(p);
-    });
-    return groups;
-  }, []);
-
-  return (
-    <div className="space-y-8 pb-28 animate-fade-in text-white">
-      
-      {/* 1. HERO BANNER */}
-      <div className="relative w-full aspect-[4/3] sm:aspect-[2/1] bg-slate-900 rounded-3xl overflow-hidden shadow-2xl">
-        <div className="absolute inset-0 bg-gradient-to-r from-black via-black/60 to-transparent z-10"></div>
-        {/* Featured Image */}
-        <div className="absolute inset-y-0 right-0 w-3/4">
-           {/* Fallback image that represents full body/fitness */}
-           <img 
-            src="https://images.pexels.com/photos/1552249/pexels-photo-1552249.jpeg?auto=compress&cs=tinysrgb&w=800" 
-            alt="Hero" 
-            className="w-full h-full object-cover object-top opacity-80"
-          />
-        </div>
-        
-        <div className="absolute inset-0 z-20 p-6 flex flex-col justify-center max-w-[70%]">
-          <h1 className="text-3xl sm:text-4xl font-black mb-2 leading-tight">
-            {featuredProgram.title}
-          </h1>
-          <p className="text-slate-300 text-sm mb-6 line-clamp-3">
-             {featuredProgram.description}
-          </p>
-          <button 
-            onClick={() => startProgram(featuredProgram)}
-            className="w-fit bg-primary-500 hover:bg-primary-600 text-white px-6 py-3 rounded-xl font-bold transition-colors shadow-lg shadow-primary-500/30"
-          >
-            Ver entrenamientos
-          </button>
-          <div className="flex gap-2 mt-4">
-             {[1,2,3,4].map(i => <div key={i} className={`w-2 h-2 rounded-full ${i === 1 ? 'bg-primary-500' : 'bg-slate-600'}`}></div>)}
-          </div>
-        </div>
-      </div>
-
-      {/* 2. CHIP FILTERS */}
-      <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide no-scrollbar">
-         {['Frecuencia', 'Objetivo', 'Nivel', 'Duración', 'Equipo'].map((label, idx) => (
-           <button 
-             key={label}
-             className={`px-5 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition-colors border border-transparent
-               ${idx === 0 ? 'bg-slate-800 text-primary-500 border-primary-500/30' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}
-             `}
-           >
-             {label}
-           </button>
-         ))}
-      </div>
-      
-      {/* 3. CATEGORIES & HORIZONTAL CARDS */}
-      <div className="space-y-8">
-        {/* Fixed TS error: explicitly type the map arguments to avoid 'unknown' */}
-        {Object.entries(programsByDifficulty).map(([difficulty, progs]: [string, Program[]]) => {
-          if (progs.length === 0) return null;
-          
-          // Map Difficulty to a catchy title like in the screenshot
-          let sectionTitle = "Entrenamientos";
-          let subTitle = "Mejora tu nivel";
-          
-          if (difficulty === Difficulty.BEGINNER) { sectionTitle = "Perder Peso & Inicio"; subTitle = "Rutinas de adaptación"; }
-          else if (difficulty === Difficulty.INTERMEDIATE) { sectionTitle = "Hipertrofia"; subTitle = "Aumentar Masa Muscular"; }
-          else if (difficulty === Difficulty.ADVANCED) { sectionTitle = "Definición Extrema"; subTitle = "Intensidad Máxima"; }
-
-          return (
-            <div key={difficulty}>
-              <div className="flex justify-between items-end mb-4 px-1">
-                 <h2 className="text-xl font-bold text-white">{sectionTitle}</h2>
-                 <button className="text-primary-500 text-sm font-bold hover:underline">Ver todos</button>
-              </div>
-
-              <div className="grid gap-4">
-                {progs.map(prog => {
-                  const isActive = user.activeProgram?.programId === prog.id;
-                  // Get first exercise image of first day as thumbnail, or generic
-                  const thumb = prog.schedule[0]?.exercises[0]?.image || "https://images.pexels.com/photos/841130/pexels-photo-841130.jpeg";
-
-                  return (
-                    <div 
-                      key={prog.id}
-                      onClick={() => {
-                        if (user.activeProgram && !isActive) return; // Locked logic
-                        if (isActive) continueProgram();
-                        else startProgram(prog);
-                      }}
-                      className={`relative bg-slate-800 rounded-2xl overflow-hidden h-28 flex cursor-pointer transition-transform active:scale-95 group border border-slate-700 hover:border-slate-600
-                        ${isActive ? 'ring-2 ring-primary-500' : ''}
-                        ${user.activeProgram && !isActive ? 'opacity-50 grayscale' : ''}
-                      `}
-                    >
-                       {/* Text Content Left */}
-                       <div className="flex-1 p-5 flex flex-col justify-center z-10">
-                          <h3 className="text-lg font-bold text-white leading-tight mb-1">{prog.title}</h3>
-                          <p className="text-slate-400 text-xs font-medium">{subTitle}</p>
-                          
-                          {isActive && (
-                            <div className="mt-2 flex items-center gap-4">
-                                <div className="flex items-center gap-1 text-primary-500 text-xs font-bold">
-                                   <Play className="w-3 h-3 fill-current" /> Continuar
-                                </div>
-                                <button 
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    abandonProgram();
-                                  }}
-                                  className="flex items-center gap-1 text-red-500 text-xs font-bold hover:text-red-400 px-2 py-1 rounded hover:bg-red-500/10 transition-colors"
-                                >
-                                   <Trash2 className="w-3 h-3" /> Abandonar
-                                </button>
-                            </div>
-                          )}
-                          {user.activeProgram && !isActive && (
-                             <div className="mt-2 flex items-center gap-1 text-slate-500 text-xs font-bold">
-                               <Lock className="w-3 h-3" /> Bloqueado
-                            </div>
-                          )}
-                       </div>
-
-                       {/* Image Right (Cutout style simulation) */}
-                       <div className="w-1/3 relative overflow-hidden">
-                          {/* Diagonal mask effect */}
-                          <div className="absolute inset-0 bg-gradient-to-r from-slate-800 via-transparent to-transparent z-10"></div>
-                          <img 
-                            src={thumb} 
-                            alt={prog.title} 
-                            className="w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-500"
-                          />
-                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-    </div>
-  );
-};
-
-const AchievementsView = ({ user }: { user: UserState }) => {
-  const unlockedIds = user.achievements || [];
-
-  // Sort: Unlocked first
-  const sortedAchievements = useMemo(() => {
-    return [...ACHIEVEMENTS].sort((a, b) => {
-      const isUnlockedA = unlockedIds.includes(a.id);
-      const isUnlockedB = unlockedIds.includes(b.id);
-      // If A is unlocked and B is not, A goes first (-1)
-      if (isUnlockedA && !isUnlockedB) return -1;
-      // If B is unlocked and A is not, B goes first (1)
-      if (!isUnlockedA && isUnlockedB) return 1;
-      // Keep original order otherwise
-      return 0;
-    });
-  }, [unlockedIds]);
-  
-  return (
-    <div className="space-y-6 pb-28 animate-fade-in">
-      <div className="flex items-center justify-between px-1">
-        <h2 className="text-2xl font-bold">Salón de la Fama</h2>
-        <div className="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 px-3 py-1 rounded-full text-sm font-bold border border-yellow-200 dark:border-yellow-700">
-          {unlockedIds.length} / {ACHIEVEMENTS.length}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-        {sortedAchievements.map(ach => {
-          const isUnlocked = unlockedIds.includes(ach.id);
-          return (
-            <div 
-              key={ach.id} 
-              className={`glass-card p-4 rounded-xl flex flex-col items-center text-center transition-all duration-300 ${
-                isUnlocked 
-                  ? 'border-2 border-yellow-400 bg-yellow-50/50 dark:bg-yellow-900/10 shadow-lg scale-100 opacity-100' 
-                  : 'border-2 border-transparent opacity-50 grayscale scale-95 hover:opacity-70'
-              }`}
-            >
-              <div className="text-4xl mb-3 relative">
-                {ach.icon}
-                {!isUnlocked && <Lock className="w-6 h-6 absolute -bottom-1 -right-1 text-slate-500" />}
-              </div>
-              <h4 className={`font-bold text-sm mb-1 ${isUnlocked ? 'text-slate-800 dark:text-white' : 'text-slate-500'}`}>{ach.name}</h4>
-              <p className="text-[10px] text-slate-500 leading-tight">{ach.description}</p>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-};
-
-const StatsView = ({ user, setUser }: { user: UserState; setUser: (u: UserState) => void }) => {
-  // --- Derived Stats Calculations ---
-  
-  // Basic aggregates
-  const totalWorkouts = user.completedWorkouts;
-  const totalWeight = user.totalWeightLifted;
-  
-  // Calculate from history
-  const historyStats = useMemo(() => {
-    const logs = user.history || [];
-    // Use explicit total duration if available, else sum from logs (fallback for old users)
-    const totalMinutes = user.totalDurationMinutes !== undefined 
-      ? user.totalDurationMinutes 
-      : logs.reduce((acc, log) => acc + log.durationMinutes, 0);
-    
-    const totalXP = logs.reduce((acc, log) => acc + log.xpEarned, 0);
-    
-    // Safely sum sets/reps (handling legacy data where they might be undefined)
-    const totalSets = logs.reduce((acc, log) => acc + (log.totalSets || 0), 0);
-    const totalReps = logs.reduce((acc, log) => acc + (log.totalReps || 0), 0);
-    
-    const totalKcal = user.totalKcalBurned !== undefined
-      ? user.totalKcalBurned
-      : logs.reduce((acc, log) => acc + (log.kcalBurned || 0), 0);
-
-    return { totalMinutes, totalXP, totalSets, totalReps, totalKcal };
-  }, [user.history, user.totalDurationMinutes, user.totalKcalBurned]);
-
-  // Chart Data: Last 10 sessions for cleaner charts
-  const historyData = useMemo(() => {
-    const safeHistory = Array.isArray(user.history) ? user.history : [];
-    if (safeHistory.length === 0) return [];
-    
-    // Last 10 sessions reversed to show chronologically left to right
-    return [...safeHistory].slice(0, 10).reverse().map(h => ({
-      date: new Date(h.date).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' }),
-      xp: h.xpEarned,
-      weight: h.totalVolume,
-      min: h.durationMinutes
-    }));
-  }, [user.history]);
-
-  // BMI Calculation
-  const bmi = useMemo(() => {
-    if (user.weight > 0 && user.height > 0) {
-      const heightInMeters = user.height / 100;
-      return (user.weight / (heightInMeters * heightInMeters)).toFixed(1);
-    }
-    return null;
-  }, [user.weight, user.height]);
-
-  const getBmiStatus = (val: number) => {
-    if (val < 18.5) return { label: "Bajo Peso", color: "text-blue-500", bg: "bg-blue-500" };
-    if (val < 25) return { label: "Saludable", color: "text-green-500", bg: "bg-green-500" };
-    if (val < 30) return { label: "Sobrepeso", color: "text-yellow-500", bg: "bg-yellow-500" };
-    return { label: "Obesidad", color: "text-red-500", bg: "bg-red-500" };
-  };
-
-  const bmiStatus = bmi ? getBmiStatus(parseFloat(bmi)) : null;
-
-  const StatCard = ({ icon: Icon, title, value, sub, colorClass }: any) => (
-    <div className="glass-card p-5 rounded-2xl flex flex-col justify-between hover:scale-[1.02] transition-transform">
-      <div className="flex justify-between items-start mb-2">
-        <div className={`p-2 rounded-lg ${colorClass} bg-opacity-10 text-opacity-100`}>
-          <Icon className={`w-5 h-5 ${colorClass.replace('bg-', 'text-')}`} />
-        </div>
-      </div>
-      <div>
-        <div className="text-2xl font-bold text-slate-800 dark:text-white">{value}</div>
-        <div className="text-xs font-bold text-slate-500 uppercase tracking-wide">{title}</div>
-        {sub && <div className="text-[10px] text-slate-400 mt-1">{sub}</div>}
-      </div>
-    </div>
-  );
-
-  return (
-    <div className="space-y-6 pb-28 animate-fade-in">
-      <div className="flex items-center justify-between px-1">
-        <h2 className="text-2xl font-bold">Estadísticas</h2>
-        <div className="text-xs font-bold text-slate-400 bg-slate-200 dark:bg-slate-800 px-3 py-1 rounded-full">
-          Histórico Global
-        </div>
-      </div>
-      
-      {/* Biometrics Input Section */}
-      <div className="glass-card p-6 rounded-2xl relative overflow-hidden">
-        <div className="flex items-center gap-2 mb-4 text-slate-500 dark:text-slate-400">
-           <Calculator className="w-5 h-5" />
-           <h3 className="font-bold text-sm uppercase tracking-wider">Datos Corporales</h3>
-        </div>
-
-        <div className="grid grid-cols-3 gap-4 mb-4">
-           {/* Weight Input */}
-           <div className="space-y-1">
-             <label className="text-[10px] uppercase font-bold text-slate-400 ml-1">Peso (kg)</label>
-             <div className="relative">
-               <Scale className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-               <input 
-                 type="number" 
-                 value={user.weight || ''}
-                 onChange={(e) => setUser({...user, weight: parseFloat(e.target.value) || 0})}
-                 placeholder="0"
-                 className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold focus:border-primary-500 outline-none transition-colors"
-               />
-             </div>
-           </div>
-
-           {/* Height Input */}
-           <div className="space-y-1">
-             <label className="text-[10px] uppercase font-bold text-slate-400 ml-1">Altura (cm)</label>
-             <div className="relative">
-               <Ruler className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-               <input 
-                 type="number" 
-                 value={user.height || ''}
-                 onChange={(e) => setUser({...user, height: parseFloat(e.target.value) || 0})}
-                 placeholder="0"
-                 className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold focus:border-primary-500 outline-none transition-colors"
-               />
-             </div>
-           </div>
-
-            {/* Age Input */}
-            <div className="space-y-1">
-             <label className="text-[10px] uppercase font-bold text-slate-400 ml-1">Edad</label>
-             <div className="relative">
-               <CalendarDays className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-               <input 
-                 type="number" 
-                 value={user.age || ''}
-                 onChange={(e) => setUser({...user, age: parseFloat(e.target.value) || 0})}
-                 placeholder="0"
-                 className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold focus:border-primary-500 outline-none transition-colors"
-               />
-             </div>
-           </div>
-        </div>
-
-        {/* BMI Visualization */}
-        {bmi && bmiStatus && (
-           <div className="bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-100 dark:border-slate-700/50 flex items-center justify-between">
-              <div>
-                 <div className="text-[10px] text-slate-400 uppercase font-bold">IMC Estimado</div>
-                 <div className="text-xl font-black text-slate-800 dark:text-white flex items-center gap-2">
-                    {bmi}
-                    <span className={`text-xs px-2 py-0.5 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 ${bmiStatus.color}`}>
-                       {bmiStatus.label}
-                    </span>
-                 </div>
-              </div>
-              
-              {/* Visual Gauge */}
-              <div className="flex gap-1">
-                 {[1,2,3,4].map(i => {
-                    let active = false;
-                    let color = "bg-slate-200 dark:bg-slate-700";
-                    if (bmiStatus.label === "Bajo Peso" && i === 1) { active = true; color = "bg-blue-500"; }
-                    if (bmiStatus.label === "Saludable" && i === 2) { active = true; color = "bg-green-500"; }
-                    if (bmiStatus.label === "Sobrepeso" && i === 3) { active = true; color = "bg-yellow-500"; }
-                    if (bmiStatus.label === "Obesidad" && i === 4) { active = true; color = "bg-red-500"; }
-                    
-                    return (
-                       <div key={i} className={`w-3 h-8 rounded-full ${color} ${active ? 'scale-110 shadow-lg' : 'opacity-40'} transition-all`}></div>
-                    )
-                 })}
-              </div>
-           </div>
-        )}
-      </div>
-      
-      {/* Grid of Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        <StatCard 
-          icon={Dumbbell} 
-          title="Peso Total" 
-          value={totalWeight > 1000 ? `${(totalWeight/1000).toFixed(1)}t` : `${totalWeight}kg`} 
-          sub="Volumen movido"
-          colorClass="bg-blue-500 text-blue-500"
-        />
-        <StatCard 
-          icon={Activity} 
-          title="Sesiones" 
-          value={totalWorkouts} 
-          sub="Entrenamientos"
-          colorClass="bg-green-500 text-green-500"
-        />
-        <StatCard 
-          icon={Flame} 
-          title="Calorías" 
-          value={historyStats.totalKcal > 1000 ? `${(historyStats.totalKcal/1000).toFixed(1)}k` : historyStats.totalKcal} 
-          sub="Energía quemada"
-          colorClass="bg-red-500 text-red-500"
-        />
-        <StatCard 
-          icon={Timer} 
-          title="Tiempo" 
-          value={historyStats.totalMinutes > 60 ? `${(historyStats.totalMinutes/60).toFixed(1)}h` : `${historyStats.totalMinutes}m`} 
-          sub="Inv. en salud"
-          colorClass="bg-orange-500 text-orange-500"
-        />
-         <StatCard 
-          icon={Hash} 
-          title="Series" 
-          value={historyStats.totalSets} 
-          sub="Completadas"
-          colorClass="bg-purple-500 text-purple-500"
-        />
-         <StatCard 
-          icon={Zap} 
-          title="XP Total" 
-          value={user.currentXP + (user.level * 500)} // Rough estimate of lifetime XP or use precise if tracked
-          sub="Nivel actual"
-          colorClass="bg-yellow-500 text-yellow-500"
-        />
-      </div>
-
-      {historyData.length === 0 ? (
-          <div className="glass-card p-12 rounded-2xl flex flex-col items-center justify-center text-center opacity-80 border-dashed border-2 border-slate-300 dark:border-slate-700">
-            <BarChart2 className="w-16 h-16 text-slate-300 mb-4" />
-            <h3 className="text-lg font-bold text-slate-500">Sin datos suficientes</h3>
-            <p className="text-slate-400">Completa tu primera misión para ver gráficos detallados.</p>
-          </div>
-      ) : (
-        <div className="space-y-6">
-          {/* Volume Chart */}
-          <div className="glass-card p-6 rounded-2xl">
-            <h3 className="text-sm font-semibold mb-6 text-slate-500 flex items-center">
-              <TrendingUp className="w-4 h-4 mr-2" /> Progreso de Carga (Últimas 10 sesiones)
-            </h3>
-            <div className="h-64 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={historyData}>
-                  <defs>
-                    <linearGradient id="colorVol" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#14b8a6" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#14b8a6" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.1} />
-                  <XAxis dataKey="date" tick={{fontSize: 10}} axisLine={false} tickLine={false} dy={10} />
-                  <YAxis tick={{fontSize: 10}} axisLine={false} tickLine={false} width={30} tickFormatter={(val) => `${(val/1000).toFixed(0)}k`} />
-                  <Tooltip 
-                      contentStyle={{ backgroundColor: user.settings.darkMode ? '#1e293b' : '#fff', borderRadius: '8px', border: 'none' }} 
-                      itemStyle={{ color: '#14b8a6' }}
-                      formatter={(val: number) => [`${val} kg`, "Volumen"]}
-                  />
-                  <Area type="monotone" dataKey="weight" stroke="#14b8a6" strokeWidth={3} fillOpacity={1} fill="url(#colorVol)" />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-           {/* XP & Time Chart */}
-           <div className="glass-card p-6 rounded-2xl">
-            <h3 className="text-sm font-semibold mb-6 text-slate-500 flex items-center">
-              <Clock className="w-4 h-4 mr-2" /> Tiempo por Sesión (min)
-            </h3>
-            <div className="h-64 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={historyData}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.1} />
-                  <XAxis dataKey="date" tick={{fontSize: 10}} axisLine={false} tickLine={false} dy={10} />
-                  <Tooltip 
-                      contentStyle={{ backgroundColor: user.settings.darkMode ? '#1e293b' : '#fff', borderRadius: '8px', border: 'none' }} 
-                      itemStyle={{ color: '#8b5cf6' }}
-                      formatter={(val: number) => [`${val} min`, "Duración"]}
-                  />
-                  <Bar dataKey="min" fill="#8b5cf6" radius={[4, 4, 0, 0]} barSize={20} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-const ProfileView = ({ user, setUser, toggleTheme, signOut }: { 
-  user: UserState; 
-  setUser: (u: UserState) => void;
-  toggleTheme: () => void;
-  signOut: () => void;
-}) => {
-  const [isEditingName, setIsEditingName] = useState(false);
-  const [newName, setNewName] = useState(user.name);
-  const [showAvatarModal, setShowAvatarModal] = useState(false);
-
-  const saveName = () => {
-    setUser({ ...user, name: newName });
-    setIsEditingName(false);
-  };
-
-  return (
-    <div className="space-y-6 pb-28 animate-fade-in">
-       <h2 className="text-2xl font-bold px-1">Perfil</h2>
-       
-       {/* Avatar & Name Section */}
-       <div className="glass-card p-6 rounded-2xl flex flex-col items-center text-center relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-r from-primary-500/20 to-secondary-500/20"></div>
-          
-          <div className="relative mb-4 group cursor-pointer" onClick={() => setShowAvatarModal(true)}>
-             <div className="w-28 h-28 rounded-full border-4 border-white dark:border-slate-800 shadow-xl overflow-hidden bg-slate-200 relative">
-               <ImageWithFallback src={user.avatar} alt="Avatar" className="w-full h-full object-cover" />
-               <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Camera className="w-8 h-8 text-white/80" />
-               </div>
-             </div>
-             <div className="absolute bottom-0 right-0 bg-primary-500 text-white p-2 rounded-full shadow-lg border-4 border-slate-900 group-hover:bg-primary-600 transition-colors">
-                <Camera className="w-4 h-4" />
-             </div>
-          </div>
-
-          {isEditingName ? (
-            <div className="flex gap-2 items-center mb-1">
-               <input 
-                 type="text" 
-                 value={newName} 
-                 onChange={(e) => setNewName(e.target.value)}
-                 className="bg-slate-100 dark:bg-slate-700 px-3 py-1 rounded-lg text-lg font-bold text-center w-full max-w-[200px]"
-                 autoFocus
-               />
-               <button onClick={saveName} className="p-2 bg-green-500 text-white rounded-lg"><Check className="w-4 h-4" /></button>
-            </div>
-          ) : (
-            <h3 className="text-2xl font-black flex items-center gap-2 mb-1">
-               {user.name} 
-               <button onClick={() => setIsEditingName(true)} className="text-slate-400 hover:text-primary-500"><Settings className="w-4 h-4" /></button>
-            </h3>
-          )}
-          
-          <p className="text-sm text-slate-500 font-bold uppercase tracking-wider mb-6">Nivel {user.level} • {user.currentXP} XP</p>
-
-          <div className="grid grid-cols-2 gap-4 w-full">
-             <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl">
-                <div className="text-xs text-slate-500 font-bold uppercase">Entrenamientos</div>
-                <div className="text-xl font-black text-slate-800 dark:text-white">{user.completedWorkouts}</div>
-             </div>
-             <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl">
-                <div className="text-xs text-slate-500 font-bold uppercase">Peso Total</div>
-                <div className="text-xl font-black text-slate-800 dark:text-white">{(user.totalWeightLifted/1000).toFixed(1)}k</div>
-             </div>
-          </div>
-       </div>
-
-       {/* Settings Section */}
-       <div className="space-y-2">
-          <h4 className="text-sm font-bold text-slate-500 px-1 uppercase">Ajustes</h4>
-          
-          <div className="glass-card p-4 rounded-xl flex items-center justify-between">
-             <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${user.settings.darkMode ? 'bg-slate-700 text-yellow-400' : 'bg-yellow-100 text-yellow-600'}`}>
-                   {user.settings.darkMode ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
-                </div>
-                <div>
-                   <div className="font-bold text-sm">Modo Oscuro</div>
-                   <div className="text-xs text-slate-500">Cambiar apariencia</div>
-                </div>
-             </div>
-             <button 
-               onClick={toggleTheme}
-               className={`w-12 h-6 rounded-full p-1 transition-colors ${user.settings.darkMode ? 'bg-primary-500' : 'bg-slate-300'}`}
-             >
-                <div className={`w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${user.settings.darkMode ? 'translate-x-6' : 'translate-x-0'}`}></div>
-             </button>
-          </div>
-
-          <button 
-             onClick={signOut}
-             className="w-full glass-card p-4 rounded-xl flex items-center gap-3 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors"
-          >
-             <div className="p-2 rounded-lg bg-red-100 dark:bg-red-900/30 text-red-500">
-                <LogOut className="w-5 h-5" />
-             </div>
-             <div className="text-left">
-                <div className="font-bold text-sm">Cerrar Sesión</div>
-                <div className="text-xs text-red-400">Salir de tu cuenta</div>
-             </div>
-          </button>
-       </div>
-       
-       <AvatarSelectionModal 
-         isOpen={showAvatarModal} 
-         onClose={() => setShowAvatarModal(false)}
-         onSelect={(url) => setUser({...user, avatar: url})}
-       />
-    </div>
-  );
-};
-
-// --- New Exercise Logger Modal Component (Matches Screenshot 4) ---
-const ExerciseLoggerModal = ({ 
-  exercise, 
-  onSave, 
-  onClose 
-}: { 
-  exercise: ActiveExerciseState, 
-  onSave: (setsLog: SetLog[]) => void, 
-  onClose: () => void 
-}) => {
-  const [localSets, setLocalSets] = useState<SetLog[]>(JSON.parse(JSON.stringify(exercise.setsLog)));
-
-  const handleAddSet = () => {
-    const lastSet = localSets[localSets.length - 1];
-    setLocalSets([...localSets, {
-      setNumber: localSets.length + 1,
-      weight: lastSet ? lastSet.weight : 0,
-      reps: lastSet ? lastSet.reps : 0,
-      completed: false
-    }]);
-  };
-
-  const handleUpdateSet = (index: number, field: 'reps' | 'weight', value: number) => {
-    const newSets = [...localSets];
-    newSets[index] = { ...newSets[index], [field]: value };
-    // Auto-complete if values are entered? Let's leave manual completion for flexibility
-    // But since this is a modal, "Guardar" implies completion. 
-    // In screenshot style, user enters numbers. We assume they did them if they save.
-    // We'll mark them as completed when Saving if they have valid values.
-    setLocalSets(newSets);
-  };
-
-  const handleSave = () => {
-    // Mark sets with data as completed automatically when saving from this modal
-    const processedSets = localSets.map(s => ({
-      ...s,
-      completed: (s.reps > 0 && s.weight >= 0) ? true : s.completed
-    }));
-    onSave(processedSets);
-  };
-
-  return (
-    <div className="fixed inset-0 z-[150] bg-slate-900 text-white flex flex-col animate-fade-in">
-      {/* Header */}
-      <div className="flex justify-between items-center p-4 bg-slate-900 border-b border-slate-800">
-        <button onClick={onClose} className="text-primary-500 font-bold text-lg">Cancelar</button>
-        <h2 className="font-bold text-lg">Configurar Ejercicio</h2>
-        <button onClick={handleSave} className="text-primary-500 font-bold text-lg">Guardar</button>
-      </div>
-
-      <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-slate-900">
-        
-        {/* Exercise Info Card */}
-        <div className="flex gap-4 items-center">
-          <div className="w-24 h-24 rounded-xl overflow-hidden bg-white shrink-0">
-             <ImageWithFallback src={exercise.image} alt={exercise.name} className="w-full h-full object-cover" />
-          </div>
-          <div className="flex-1">
-             <h1 className="text-2xl font-bold leading-tight mb-1">{exercise.name}</h1>
-             <div className="text-slate-400 text-sm flex flex-wrap gap-2">
-               <span>Pectorales, Antebrazo, Tríceps</span> {/* Hardcoded for demo/screenshot match, ideally dynamic */}
-             </div>
-          </div>
-          <Info className="text-slate-500 w-6 h-6" />
-        </div>
-
-        {/* Tabs (Visual only for now) */}
-        <div className="flex gap-2">
-           <button className="bg-slate-800 text-white px-4 py-2 rounded-full text-sm font-bold border border-transparent">Reps y carga <ChevronRight className="inline w-3 h-3 ml-1 rotate-90"/></button>
-           <button className="bg-slate-900 text-slate-500 border border-slate-800 px-4 py-2 rounded-full text-sm font-bold flex items-center gap-1"><Timer className="w-3 h-3" /> 01:00</button>
-           <button className="bg-slate-900 text-slate-500 border border-slate-800 px-4 py-2 rounded-full text-sm font-bold">+ Notas</button>
-        </div>
-
-        <div className="bg-primary-500/10 p-2 rounded-lg text-primary-500 text-xs font-bold uppercase tracking-wider mb-2">high load</div>
-
-        {/* Sets List */}
-        <div className="space-y-3">
-           {localSets.map((set, idx) => (
-             <div key={idx} className="bg-slate-800 p-3 rounded-xl flex items-center justify-between">
-                <div className="flex items-center gap-4 flex-1">
-                   <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center font-bold text-slate-300 text-sm">
-                     {set.setNumber}
-                   </div>
-                   
-                   <div className="flex items-center gap-2">
-                      <input 
-                        type="number" 
-                        value={set.reps || ''}
-                        onChange={(e) => handleUpdateSet(idx, 'reps', Number(e.target.value))}
-                        placeholder="0"
-                        className="bg-transparent text-white font-bold text-xl w-12 text-center focus:outline-none border-b border-slate-700 focus:border-primary-500"
-                      />
-                      <span className="text-slate-500 font-bold">reps</span>
-                   </div>
-
-                   <div className="w-px h-8 bg-slate-700 mx-2"></div>
-
-                   <div className="flex items-center gap-2">
-                      <input 
-                        type="number" 
-                        value={set.weight || ''}
-                        onChange={(e) => handleUpdateSet(idx, 'weight', Number(e.target.value))}
-                        placeholder="0"
-                        className="bg-transparent text-white font-bold text-xl w-16 text-center focus:outline-none border-b border-slate-700 focus:border-primary-500"
-                      />
-                      <span className="text-slate-500 font-bold">kg</span>
-                   </div>
-                </div>
-             </div>
-           ))}
-        </div>
-
-        {/* Add Set Button */}
-        <button 
-          onClick={handleAddSet}
-          className="w-full py-4 flex items-center justify-center gap-2 text-primary-500 font-bold bg-primary-500/10 rounded-xl hover:bg-primary-500/20 transition-colors"
-        >
-           <Plus className="w-5 h-5 bg-primary-500 text-slate-900 rounded-full p-0.5" />
-           Agregar serie
-        </button>
-
-      </div>
-    </div>
-  );
-};
-
 const ActiveWorkoutView: React.FC<{
   user: UserState;
   finishDay: (log: WorkoutLog) => void;
@@ -1316,7 +1138,9 @@ const ActiveWorkoutView: React.FC<{
     const totalSets = exercises.reduce((acc, ex) => acc + ex.setsLog.filter(s => s.completed).length, 0);
     const totalReps = exercises.reduce((acc, ex) => acc + ex.setsLog.reduce((sAcc, set) => sAcc + (set.completed ? set.reps : 0), 0), 0);
     const durationMinutes = Math.max(1, Math.round(timer / 60));
-    const avgKcalPerSession = Math.round(program.estimatedKcal / program.schedule.length);
+    
+    // Dynamic Kcal calculation: approx 6 kcal/min for moderate lifting
+    const calculatedKcal = Math.round(durationMinutes * 6);
 
     finishDay({
       id: Date.now().toString(),
@@ -1328,7 +1152,7 @@ const ActiveWorkoutView: React.FC<{
       totalSets,
       totalReps,
       xpEarned: program.xpRewardDay,
-      kcalBurned: avgKcalPerSession
+      kcalBurned: calculatedKcal
     });
   };
 
@@ -1373,7 +1197,8 @@ const ActiveWorkoutView: React.FC<{
             </div>
             <div className="flex items-center gap-2">
                <Flame className="w-5 h-5 text-primary-500" />
-               <span>489 kcal</span> {/* Hardcoded/Estimated for visual match */}
+               {/* Dynamic Kcal Visualization */}
+               <span>{Math.round((timer / 60) * 6)} kcal</span> 
             </div>
             <div className="flex items-center gap-2">
                <Dumbbell className="w-5 h-5 text-primary-500" />
@@ -1442,6 +1267,8 @@ const App = () => {
   const [loading, setLoading] = useState(true);
   const [showLevelUp, setShowLevelUp] = useState<{show: boolean, level: number}>({show: false, level: 0});
   const [showConfirmAbort, setShowConfirmAbort] = useState(false);
+  const [toast, setToast] = useState<{message: string, type: 'success' | 'error'} | null>(null);
+  const [workoutSummary, setWorkoutSummary] = useState<{log: WorkoutLog, isProgramFinish: boolean, isWeekFinish: boolean} | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -1581,6 +1408,8 @@ const App = () => {
 
   const handleFinishDay = (log: WorkoutLog) => {
     let nextUser = { ...user };
+    let isProgramFinish = false;
+    let isWeekFinish = false;
     
     nextUser.history = [...nextUser.history, log];
     nextUser.completedWorkouts += 1;
@@ -1595,8 +1424,17 @@ const App = () => {
     if (nextUser.activeProgram) {
       const prog = PROGRAMS.find(p => p.id === nextUser.activeProgram!.programId);
       if (prog) {
-        const nextDayIndex = nextUser.activeProgram.currentDayIndex + 1;
+        const currentIndex = nextUser.activeProgram.currentDayIndex;
+        
+        // Detect Week Completion: (current index + 1) % daysPerWeek == 0
+        if ((currentIndex + 1) % prog.daysPerWeek === 0) {
+          isWeekFinish = true;
+        }
+
+        const nextDayIndex = currentIndex + 1;
         if (nextDayIndex >= prog.schedule.length) {
+          isProgramFinish = true;
+          isWeekFinish = false; // Program finish overrides week finish
           nextUser.activeProgram = null;
           nextUser.completedProgramIds = [...nextUser.completedProgramIds, prog.id];
           nextUser.currentXP += prog.xpRewardFinish;
@@ -1614,6 +1452,11 @@ const App = () => {
     nextUser = checkAchievements(nextUser);
 
     updateUser(nextUser);
+    setWorkoutSummary({ log, isProgramFinish, isWeekFinish }); // Show Modal
+  };
+
+  const closeSummary = () => {
+    setWorkoutSummary(null);
     setView('dashboard');
   };
 
@@ -1675,10 +1518,20 @@ const App = () => {
         )}
       </main>
 
+      {/* Modals Layer */}
       {showLevelUp.show && (
         <LevelUpModal 
           level={showLevelUp.level} 
           onClose={() => setShowLevelUp({show: false, level: 0})} 
+        />
+      )}
+
+      {workoutSummary && (
+        <WorkoutCompleteModal 
+          log={workoutSummary.log} 
+          isProgramFinish={workoutSummary.isProgramFinish}
+          isWeekFinish={workoutSummary.isWeekFinish}
+          onClose={closeSummary} 
         />
       )}
 
@@ -1689,6 +1542,14 @@ const App = () => {
         onConfirm={confirmAbort}
         onCancel={() => setShowConfirmAbort(false)}
       />
+
+      {toast && (
+        <Toast 
+          message={toast.message} 
+          type={toast.type} 
+          onClose={() => setToast(null)} 
+        />
+      )}
     </div>
   );
 };
