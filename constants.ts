@@ -82,10 +82,11 @@ export const ACHIEVEMENTS: Achievement[] = [
    { id: 'prog_cali', name: "Ninja Urbano", description: "Completa 'Calistenia Táctica'.", icon: "🥷", unlocked: false, condition: (u) => hasFinishedProgram(u, 'prog_cali_int') },
    { id: 'prog_power', name: "Powerlifter", description: "Completa el programa 'Titán de Fuerza'.", icon: "🦍", unlocked: false, condition: (u) => hasFinishedProgram(u, 'prog_power_adv') },
 
-   // --- DESAFIOS SEMANALES [3] ---
+   // --- DESAFIOS SEMANALES [4] ---
    { id: 'chal_hell', name: "Superviviente del Infierno", description: "Completa el Desafío: Semana del Infierno.", icon: "🔥", unlocked: false, condition: (u) => hasFinishedProgram(u, 'chal_hell_week') },
    { id: 'chal_300', name: "Espíritu 300", description: "Completa el Desafío: El 300.", icon: "🛡️", unlocked: false, condition: (u) => hasFinishedProgram(u, 'chal_300_rep') },
    { id: 'chal_legs', name: "Silla de Ruedas", description: "Completa el Desafío: Destructor de Piernas.", icon: "🦿", unlocked: false, condition: (u) => hasFinishedProgram(u, 'chal_leg_dest') },
+   { id: 'chal_pushups_master', name: "Maestro de las Flexiones", description: "Completa el Desafío de Flexiones.", icon: "💪", unlocked: false, condition: (u) => hasFinishedProgram(u, 'chal_pushups') },
 
    // --- VOLUMEN DE TRABAJO (Sets/Reps) [6] ---
    { id: 'reps1k', name: "Mil Repeticiones", description: "Realiza 1,000 repeticiones totales.", icon: "🔢", unlocked: false, condition: (u) => getTotalReps(u) >= 1000 },
@@ -387,6 +388,33 @@ const buildLegChallenge = (): ProgramDay[] => {
     ];
 };
 
+// Desafío 4: Desafío de Flexiones
+const pushupDay1: ExerciseTemplate[] = [
+    createExercise("Flexiones Clásicas", 5, "Al fallo", 60, "La básica. Pecho al suelo, codos a 45 grados."),
+    createExercise("Flexiones Abiertas", 4, "12-15", 60, "Manos más anchas que los hombros. Énfasis en pecho."),
+    createExercise("Flexiones Declinadas", 4, "10-12", 60, "Pies elevados sobre silla o sofá. Pecho superior."),
+];
+const pushupDay2: ExerciseTemplate[] = [
+    createExercise("Flexiones Diamante", 5, "8-12", 60, "Manos juntas bajo el pecho. Tríceps a fuego."),
+    createExercise("Fondos en suelo (Pike)", 4, "10", 60, "Cuerpo en V invertida. Hombros y tríceps."),
+    createExercise("Flexiones Sphinx", 3, "8-10", 60, "Antebrazos en suelo, empuja hasta estirar brazos. Tríceps puro."),
+];
+const pushupDay3: ExerciseTemplate[] = [
+    createExercise("Flexiones Explosivas", 5, "5-8", 90, "Sube rápido, despega las manos. Potencia."),
+    createExercise("Flexiones Arqueras", 4, "6/lado", 90, "Un brazo se estira, el otro empuja. Unilateral."),
+    createExercise("Flexiones Spiderman", 4, "10/lado", 60, "Lleva rodilla al codo al bajar. Core y pecho."),
+];
+
+const buildPushupChallenge = (): ProgramDay[] => {
+    return [
+        { id: 'pc_d1', title: 'Día 1: Volumen Pecho', exercises: pushupDay1 },
+        { id: 'pc_d2', title: 'Día 2: Tríceps Acero', exercises: pushupDay2 },
+        { id: 'pc_d3', title: 'Día 3: Descanso Activo', exercises: [createExercise("Plancha", 5, "1 min", 60, "Mantén la posición.")] },
+        { id: 'pc_d4', title: 'Día 4: Potencia', exercises: pushupDay3 },
+        { id: 'pc_d5', title: 'Día 5: El Test Final', exercises: [createExercise("Flexiones Clásicas", 1, "MÁXIMO", 120, "Una sola serie al fallo absoluto. Récord."), ...pushupDay1] },
+    ];
+};
+
 
 export const PROGRAMS: Program[] = [
   {
@@ -506,5 +534,18 @@ export const PROGRAMS: Program[] = [
       xpRewardDay: 500,
       estimatedKcal: 1500,
       schedule: buildLegChallenge()
+  },
+  {
+      id: 'chal_pushups',
+      title: "Desafío de Flexiones",
+      description: "Domina tu peso corporal. Una semana intensiva para pecho y tríceps.",
+      difficulty: Difficulty.CHALLENGE,
+      location: 'Casa',
+      durationWeeks: 1,
+      daysPerWeek: 5,
+      xpRewardFinish: 1500,
+      xpRewardDay: 300,
+      estimatedKcal: 2000,
+      schedule: buildPushupChallenge()
   }
 ];
