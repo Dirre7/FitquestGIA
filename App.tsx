@@ -7,7 +7,6 @@ import {
   Camera, Image as ImageIcon, Info, Filter, ArrowLeft, Check, Pause, SkipForward, Plus,
   Scale, Ruler, CalendarDays, Calculator, LayoutGrid, ChevronLeft, MoreHorizontal, Settings, MapPin, Minus, AlertTriangle
 } from 'lucide-react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { supabase } from './services/supabaseClient';
 import { getAiCoachAdvice } from './services/geminiService';
 import { AuthView } from './components/AuthView';
@@ -731,25 +730,6 @@ const AchievementsView = ({ user }: { user: UserState }) => {
 };
 
 const StatsView = ({ user, setUser }: { user: UserState, setUser: (u: UserState) => void }) => {
-   // Calculate chart data from history
-   const chartData = useMemo(() => {
-      // Group by date, accumulate volume/duration
-      const dataMap = new Map<string, {date: string, volume: number, duration: number}>();
-      
-      [...user.history]
-        .sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-        .forEach(log => {
-           const dateStr = new Date(log.date).toLocaleDateString(undefined, {month: 'short', day: 'numeric'});
-           const existing = dataMap.get(dateStr) || { date: dateStr, volume: 0, duration: 0 };
-           existing.volume += log.totalVolume;
-           existing.duration += log.durationMinutes;
-           dataMap.set(dateStr, existing);
-        });
-      
-      // Take last 7 entries for cleaner chart
-      return Array.from(dataMap.values()).slice(-7);
-   }, [user.history]);
-
    // Calculate weekly comparison
    const weeklyStats = useMemo(() => {
     const now = new Date();
@@ -854,37 +834,6 @@ const StatsView = ({ user, setUser }: { user: UserState, setUser: (u: UserState)
                   </div>
                   {renderTrend(weeklyStats.current.kcal, weeklyStats.previous.kcal)}
                </div>
-            </div>
-         </div>
-
-         {/* Charts */}
-         <div className="glass-card p-4 rounded-2xl">
-            <h3 className="font-bold text-slate-700 dark:text-white mb-4 flex items-center gap-2">
-               <Activity className="w-4 h-4 text-primary-500" /> Volumen Reciente (kg)
-            </h3>
-            <div className="h-48 w-full">
-               {chartData.length > 0 ? (
-                 <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={chartData}>
-                       <defs>
-                          <linearGradient id="colorVol" x1="0" y1="0" x2="0" y2="1">
-                             <stop offset="5%" stopColor="#14b8a6" stopOpacity={0.3}/>
-                             <stop offset="95%" stopColor="#14b8a6" stopOpacity={0}/>
-                          </linearGradient>
-                       </defs>
-                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" opacity={0.2} />
-                       <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#94a3b8'}} />
-                       <YAxis hide />
-                       <Tooltip 
-                          contentStyle={{backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff'}}
-                          itemStyle={{color: '#fff'}}
-                       />
-                       <Area type="monotone" dataKey="volume" stroke="#14b8a6" strokeWidth={3} fillOpacity={1} fill="url(#colorVol)" />
-                    </AreaChart>
-                 </ResponsiveContainer>
-               ) : (
-                 <div className="h-full flex items-center justify-center text-slate-400 text-xs">Sin datos recientes</div>
-               )}
             </div>
          </div>
 
