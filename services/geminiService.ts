@@ -21,7 +21,7 @@ export const getAiCoachAdvice = async (user: UserState, query: string): Promise<
   const ai = new GoogleGenAI({ apiKey: apiKey });
   
   const systemPrompt = `
-    Eres "FitQuest Coach", un entrenador personal experto y motivador en una aplicación gamificada.
+    Eres "LevelUp Coach", un entrenador personal experto y motivador en una aplicación gamificada.
     El usuario está en Nivel ${user.level}.
     Ha completado ${user.completedWorkouts} entrenamientos.
     Su peso total levantado históricamente es ${user.totalWeightLifted} kg.

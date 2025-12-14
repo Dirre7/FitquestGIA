@@ -1187,7 +1187,7 @@ const DashboardView = ({ user, setView, onGoToChallenges }: { user: UserState; s
         
         <div className="relative z-10">
           <h3 className="text-lg font-bold mb-2 flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
-            <Sparkles className="w-5 h-5" /> FitQuest Coach AI
+            <Sparkles className="w-5 h-5" /> LevelUp Coach AI
           </h3>
           
           {!aiAdvice ? (

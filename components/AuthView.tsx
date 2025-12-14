@@ -49,7 +49,7 @@ export const AuthView = () => {
           <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-2xl mx-auto flex items-center justify-center mb-4 shadow-lg shadow-primary-500/30">
             <Zap className="w-8 h-8 text-white" fill="currentColor" />
           </div>
-          <h1 className="text-3xl font-black text-white mb-2">FitQuest</h1>
+          <h1 className="text-3xl font-black text-white mb-2">LevelUp Fitness</h1>
           <p className="text-slate-300">Tu viaje fitness comienza aquí</p>
         </div>
 
@@ -64,7 +64,7 @@ export const AuthView = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full bg-slate-800/50 border border-slate-700 text-white rounded-xl py-3 pl-12 pr-4 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 transition-all placeholder:text-slate-600"
-                placeholder="guerrero@fitquest.com"
+                placeholder="usuario@levelup.com"
               />
             </div>
           </div>
