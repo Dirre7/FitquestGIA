@@ -69,19 +69,24 @@
       
       html {
         height: 100%;
-        /* Background color handled by JS/Tailwind */
+        background-color: #0f172a; /* Default dark color to prevent white flash */
+        overscroll-behavior: none; /* CRITICAL: Prevents pull-to-refresh/bounce revealing white bg */
+        -webkit-overflow-scrolling: touch;
       }
 
       body {
         font-family: 'Inter', sans-serif;
-        overscroll-behavior-y: none;
+        overscroll-behavior-y: none; /* CRITICAL */
         height: 100%;
         margin: 0;
         padding: 0;
+        background-color: #0f172a;
       }
 
       #root {
         height: 100%;
+        overflow-y: auto; /* Allow internal scrolling instead of body scrolling */
+        overscroll-behavior: none;
       }
 
       ::-webkit-scrollbar {

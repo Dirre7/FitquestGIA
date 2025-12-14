@@ -1858,6 +1858,7 @@ const App = () => {
     }
     // Update body background color to prevent white bars on scroll/overscroll
     document.body.style.backgroundColor = color;
+    document.documentElement.style.backgroundColor = color;
 
   }, [user.settings.darkMode]);
 
