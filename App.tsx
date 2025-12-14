@@ -112,13 +112,13 @@ const Confetti = () => {
   );
 };
 
-const ConfirmationModal = ({ isOpen, title, message, onConfirm, onCancel }: { isOpen: boolean, title: string, message: string, onConfirm: () => void, onCancel: () => void }) => {
+const ConfirmationModal = ({ isOpen, title, message, onConfirm, onCancel, confirmText = "Abandonar" }: { isOpen: boolean, title: string, message: string, onConfirm: () => void, onCancel: () => void, confirmText?: string }) => {
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
       <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-2xl max-w-sm w-full border border-slate-200 dark:border-slate-700 animate-bounce-in relative overflow-hidden">
         <div className="absolute top-0 right-0 p-4 opacity-5">
-           <Trash2 className="w-24 h-24" />
+           <AlertTriangle className="w-24 h-24" />
         </div>
         <h3 className="text-xl font-bold mb-2 text-slate-900 dark:text-white relative z-10">{title}</h3>
         <p className="text-slate-500 dark:text-slate-300 mb-6 text-sm relative z-10">{message}</p>
@@ -126,7 +126,7 @@ const ConfirmationModal = ({ isOpen, title, message, onConfirm, onCancel }: { is
           <button onClick={onCancel} className="flex-1 px-4 py-3 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-bold hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">Cancelar</button>
           <button onClick={onConfirm} className="flex-1 px-4 py-3 bg-red-500 text-white rounded-xl font-bold hover:bg-red-600 shadow-lg shadow-red-500/30 transition-colors flex items-center justify-center gap-2">
             <Trash2 className="w-4 h-4" />
-            Abandonar
+            {confirmText}
           </button>
         </div>
       </div>
@@ -858,7 +858,7 @@ const StatsView = ({ user, setUser }: { user: UserState, setUser: (u: UserState)
    );
 };
 
-const ProfileView = ({ user, setUser, toggleTheme, signOut }: { user: UserState, setUser: (u: UserState) => void, toggleTheme: () => void, signOut: () => void }) => {
+const ProfileView = ({ user, setUser, toggleTheme, signOut, onResetProgress }: { user: UserState, setUser: (u: UserState) => void, toggleTheme: () => void, signOut: () => void, onResetProgress: () => void }) => {
    const [showAvatarModal, setShowAvatarModal] = useState(false);
    const [editingName, setEditingName] = useState(false);
    const [name, setName] = useState(user.name);
@@ -926,6 +926,14 @@ const ProfileView = ({ user, setUser, toggleTheme, signOut }: { user: UserState,
             >
                <LogOut className="w-5 h-5" />
                Cerrar Sesión
+            </button>
+
+            <button 
+               onClick={onResetProgress}
+               className="w-full border border-red-500/50 p-4 rounded-xl flex items-center gap-3 text-red-500 font-bold hover:bg-red-500 hover:text-white transition-all text-xs uppercase tracking-widest"
+            >
+               <Trash2 className="w-5 h-5" />
+               Reiniciar Progreso
             </button>
          </div>
 
@@ -1416,6 +1424,7 @@ const App = () => {
   const [showLevelUp, setShowLevelUp] = useState(false);
   const [showWorkoutComplete, setShowWorkoutComplete] = useState<WorkoutLog | null>(null);
   const [showConfirmAbandon, setShowConfirmAbandon] = useState(false);
+  const [showConfirmReset, setShowConfirmReset] = useState(false);
 
   // Derived state for modals
   const [newLevel, setNewLevel] = useState(0);
@@ -1482,6 +1491,17 @@ const App = () => {
   const handleUpdateUser = (newUser: UserState) => {
     setUser(newUser);
     saveUser(newUser);
+  };
+  
+  const resetUser = () => {
+    // Keep settings preference to avoid blinding user
+    const resetState = { 
+      ...INITIAL_USER_STATE,
+      settings: user.settings
+    };
+    handleUpdateUser(resetState);
+    setShowConfirmReset(false);
+    setView('dashboard');
   };
   
   // Logic for leveling up
@@ -1692,7 +1712,7 @@ const App = () => {
              {view === 'active-workout' && <ActiveWorkoutView user={user} onUpdateUser={handleUpdateUser} onFinishWorkout={finishWorkout} onCancelWorkout={() => setView('training')} />}
              {view === 'stats' && <StatsView user={user} setUser={handleUpdateUser} />}
              {view === 'achievements' && <AchievementsView user={user} />}
-             {view === 'profile' && <ProfileView user={user} setUser={handleUpdateUser} toggleTheme={() => handleUpdateUser({...user, settings: {...user.settings, darkMode: !user.settings.darkMode}})} signOut={() => supabase.auth.signOut()} />}
+             {view === 'profile' && <ProfileView user={user} setUser={handleUpdateUser} toggleTheme={() => handleUpdateUser({...user, settings: {...user.settings, darkMode: !user.settings.darkMode}})} signOut={() => supabase.auth.signOut()} onResetProgress={() => setShowConfirmReset(true)} />}
           </main>
 
           {/* Bottom Nav */}
@@ -1723,6 +1743,14 @@ const App = () => {
              message="Perderás el progreso de tu sesión actual y del programa. ¿Estás seguro?" 
              onConfirm={confirmAbandon} 
              onCancel={() => setShowConfirmAbandon(false)} 
+          />
+           <ConfirmationModal 
+             isOpen={showConfirmReset} 
+             title="¿Reiniciar Progreso?" 
+             message="Estás a punto de borrar todo tu historial, nivel, experiencia y logros. Volverás al Nivel 1. Esta acción no se puede deshacer." 
+             onConfirm={resetUser} 
+             onCancel={() => setShowConfirmReset(false)}
+             confirmText="Sí, borrar todo"
           />
        </div>
     </div>
