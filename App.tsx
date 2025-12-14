@@ -506,9 +506,7 @@ const ExerciseLoggerModal = ({ exercise, onSave, onClose }: { exercise: ActiveEx
   );
 };
 
-const ProgramsView = ({ user, startProgram, continueProgram, abandonProgram }: { user: UserState, startProgram: (p: Program) => void, continueProgram: () => void, abandonProgram: () => void }) => {
-  const [filter, setFilter] = useState<'ALL' | Difficulty>('ALL');
-  
+const ProgramsView = ({ user, startProgram, continueProgram, abandonProgram, filter, setFilter }: { user: UserState, startProgram: (p: Program) => void, continueProgram: () => void, abandonProgram: () => void, filter: 'ALL' | Difficulty, setFilter: (f: 'ALL' | Difficulty) => void }) => {
   const filteredPrograms = PROGRAMS.filter(p => filter === 'ALL' || p.difficulty === filter);
   const activeProgram = user.activeProgram ? PROGRAMS.find(p => p.id === user.activeProgram!.programId) : null;
 
@@ -963,7 +961,7 @@ const ProfileView = ({ user, setUser, toggleTheme, signOut }: { user: UserState,
    );
 };
 
-const DashboardView = ({ user, setView }: { user: UserState; setView: (v: ViewState) => void }) => {
+const DashboardView = ({ user, setView, onGoToChallenges }: { user: UserState; setView: (v: ViewState) => void, onGoToChallenges: () => void }) => {
   const activeProgram = user.activeProgram ? PROGRAMS.find(p => p.id === user.activeProgram!.programId) : null;
   const activeProgress = user.activeProgram;
   const unlockedAchievements = ACHIEVEMENTS.filter(ach => (user.achievements || []).includes(ach.id));
@@ -1112,6 +1110,20 @@ const DashboardView = ({ user, setView }: { user: UserState; setView: (v: ViewSt
           <Trophy className="absolute -bottom-6 -right-6 w-32 h-32 text-white/10 rotate-12" />
         </div>
       )}
+
+      {/* Weekly Challenge Card */}
+      <div 
+        onClick={onGoToChallenges}
+        className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-orange-600 to-red-600 text-white shadow-lg cursor-pointer hover:shadow-orange-500/20 hover:scale-[1.01] transition-all p-5 flex items-center justify-between group"
+      >
+        <div>
+          <h3 className="font-black text-xl italic uppercase tracking-wider mb-1">Desafíos Semanales</h3>
+          <p className="text-red-100 text-sm font-medium">Prueba tu valía. Gana recompensas exclusivas.</p>
+        </div>
+        <div className="bg-white/20 p-3 rounded-full backdrop-blur-sm group-hover:bg-white/30 transition-colors">
+          <Flame className="w-6 h-6 text-white animate-pulse" />
+        </div>
+      </div>
 
       {/* AI Coach Card */}
       <div className="glass-card p-6 rounded-2xl relative overflow-hidden border-2 border-indigo-500/20 shadow-lg shadow-indigo-500/5">
@@ -1388,6 +1400,7 @@ const App = () => {
   const [session, setSession] = useState<any>(null);
   const [user, setUser] = useState<UserState>(INITIAL_USER_STATE);
   const [view, setView] = useState<ViewState>('dashboard');
+  const [programFilter, setProgramFilter] = useState<'ALL' | Difficulty>('ALL');
   const [loading, setLoading] = useState(true);
   
   // Modals state
@@ -1636,6 +1649,11 @@ const App = () => {
     setShowWorkoutComplete(newLog);
     setView('dashboard');
   };
+
+  const goToChallenges = () => {
+    setProgramFilter(Difficulty.CHALLENGE);
+    setView('training');
+  };
   
   // Theme effect
   useEffect(() => {
@@ -1660,8 +1678,8 @@ const App = () => {
 
           {/* Main Content */}
           <main className="max-w-md mx-auto min-h-screen relative p-4 pb-24">
-             {view === 'dashboard' && <DashboardView user={user} setView={setView} />}
-             {view === 'training' && <ProgramsView user={user} startProgram={startProgram} continueProgram={continueProgram} abandonProgram={abandonProgram} />}
+             {view === 'dashboard' && <DashboardView user={user} setView={setView} onGoToChallenges={goToChallenges} />}
+             {view === 'training' && <ProgramsView user={user} startProgram={startProgram} continueProgram={continueProgram} abandonProgram={abandonProgram} filter={programFilter} setFilter={setProgramFilter} />}
              {view === 'active-workout' && <ActiveWorkoutView user={user} onUpdateUser={handleUpdateUser} onFinishWorkout={finishWorkout} onCancelWorkout={() => setView('training')} />}
              {view === 'stats' && <StatsView user={user} setUser={handleUpdateUser} />}
              {view === 'achievements' && <AchievementsView user={user} />}
