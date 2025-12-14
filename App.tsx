@@ -631,7 +631,7 @@ const ProgramsView = ({ user, startProgram, continueProgram, abandonProgram, fil
   const activeProgram = user.activeProgram ? PROGRAMS.find(p => p.id === user.activeProgram!.programId) : null;
 
   return (
-    <div className="space-y-6 pb-24 animate-fade-in">
+    <div className="space-y-6 pb-24 animate-fade-in pt-safe-top">
        <div className="flex items-center justify-between">
           <h2 className="text-2xl font-black text-slate-900 dark:text-white">Entrenamiento</h2>
        </div>
@@ -751,9 +751,9 @@ const AchievementsView = ({ user }: { user: UserState }) => {
    }, [user.achievements]);
 
    return (
-      <div className="space-y-4 pb-24 animate-fade-in">
+      <div className="space-y-4 pb-24 animate-fade-in pt-safe-top">
          {/* Sticky Header */}
-         <div className="bg-slate-900/90 sticky top-0 z-30 py-3 -mx-4 px-4 border-b border-slate-800/50 backdrop-blur-md pt-safe-top">
+         <div className="bg-slate-900/90 sticky top-0 z-30 py-3 -mx-4 px-4 border-b border-slate-800/50 backdrop-blur-md">
             <div className="flex items-end justify-between mb-2">
                <h2 className="text-xl font-black text-white">Sala de Trofeos</h2>
                <span className="text-primary-400 font-bold text-xs">{unlockedCount} / {totalCount}</span>
@@ -921,7 +921,7 @@ const StatsView = ({ user, setUser }: { user: UserState, setUser: (u: UserState)
    );
 
    return (
-      <div className="space-y-6 pb-24 animate-fade-in">
+      <div className="space-y-6 pb-24 animate-fade-in pt-safe-top">
          <h2 className="text-2xl font-black text-slate-900 dark:text-white">Estadísticas</h2>
          
          {/* Summary Grid */}
@@ -1006,7 +1006,7 @@ const ProfileView = ({ user, setUser, toggleTheme, signOut, onResetProgress }: {
    };
 
    return (
-      <div className="space-y-6 pb-24 animate-fade-in">
+      <div className="space-y-6 pb-24 animate-fade-in pt-safe-top">
          {/* Header */}
          <div className="text-center pt-4">
             <div className="relative inline-block">
@@ -1849,6 +1849,16 @@ const App = () => {
     } else {
       document.documentElement.classList.remove('dark');
     }
+
+    // Dynamic Meta Theme Color Update
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    const color = user.settings.darkMode ? '#0f172a' : '#f8fafc'; // slate-900 or slate-50
+    if (metaThemeColor) {
+      metaThemeColor.setAttribute('content', color);
+    }
+    // Update body background color to prevent white bars on scroll/overscroll
+    document.body.style.backgroundColor = color;
+
   }, [user.settings.darkMode]);
 
   // View Logic Switcher
@@ -1860,8 +1870,8 @@ const App = () => {
   }
 
   return (
-    <div className={`min-h-screen ${user.settings.darkMode ? 'dark' : ''}`}>
-       <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-200 font-sans selection:bg-primary-500 selection:text-white pb-safe transition-colors duration-300">
+    <div className={`min-h-[100dvh] ${user.settings.darkMode ? 'dark' : ''}`}>
+       <div className="min-h-[100dvh] bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-200 font-sans selection:bg-primary-500 selection:text-white pb-safe transition-colors duration-300">
           
           {loading && (
              <div className="fixed inset-0 z-[200] bg-slate-900 flex items-center justify-center">
@@ -1870,7 +1880,7 @@ const App = () => {
           )}
 
           {/* Main Content */}
-          <main className="max-w-md mx-auto min-h-screen relative p-4 pb-24">
+          <main className="max-w-md mx-auto min-h-[100dvh] relative p-4 pb-24">
              {view === 'dashboard' && <DashboardView user={user} setView={setView} onGoToChallenges={goToChallenges} />}
              {view === 'training' && <ProgramsView user={user} startProgram={startProgram} continueProgram={continueProgram} abandonProgram={abandonProgram} filter={programFilter} setFilter={setProgramFilter} />}
              {view === 'active-workout' && <ActiveWorkoutView user={user} onUpdateUser={handleUpdateUser} onFinishWorkout={finishWorkout} onCancelWorkout={() => setView('training')} />}

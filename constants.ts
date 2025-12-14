@@ -350,6 +350,39 @@ const buildQuickProgram = (): ProgramDay[] => {
   return schedule;
 };
 
+// --- PROGRAMA 8: DOMINA LAS MANCUERNAS (Intermedio - Casa/Gym) ---
+const dbUpper: ExerciseTemplate[] = [
+  createExercise("Press de Pecho (Suelo/Banco)", 4, "10-12", 90, "Tumbado. Empuja las mancuernas arriba juntándolas. Si estás en suelo, hasta que codos toquen."),
+  createExercise("Remo Unilateral", 4, "10-12", 90, "Apoya mano y rodilla en superficie estable. Tira de la mancuerna a la cadera. Espalda plana."),
+  createExercise("Press Hombros Arnold", 3, "10-12", 60, "Sentado o de pie. Inicia palmas hacia ti, gira al subir hasta palmas al frente."),
+  createExercise("Elevaciones Laterales", 3, "12-15", 45, "Sube los brazos lateralmente hasta altura de hombros. Controla la bajada."),
+  createExercise("Copa de Tríceps", 3, "12-15", 45, "De pie, sujeta una mancuerna con ambas manos tras la nuca. Extiende al techo."),
+  createExercise("Curl Martillo", 3, "12", 45, "Palmas enfrentadas. Sube la mancuerna sin girar la muñeca.")
+];
+
+const dbLower: ExerciseTemplate[] = [
+  createExercise("Goblet Squat", 4, "10-12", 90, "Sujeta la mancuerna verticalmente pegada al pecho. Baja profundo. Codos por dentro de rodillas."),
+  createExercise("Peso Muerto Rumano", 4, "10-12", 90, "Dos mancuernas. Baja rozando las piernas, cadera atrás, espalda neutra. Siente el estiramiento."),
+  createExercise("Zancadas Caminando", 3, "20 pasos", 60, "Mancuernas a los lados. Pasos largos y controlados."),
+  createExercise("Puente Glúteo (con peso)", 4, "15", 60, "Mancuerna sobre la cadera. Sube y aprieta glúteos arriba 1 seg."),
+  createExercise("Gemelos a un pie", 3, "15/p", 45, "Sujeta mancuerna del lado que trabaja. Sube talón explosivo.")
+];
+
+const buildDbProgram = (): ProgramDay[] => {
+  const schedule: ProgramDay[] = [];
+  for (let w = 1; w <= 6; w++) {
+    schedule.push({ id: `db_w${w}_d1`, title: `Semana ${w}: Torso Mancuernas`, exercises: dbUpper });
+    schedule.push({ id: `db_w${w}_d2`, title: `Semana ${w}: Pierna Mancuernas`, exercises: dbLower });
+    schedule.push({ id: `db_w${w}_d3`, title: `Semana ${w}: Full Body Remix`, exercises: [...dbUpper.slice(0,3), ...dbLower.slice(0,3)] });
+    schedule.push({ id: `db_w${w}_d4`, title: `Semana ${w}: Hipertrofia Extra`, exercises: [
+        createExercise("Aperturas Pecho", 3, "12", 60, "Abre brazos en cruz tumbado."),
+        createExercise("Pájaros", 3, "15", 45, "Inclínate y abre brazos para hombro posterior."),
+        ...dbLower.slice(2)
+    ] });
+  }
+  return schedule;
+};
+
 // --- DESAFIOS SEMANALES DEFINICIONES ---
 
 // Desafío 1: Semana del Infierno (Metabólico/Cardio)
@@ -526,6 +559,19 @@ export const PROGRAMS: Program[] = [
     xpRewardDay: 100, // Requested 100 XP
     estimatedKcal: 900,
     schedule: buildQuickProgram()
+  },
+  {
+    id: 'prog_db_master',
+    title: "Domina las Mancuernas",
+    description: "Construye músculo solo con un par de mancuernas. Ideal para casa o gimnasios llenos. Enfoque hipertrofia.",
+    difficulty: Difficulty.INTERMEDIATE,
+    location: 'Casa',
+    durationWeeks: 6,
+    daysPerWeek: 4,
+    xpRewardFinish: 3100,
+    xpRewardDay: 250,
+    estimatedKcal: 8400,
+    schedule: buildDbProgram()
   },
   // --- DESAFIOS SEMANALES ---
   {
