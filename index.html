@@ -67,24 +67,31 @@
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
       
+      /* Reset completo para evitar rebotes y franjas */
       html {
-        min-height: 100dvh;
+        height: 100%;
         width: 100%;
+        background-color: #0f172a; /* Fondo oscuro por defecto para tapar huecos */
+        overscroll-behavior: none; /* Evita el rebote elástico en Android/iOS */
         -webkit-tap-highlight-color: transparent;
-        /* Dynamic background controlled by Tailwind classes on body/app */
       }
 
       body {
+        height: 100%;
+        width: 100%;
         margin: 0;
         padding: 0;
-        width: 100%;
-        min-height: 100dvh;
-        overscroll-behavior-y: none;
+        background-color: #0f172a;
+        overflow: hidden; /* El scroll lo maneja el contenedor #root o App */
+        position: fixed; /* Fija el body para que no se mueva con el teclado virtual */
+        inset: 0;
       }
 
       #root {
+        height: 100%;
         width: 100%;
-        min-height: 100dvh;
+        overflow: hidden; /* Contenedor raíz sin scroll */
+        background-color: inherit;
       }
 
       ::-webkit-scrollbar {
@@ -124,7 +131,6 @@
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
       }
 
-      /* LIQUID GLASS EFFECT */
       .liquid-glass {
         background: rgba(255, 255, 255, 0.15);
         backdrop-filter: blur(20px);
