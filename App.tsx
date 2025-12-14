@@ -753,7 +753,7 @@ const AchievementsView = ({ user }: { user: UserState }) => {
    return (
       <div className="space-y-4 pb-24 animate-fade-in">
          {/* Sticky Header */}
-         <div className="bg-slate-900/90 sticky top-0 z-30 py-3 -mx-4 px-4 border-b border-slate-800/50 backdrop-blur-md">
+         <div className="bg-slate-900/90 sticky top-0 z-30 py-3 -mx-4 px-4 border-b border-slate-800/50 backdrop-blur-md pt-safe-top">
             <div className="flex items-end justify-between mb-2">
                <h2 className="text-xl font-black text-white">Sala de Trofeos</h2>
                <span className="text-primary-400 font-bold text-xs">{unlockedCount} / {totalCount}</span>
@@ -1142,7 +1142,7 @@ const DashboardView = ({ user, setView, onGoToChallenges }: { user: UserState; s
   };
 
   return (
-    <div className="space-y-6 pb-28 animate-fade-in">
+    <div className="space-y-6 pb-28 animate-fade-in pt-safe-top">
       
       {/* Profile Summary Card - Redesigned */}
       <div 
@@ -1449,7 +1449,7 @@ const ActiveWorkoutView = ({ user, onUpdateUser, onFinishWorkout, onCancelWorkou
   };
   
   return (
-    <div className="pb-24 animate-fade-in relative min-h-screen flex flex-col">
+    <div className="pb-24 animate-fade-in relative min-h-screen flex flex-col pt-safe-top">
        {/* Header */}
        <div className="flex items-center justify-between mb-6 sticky top-0 z-40 bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-sm py-2">
           <div>
@@ -1496,7 +1496,7 @@ const ActiveWorkoutView = ({ user, onUpdateUser, onFinishWorkout, onCancelWorkou
        </div>
 
        {/* Finish Button */}
-       <div className="sticky bottom-4 mt-6">
+       <div className="sticky bottom-4 mt-6 mb-safe">
           <button 
              onClick={handleFinishAttempt}
              className="w-full bg-green-500 hover:bg-green-400 text-white font-bold py-4 rounded-2xl shadow-xl shadow-green-500/30 active:scale-95 transition-all flex items-center justify-center gap-2"
@@ -1881,7 +1881,7 @@ const App = () => {
 
           {/* Bottom Nav */}
           {view !== 'active-workout' && (
-            <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-[360px] z-50 liquid-glass rounded-3xl transition-all duration-300 hover:scale-[1.02]">
+            <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-[360px] z-50 liquid-glass rounded-3xl transition-all duration-300 hover:scale-[1.02] mb-safe">
                <div className="flex justify-around items-center h-20 px-2">
                   <NavButton icon={Home} label="Inicio" isActive={view === 'dashboard'} onClick={() => setView('dashboard')} />
                   <NavButton icon={Dumbbell} label="Entreno" isActive={view === 'training'} onClick={() => setView('training')} />
