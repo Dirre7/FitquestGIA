@@ -1871,17 +1871,19 @@ const App = () => {
   }
 
   return (
-    <div className={`h-full ${user.settings.darkMode ? 'dark' : ''}`}>
-       <div className="min-h-full bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-200 font-sans selection:bg-primary-500 selection:text-white pb-safe transition-colors duration-300">
-          
-          {loading && (
-             <div className="fixed inset-0 z-[200] bg-slate-900 flex items-center justify-center">
-                <Loader2 className="w-10 h-10 text-primary-500 animate-spin" />
-             </div>
-          )}
+    <div className={`fixed inset-0 w-full h-[100dvh] overflow-hidden bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-200 font-sans selection:bg-primary-500 selection:text-white transition-colors duration-300 ${user.settings.darkMode ? 'dark' : ''}`}>
+       
+       {loading && (
+          <div className="fixed inset-0 z-[200] bg-slate-900 flex items-center justify-center">
+             <Loader2 className="w-10 h-10 text-primary-500 animate-spin" />
+          </div>
+       )}
 
+       {/* Scrolling Container */}
+       <div className="w-full h-full overflow-y-auto overflow-x-hidden pb-safe relative">
+          
           {/* Main Content */}
-          <main className="max-w-md mx-auto min-h-full relative p-4 pb-24">
+          <main className="max-w-md mx-auto min-h-full p-4 pb-24">
              {view === 'dashboard' && <DashboardView user={user} setView={setView} onGoToChallenges={goToChallenges} />}
              {view === 'training' && <ProgramsView user={user} startProgram={startProgram} continueProgram={continueProgram} abandonProgram={abandonProgram} filter={programFilter} setFilter={setProgramFilter} />}
              {view === 'active-workout' && <ActiveWorkoutView user={user} onUpdateUser={handleUpdateUser} onFinishWorkout={finishWorkout} onCancelWorkout={() => setView('training')} />}
@@ -1890,44 +1892,46 @@ const App = () => {
              {view === 'profile' && <ProfileView user={user} setUser={handleUpdateUser} toggleTheme={() => handleUpdateUser({...user, settings: {...user.settings, darkMode: !user.settings.darkMode}})} signOut={() => supabase.auth.signOut()} onResetProgress={() => setShowConfirmReset(true)} />}
           </main>
 
-          {/* Bottom Nav */}
+          {/* Bottom Nav (Inside scrolling container but fixed visually) */}
           {view !== 'active-workout' && (
-            <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-[360px] z-50 liquid-glass rounded-3xl transition-all duration-300 hover:scale-[1.02] mb-safe">
-               <div className="flex justify-around items-center h-20 px-2">
-                  <NavButton icon={Home} label="Inicio" isActive={view === 'dashboard'} onClick={() => setView('dashboard')} />
-                  <NavButton icon={Dumbbell} label="Entreno" isActive={view === 'training'} onClick={() => setView('training')} />
-                  <NavButton icon={BarChart2} label="Stats" isActive={view === 'stats'} onClick={() => setView('stats')} />
-                  <NavButton icon={User} label="Perfil" isActive={view === 'profile'} onClick={() => setView('profile')} />
-               </div>
-            </nav>
+            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-[360px] z-50 mb-safe pointer-events-none">
+                <nav className="liquid-glass rounded-3xl transition-all duration-300 pointer-events-auto">
+                   <div className="flex justify-around items-center h-20 px-2">
+                      <NavButton icon={Home} label="Inicio" isActive={view === 'dashboard'} onClick={() => setView('dashboard')} />
+                      <NavButton icon={Dumbbell} label="Entreno" isActive={view === 'training'} onClick={() => setView('training')} />
+                      <NavButton icon={BarChart2} label="Stats" isActive={view === 'stats'} onClick={() => setView('stats')} />
+                      <NavButton icon={User} label="Perfil" isActive={view === 'profile'} onClick={() => setView('profile')} />
+                   </div>
+                </nav>
+            </div>
           )}
-          
-          {/* Global Modals */}
-          {showLevelUp && <LevelUpModal level={newLevel} onClose={() => setShowLevelUp(false)} />}
-          {showWorkoutComplete && (
-             <WorkoutCompleteModal 
-               log={showWorkoutComplete} 
-               isProgramFinish={isProgFinish} 
-               isWeekFinish={isWeekFinish} 
-               onClose={() => setShowWorkoutComplete(null)} 
-             />
-          )}
-          <ConfirmationModal 
-             isOpen={showConfirmAbandon} 
-             title="¿Abandonar Programa?" 
-             message="Perderás el progreso de tu sesión actual y del programa. ¿Estás seguro?" 
-             onConfirm={confirmAbandon} 
-             onCancel={() => setShowConfirmAbandon(false)} 
-          />
-           <ConfirmationModal 
-             isOpen={showConfirmReset} 
-             title="¿Reiniciar Progreso?" 
-             message="Estás a punto de borrar todo tu historial, nivel, experiencia y logros. Volverás al Nivel 1. Esta acción no se puede deshacer." 
-             onConfirm={resetUser} 
-             onCancel={() => setShowConfirmReset(false)}
-             confirmText="Sí, borrar todo"
-          />
        </div>
+       
+       {/* Global Modals */}
+       {showLevelUp && <LevelUpModal level={newLevel} onClose={() => setShowLevelUp(false)} />}
+       {showWorkoutComplete && (
+          <WorkoutCompleteModal 
+            log={showWorkoutComplete} 
+            isProgramFinish={isProgFinish} 
+            isWeekFinish={isWeekFinish} 
+            onClose={() => setShowWorkoutComplete(null)} 
+          />
+       )}
+       <ConfirmationModal 
+          isOpen={showConfirmAbandon} 
+          title="¿Abandonar Programa?" 
+          message="Perderás el progreso de tu sesión actual y del programa. ¿Estás seguro?" 
+          onConfirm={confirmAbandon} 
+          onCancel={() => setShowConfirmAbandon(false)} 
+       />
+        <ConfirmationModal 
+          isOpen={showConfirmReset} 
+          title="¿Reiniciar Progreso?" 
+          message="Estás a punto de borrar todo tu historial, nivel, experiencia y logros. Volverás al Nivel 1. Esta acción no se puede deshacer." 
+          onConfirm={resetUser} 
+          onCancel={() => setShowConfirmReset(false)}
+          confirmText="Sí, borrar todo"
+       />
     </div>
   );
 };
