@@ -1635,8 +1635,8 @@ const App = () => {
 
           {/* Bottom Nav */}
           {view !== 'active-workout' && (
-            <nav className="fixed bottom-0 left-0 w-full z-50 bg-white/90 dark:bg-slate-900/90 backdrop-blur-lg border-t border-slate-200 dark:border-slate-800 pb-safe shadow-lg">
-               <div className="max-w-md mx-auto flex justify-around h-20 items-center px-2">
+            <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-[360px] z-50 liquid-glass rounded-3xl transition-all duration-300 hover:scale-[1.02]">
+               <div className="flex justify-around items-center h-20 px-2">
                   <NavButton icon={Home} label="Inicio" isActive={view === 'dashboard'} onClick={() => setView('dashboard')} />
                   <NavButton icon={Dumbbell} label="Entreno" isActive={view === 'training'} onClick={() => setView('training')} />
                   <NavButton icon={BarChart2} label="Stats" isActive={view === 'stats'} onClick={() => setView('stats')} />
