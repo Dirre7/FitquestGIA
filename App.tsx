@@ -307,6 +307,20 @@ const AvatarSelectionModal = ({ isOpen, onClose, onSelect }: { isOpen: boolean, 
 
 const ExerciseLoggerModal = ({ exercise, onSave, onClose }: { exercise: ActiveExerciseState, onSave: (sets: SetLog[]) => void, onClose: () => void }) => {
   const [sets, setSets] = useState<SetLog[]>(exercise.setsLog);
+  const [restTimer, setRestTimer] = useState<number | null>(null);
+
+  // Timer logic
+  useEffect(() => {
+    let interval: any;
+    if (restTimer !== null && restTimer > 0) {
+      interval = setInterval(() => {
+        setRestTimer((prev) => (prev !== null && prev > 0 ? prev - 1 : null));
+      }, 1000);
+    } else if (restTimer === 0) {
+      setRestTimer(null);
+    }
+    return () => clearInterval(interval);
+  }, [restTimer]);
 
   const updateSet = (index: number, field: keyof SetLog, value: any) => {
     const newSets = [...sets];
@@ -314,13 +328,66 @@ const ExerciseLoggerModal = ({ exercise, onSave, onClose }: { exercise: ActiveEx
     setSets(newSets);
   };
 
+  const toggleComplete = (index: number) => {
+    const newSets = [...sets];
+    const wasCompleted = newSets[index].completed;
+    newSets[index].completed = !wasCompleted;
+    setSets(newSets);
+
+    // If marking as complete and it's NOT the very last set (though some people rest after last set too, usually between exercises is handled by user flow)
+    // AND there is a rest time defined:
+    if (!wasCompleted && exercise.restSeconds > 0) {
+       setRestTimer(exercise.restSeconds);
+    }
+  };
+
   const handleSave = () => {
     onSave(sets);
   };
 
+  const formatRestTime = (seconds: number) => {
+     const m = Math.floor(seconds / 60);
+     const s = seconds % 60;
+     return `${m}:${s < 10 ? '0' : ''}${s}`;
+  };
+
   return (
     <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center sm:p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-       <div className="bg-slate-900 w-full max-w-lg sm:rounded-3xl rounded-t-3xl border border-slate-700 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+       <div className="bg-slate-900 w-full max-w-lg sm:rounded-3xl rounded-t-3xl border border-slate-700 shadow-2xl overflow-hidden flex flex-col max-h-[90vh] relative">
+          
+          {/* REST TIMER OVERLAY */}
+          {restTimer !== null && (
+            <div className="absolute inset-0 z-50 bg-slate-900/95 flex flex-col items-center justify-center animate-fade-in text-center p-6">
+              <h3 className="text-slate-400 font-bold uppercase tracking-widest mb-6 animate-pulse">Descanso</h3>
+              
+              <div className="relative mb-8">
+                 <div className="text-8xl font-black text-white tabular-nums tracking-tighter drop-shadow-2xl">
+                    {formatRestTime(restTimer)}
+                 </div>
+                 <Zap className="absolute -top-4 -right-4 w-8 h-8 text-yellow-400 animate-bounce" fill="currentColor"/>
+              </div>
+
+              <div className="w-64 h-3 bg-slate-800 rounded-full overflow-hidden mb-8 border border-slate-700">
+                 <div 
+                   className="h-full bg-gradient-to-r from-primary-500 to-primary-400 transition-all duration-1000 ease-linear" 
+                   style={{width: `${(restTimer / exercise.restSeconds) * 100}%`}}
+                 ></div>
+              </div>
+
+              <button 
+                onClick={() => setRestTimer(null)} 
+                className="px-10 py-4 bg-slate-800 text-white rounded-2xl font-bold hover:bg-slate-700 transition-all active:scale-95 border border-slate-700 flex items-center gap-2 group"
+              >
+                 <SkipForward className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                 Saltar Descanso
+              </button>
+
+              <p className="absolute bottom-8 text-xs text-slate-500 font-bold">
+                 Respira profundo... recupérate.
+              </p>
+            </div>
+          )}
+
           {/* Header */}
           <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-800/50">
              <div className="flex items-center gap-3">
@@ -329,7 +396,14 @@ const ExerciseLoggerModal = ({ exercise, onSave, onClose }: { exercise: ActiveEx
                 </div>
                 <div>
                    <h3 className="text-white font-bold">{exercise.name}</h3>
-                   <p className="text-xs text-slate-400">{exercise.targetSets} Series x {exercise.targetReps} Reps</p>
+                   <div className="flex items-center gap-2 text-xs text-slate-400">
+                      <span>{exercise.targetSets} Series x {exercise.targetReps} Reps</span>
+                      {exercise.restSeconds > 0 && (
+                        <span className="flex items-center gap-1 text-primary-400">
+                           <Clock className="w-3 h-3" /> {exercise.restSeconds}s
+                        </span>
+                      )}
+                   </div>
                 </div>
              </div>
              <button onClick={onClose} className="p-2 bg-slate-800 rounded-full text-slate-400 hover:text-white"><X className="w-5 h-5"/></button>
@@ -375,7 +449,7 @@ const ExerciseLoggerModal = ({ exercise, onSave, onClose }: { exercise: ActiveEx
                    </div>
                    <div className="col-span-2 flex justify-center">
                       <button 
-                        onClick={() => updateSet(i, 'completed', !set.completed)}
+                        onClick={() => toggleComplete(i)}
                         className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${set.completed ? 'bg-green-500 text-white shadow-lg shadow-green-500/30' : 'bg-slate-700 text-slate-500 hover:bg-slate-600'}`}
                       >
                          <Check className="w-5 h-5" />
@@ -1044,512 +1118,114 @@ const DashboardView = ({ user, setView }: { user: UserState; setView: (v: ViewSt
   );
 };
 
-const ActiveWorkoutView: React.FC<{
-  user: UserState;
-  finishDay: (log: WorkoutLog) => void;
-  abortWorkout: () => void;
-  updateProgress: (exercises: ActiveExerciseState[], timer: number, dayIndex: number) => void;
-}> = ({ 
-  user,
-  finishDay,
-  abortWorkout,
-  updateProgress
-}) => {
-  const activeProgData = user.activeProgram;
-  const program = PROGRAMS.find(p => p.id === activeProgData?.programId);
-  const currentDayIndex = activeProgData?.currentDayIndex || 0;
-  const dayData = program?.schedule[currentDayIndex];
-  
-  const [exercises, setExercises] = useState<ActiveExerciseState[]>([]);
-  const [timer, setTimer] = useState(0);
-  const [selectedExerciseIndex, setSelectedExerciseIndex] = useState<number | null>(null); // New state for modal
-  
-  const exercisesRef = useRef(exercises);
-  const timerRef = useRef(timer);
+const ActiveWorkoutView = ({ user, onUpdateUser, onFinishWorkout, onCancelWorkout }: { user: UserState, onUpdateUser: (u: UserState) => void, onFinishWorkout: () => void, onCancelWorkout: () => void }) => {
+  const [activeExercise, setActiveExercise] = useState<ActiveExerciseState | null>(null);
+  const [elapsed, setElapsed] = useState(user.activeProgram?.currentDayLog?.timer || 0);
 
-  useEffect(() => { exercisesRef.current = exercises; }, [exercises]);
-  useEffect(() => { timerRef.current = timer; }, [timer]);
-
+  // Timer effect
   useEffect(() => {
-    if (!dayData) return;
-    if (activeProgData?.currentDayLog && activeProgData.currentDayLog.exercises.length > 0) {
-      setExercises(activeProgData.currentDayLog.exercises);
-      setTimer(activeProgData.currentDayLog.timer);
-    } else {
-      const initialExercises: ActiveExerciseState[] = dayData.exercises.map(template => ({
-        ...template,
-        isFullyCompleted: false,
-        setsLog: Array.from({ length: template.targetSets }).map((_, i) => ({
-          setNumber: i + 1,
-          weight: 0,
-          reps: 0,
-          completed: false
-        }))
-      }));
-      setExercises(initialExercises);
-      setTimer(0);
-    }
-  }, [dayData?.id, activeProgData?.startedAt]); 
-
-  useEffect(() => {
-    const interval = setInterval(() => { setTimer(t => t + 1); }, 1000);
-    return () => clearInterval(interval);
+    const timer = setInterval(() => {
+      setElapsed(prev => prev + 1);
+    }, 1000);
+    return () => clearInterval(timer);
   }, []);
-  
-  useEffect(() => {
-    const saveState = () => {
-      if (exercisesRef.current.length > 0) {
-        updateProgress(exercisesRef.current, timerRef.current, currentDayIndex);
-      }
-    };
-    const intervalId = setInterval(saveState, 10000);
-    return () => {
-      clearInterval(intervalId);
-      saveState();
-    };
-  }, [updateProgress, currentDayIndex]);
 
-  if (!program || !dayData) return <div className="p-4 text-white">Error cargando entrenamiento.</div>;
+  // Sync timer logic could be added here if needed, but for now relies on finish/save actions.
 
-  const handleSaveSets = (setsLog: SetLog[]) => {
-    if (selectedExerciseIndex === null) return;
+  if (!user.activeProgram || !user.activeProgram.currentDayLog) return null;
+
+  const currentLog = user.activeProgram.currentDayLog;
+  const program = PROGRAMS.find(p => p.id === user.activeProgram!.programId);
+  const day = program?.schedule[user.activeProgram.currentDayIndex];
+
+  const handleExerciseSave = (sets: SetLog[]) => {
+    if (!activeExercise) return;
     
-    const newExs = [...exercises];
-    newExs[selectedExerciseIndex].setsLog = setsLog;
-    // Check completion status based on sets
-    // A set is 'complete' if it has reps > 0 (handled in modal). 
-    // Exercise is complete if all intended sets have data.
-    const completedSetsCount = setsLog.filter(s => s.completed).length;
-    newExs[selectedExerciseIndex].isFullyCompleted = completedSetsCount >= newExs[selectedExerciseIndex].targetSets;
-    
-    setExercises(newExs);
-    updateProgress(newExs, timer, currentDayIndex);
-    setSelectedExerciseIndex(null); // Close modal
-  };
-
-  const tryFinishWorkout = () => {
-    const allComplete = exercises.every(ex => ex.isFullyCompleted);
-    if (!allComplete) {
-      const confirmFinish = window.confirm("No has completado todos los ejercicios. ¿Terminar de todas formas?");
-      if (!confirmFinish) return;
-    }
-
-    const totalVol = exercises.reduce((acc, ex) => acc + ex.setsLog.reduce((sAcc, set) => sAcc + (set.weight * set.reps), 0), 0);
-    const totalSets = exercises.reduce((acc, ex) => acc + ex.setsLog.filter(s => s.completed).length, 0);
-    const totalReps = exercises.reduce((acc, ex) => acc + ex.setsLog.reduce((sAcc, set) => sAcc + (set.completed ? set.reps : 0), 0), 0);
-    const durationMinutes = Math.max(1, Math.round(timer / 60));
-    
-    // Dynamic Kcal calculation: approx 6 kcal/min for moderate lifting
-    const calculatedKcal = Math.round(durationMinutes * 6);
-
-    finishDay({
-      id: Date.now().toString(),
-      date: new Date().toISOString(),
-      programTitle: program.title,
-      dayTitle: dayData.title,
-      durationMinutes: durationMinutes,
-      totalVolume: totalVol,
-      totalSets,
-      totalReps,
-      xpEarned: program.xpRewardDay,
-      kcalBurned: calculatedKcal
-    });
-  };
-
-  const formatTime = (s: number) => {
-    const mins = Math.floor(s / 60);
-    // const secs = s % 60; // Not needed for clean display in screenshot style usually, but lets keep minutes
-    return `${mins} min`;
-  };
-
-  // --- Render Modal if Active ---
-  if (selectedExerciseIndex !== null) {
-    return (
-      <ExerciseLoggerModal 
-        exercise={exercises[selectedExerciseIndex]}
-        onSave={handleSaveSets}
-        onClose={() => setSelectedExerciseIndex(null)}
-      />
+    // Update exercises in currentDayLog
+    const updatedExercises = currentLog.exercises.map(ex => 
+       ex.id === activeExercise.id ? { ...ex, setsLog: sets, isFullyCompleted: sets.every(s => s.completed) } : ex
     );
-  }
 
-  // --- Render Main List (Screenshot 3 style) ---
-  return (
-    <div className="min-h-screen bg-slate-900 text-white pb-20 animate-fade-in relative">
-      
-      {/* Top Bar */}
-      <div className="p-4 flex items-center justify-between sticky top-0 bg-slate-900 z-10">
-         <button onClick={abortWorkout} className="flex items-center text-primary-500 font-bold">
-            <ChevronLeft className="w-6 h-6" /> Atrás
-         </button>
-         <div className="text-white font-bold">{/* Optional Center Title */}</div>
-         <div className="w-6"></div> {/* Spacer */}
-      </div>
-
-      {/* Header Content */}
-      <div className="px-4 mb-6">
-         <h1 className="text-3xl font-black text-white mb-4">{dayData.title}</h1>
-         
-         <div className="flex items-center gap-6 text-sm font-bold text-white mb-6">
-            <div className="flex items-center gap-2">
-               <Clock className="w-5 h-5 text-primary-500" />
-               <span>{formatTime(timer)}</span>
-            </div>
-            <div className="flex items-center gap-2">
-               <Flame className="w-5 h-5 text-primary-500" />
-               {/* Dynamic Kcal Visualization */}
-               <span>{Math.round((timer / 60) * 6)} kcal</span> 
-            </div>
-            <div className="flex items-center gap-2">
-               <Dumbbell className="w-5 h-5 text-primary-500" />
-               <span>{exercises.reduce((acc,ex) => acc + ex.setsLog.reduce((s, set) => s + set.weight * set.reps, 0), 0)} kg</span>
-            </div>
-         </div>
-
-         <button 
-           onClick={tryFinishWorkout}
-           className="w-full bg-primary-500 text-white font-bold py-4 rounded-full shadow-lg shadow-primary-500/20 active:scale-95 transition-transform"
-         >
-           Terminar Entrenamiento
-         </button>
-      </div>
-
-      {/* Exercises List Header */}
-      <div className="px-4 flex justify-between items-center mb-4">
-         <h2 className="text-xl font-bold text-white">Ejercicios</h2>
-         <button className="text-primary-500 font-bold text-sm">Añadir</button>
-      </div>
-
-      {/* Exercises List */}
-      <div className="px-4 space-y-3">
-         {exercises.map((ex, idx) => (
-           <div 
-             key={ex.id}
-             onClick={() => setSelectedExerciseIndex(idx)}
-             className="bg-slate-800 rounded-xl p-3 flex items-center gap-4 active:bg-slate-700 transition-colors cursor-pointer border border-transparent hover:border-slate-700"
-           >
-              {/* Image */}
-              <div className="w-20 h-20 bg-white rounded-lg overflow-hidden shrink-0">
-                 <ImageWithFallback src={ex.image} alt={ex.name} className="w-full h-full object-cover" />
-              </div>
-
-              {/* Content */}
-              <div className="flex-1 min-w-0">
-                 <h3 className="font-bold text-white text-md leading-tight mb-1 truncate">{ex.name}</h3>
-                 <p className="text-slate-400 text-sm mb-2">
-                    {ex.setsLog.length} series • {ex.targetReps} reps • {ex.setsLog[0]?.weight || 0} kg
-                 </p>
-                 <span className="text-primary-500 text-[10px] uppercase font-bold tracking-wider bg-primary-500/10 px-2 py-1 rounded">high load</span>
-              </div>
-
-              {/* Status Icon */}
-              <div className="pr-2">
-                 {ex.isFullyCompleted ? (
-                    <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center">
-                       <Check className="w-4 h-4 text-white" />
-                    </div>
-                 ) : (
-                    <ChevronRight className="text-slate-500" />
-                 )}
-              </div>
-           </div>
-         ))}
-      </div>
-
-    </div>
-  );
-};
-
-const App = () => {
-  const [session, setSession] = useState<any>(null);
-  const [user, setUser] = useState<UserState>(INITIAL_USER_STATE);
-  const [view, setView] = useState<ViewState>('dashboard');
-  const [loading, setLoading] = useState(true);
-  const [showLevelUp, setShowLevelUp] = useState<{show: boolean, level: number}>({show: false, level: 0});
-  const [showConfirmAbort, setShowConfirmAbort] = useState(false);
-  const [toast, setToast] = useState<{message: string, type: 'success' | 'error'} | null>(null);
-  const [workoutSummary, setWorkoutSummary] = useState<{log: WorkoutLog, isProgramFinish: boolean, isWeekFinish: boolean} | null>(null);
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session) loadUserData(session.user.id);
-      else setLoading(false);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (session) loadUserData(session.user.id);
-      else {
-        setUser(INITIAL_USER_STATE);
-        setLoading(false);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const loadUserData = async (userId: string) => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from('user_progress')
-      .select('state')
-      .eq('user_id', userId)
-      .single();
-
-    if (data?.state) {
-      setUser(data.state);
-    } else {
-      saveUserData(userId, INITIAL_USER_STATE);
-    }
-    setLoading(false);
-  };
-
-  const saveUserData = async (userId: string, state: UserState) => {
-    await supabase.from('user_progress').upsert({
-      user_id: userId,
-      state: state
-    });
-  };
-
-  const updateUser = (newState: UserState) => {
-    setUser(newState);
-    if (session?.user?.id) {
-      saveUserData(session.user.id, newState);
-    }
-  };
-
-  useEffect(() => {
-    if (user.settings.darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [user.settings.darkMode]);
-
-  const checkLevelUp = (newUser: UserState) => {
-    if (newUser.currentXP >= newUser.nextLevelXP) {
-      const remainder = newUser.currentXP - newUser.nextLevelXP;
-      const newLevel = newUser.level + 1;
-      const newNextXP = Math.floor(newUser.nextLevelXP * 1.2);
-      
-      const leveledUser = {
-        ...newUser,
-        level: newLevel,
-        currentXP: remainder,
-        nextLevelXP: newNextXP
-      };
-      
-      setShowLevelUp({ show: true, level: newLevel });
-      return leveledUser;
-    }
-    return newUser;
-  };
-
-  const checkAchievements = (u: UserState): UserState => {
-    const newUnlocked: string[] = [];
-    ACHIEVEMENTS.forEach(ach => {
-      if (!u.achievements.includes(ach.id) && ach.condition(u)) {
-        newUnlocked.push(ach.id);
-      }
-    });
-
-    if (newUnlocked.length > 0) {
-      return { ...u, achievements: [...u.achievements, ...newUnlocked] };
-    }
-    return u;
-  };
-
-  const handleStartProgram = (prog: Program) => {
-    const newState: UserState = {
+    // Save to global user state
+    onUpdateUser({
       ...user,
       activeProgram: {
-        programId: prog.id,
-        currentDayIndex: 0,
-        startedAt: new Date().toISOString()
-      }
-    };
-    updateUser(newState);
-    setView('active-workout');
-  };
-
-  const handleContinueProgram = () => {
-    setView('active-workout');
-  };
-
-  const handleAbortProgram = () => {
-     setShowConfirmAbort(true);
-  };
-
-  const confirmAbort = () => {
-    const newState = { ...user, activeProgram: null };
-    updateUser(newState);
-    setShowConfirmAbort(false);
-  };
-
-  const handleUpdateActiveProgress = useCallback((exercises: ActiveExerciseState[], timer: number, dayIndex: number) => {
-     setUser(prev => {
-       if (!prev.activeProgram) return prev;
-       const newProgState: ActiveProgramProgress = {
-         ...prev.activeProgram,
-         currentDayLog: {
-           timer,
-           exercises
-         }
-       };
-       const newState = { ...prev, activeProgram: newProgState };
-       
-       if (session?.user?.id) {
-          saveUserData(session.user.id, newState); 
-       }
-       return newState;
-     });
-  }, [session?.user?.id]);
-
-  const handleFinishDay = (log: WorkoutLog) => {
-    let nextUser = { ...user };
-    let isProgramFinish = false;
-    let isWeekFinish = false;
-    
-    nextUser.history = [...nextUser.history, log];
-    nextUser.completedWorkouts += 1;
-    nextUser.totalWeightLifted += log.totalVolume;
-    nextUser.totalDurationMinutes = (nextUser.totalDurationMinutes || 0) + log.durationMinutes;
-    // Update total kcal burnt if log has it
-    if (log.kcalBurned) {
-      nextUser.totalKcalBurned = (nextUser.totalKcalBurned || 0) + log.kcalBurned;
-    }
-    nextUser.currentXP += log.xpEarned;
-    
-    if (nextUser.activeProgram) {
-      const prog = PROGRAMS.find(p => p.id === nextUser.activeProgram!.programId);
-      if (prog) {
-        const currentIndex = nextUser.activeProgram.currentDayIndex;
-        
-        // Detect Week Completion: (current index + 1) % daysPerWeek == 0
-        if ((currentIndex + 1) % prog.daysPerWeek === 0) {
-          isWeekFinish = true;
-        }
-
-        const nextDayIndex = currentIndex + 1;
-        if (nextDayIndex >= prog.schedule.length) {
-          isProgramFinish = true;
-          isWeekFinish = false; // Program finish overrides week finish
-          nextUser.activeProgram = null;
-          nextUser.completedProgramIds = [...nextUser.completedProgramIds, prog.id];
-          nextUser.currentXP += prog.xpRewardFinish;
-        } else {
-          nextUser.activeProgram = {
-            ...nextUser.activeProgram,
-            currentDayIndex: nextDayIndex,
-            currentDayLog: undefined
-          };
+        ...user.activeProgram!,
+        currentDayLog: {
+          timer: elapsed,
+          exercises: updatedExercises
         }
       }
-    }
+    });
 
-    nextUser = checkLevelUp(nextUser);
-    nextUser = checkAchievements(nextUser);
-
-    updateUser(nextUser);
-    setWorkoutSummary({ log, isProgramFinish, isWeekFinish }); // Show Modal
+    setActiveExercise(null);
   };
-
-  const closeSummary = () => {
-    setWorkoutSummary(null);
-    setView('dashboard');
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
-        <Loader2 className="w-10 h-10 text-primary-500 animate-spin" />
-      </div>
-    );
-  }
-
-  if (!session) {
-    return <AuthView />;
-  }
-
+  
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 transition-colors duration-300 font-sans selection:bg-primary-500/30">
-      <main className="max-w-md mx-auto min-h-screen relative shadow-2xl bg-white/50 dark:bg-slate-900/50">
-        <div className={view === 'active-workout' ? '' : 'p-4 pt-6'}>
-           {view === 'dashboard' && <DashboardView user={user} setView={setView} />}
-           {view === 'training' && (
-             <ProgramsView 
-               user={user} 
-               startProgram={handleStartProgram} 
-               continueProgram={handleContinueProgram}
-               abandonProgram={handleAbortProgram}
-             />
-           )}
-           {view === 'achievements' && <AchievementsView user={user} />}
-           {view === 'stats' && <StatsView user={user} setUser={updateUser} />}
-           {view === 'profile' && (
-             <ProfileView 
-               user={user} 
-               setUser={updateUser} 
-               toggleTheme={() => updateUser({...user, settings: { ...user.settings, darkMode: !user.settings.darkMode }})}
-               signOut={() => supabase.auth.signOut()}
-             />
-           )}
-           {view === 'active-workout' && (
-             <ActiveWorkoutView 
-               user={user}
-               finishDay={handleFinishDay}
-               abortWorkout={() => setView('dashboard')}
-               updateProgress={handleUpdateActiveProgress}
-             />
-           )}
-        </div>
+    <div className="pb-24 animate-fade-in relative min-h-screen flex flex-col">
+       {/* Header */}
+       <div className="flex items-center justify-between mb-6 sticky top-0 z-40 bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-sm py-2">
+          <div>
+             <h2 className="text-xl font-black text-slate-900 dark:text-white">{day?.title}</h2>
+             <div className="flex items-center gap-2 text-slate-500 font-mono text-sm">
+                <Timer className="w-4 h-4" />
+                <span>{Math.floor(elapsed / 60)}:{String(elapsed % 60).padStart(2, '0')}</span>
+             </div>
+          </div>
+          <button onClick={onCancelWorkout} className="p-2 text-slate-400 hover:text-red-500">
+             <X className="w-6 h-6" />
+          </button>
+       </div>
 
-        {view !== 'active-workout' && (
-          <nav className="fixed bottom-6 left-4 right-4 z-50 max-w-[400px] mx-auto pb-safe">
-            <div className="liquid-glass rounded-3xl flex justify-around items-center h-20 px-2 shadow-2xl backdrop-blur-xl border border-white/40 dark:border-white/5">
-              <NavButton icon={Home} label="Inicio" isActive={view === 'dashboard'} onClick={() => setView('dashboard')} />
-              <NavButton icon={Dumbbell} label="Entrenar" isActive={view === 'training'} onClick={() => setView('training')} />
-              <NavButton icon={BarChart2} label="Stats" isActive={view === 'stats'} onClick={() => setView('stats')} />
-              <NavButton icon={Trophy} label="Logros" isActive={view === 'achievements'} onClick={() => setView('achievements')} />
-              <NavButton icon={User} label="Perfil" isActive={view === 'profile'} onClick={() => setView('profile')} />
-            </div>
-          </nav>
-        )}
-      </main>
+       {/* Exercises List */}
+       <div className="space-y-4 flex-1">
+          {currentLog.exercises.map((ex) => {
+             const completedSets = ex.setsLog.filter(s => s.completed).length;
+             return (
+                <div 
+                   key={ex.id} 
+                   onClick={() => setActiveExercise(ex)}
+                   className={`glass-card p-4 rounded-xl flex items-center gap-4 cursor-pointer border-l-4 transition-all ${
+                      ex.isFullyCompleted ? 'border-green-500 opacity-60' : 'border-primary-500 hover:scale-[1.01]'
+                   }`}
+                >
+                   <div className="w-16 h-16 bg-slate-200 dark:bg-slate-700 rounded-lg overflow-hidden shrink-0">
+                      <ImageWithFallback src={ex.image} alt={ex.name} className="w-full h-full object-cover" />
+                   </div>
+                   <div className="flex-1">
+                      <h4 className={`font-bold ${ex.isFullyCompleted ? 'text-green-600 line-through' : 'text-slate-900 dark:text-white'}`}>{ex.name}</h4>
+                      <p className="text-xs text-slate-500">{ex.targetSets} Series × {ex.targetReps}</p>
+                   </div>
+                   <div className="flex flex-col items-end">
+                      {ex.isFullyCompleted ? (
+                         <CheckCircle className="w-6 h-6 text-green-500" />
+                      ) : (
+                         <span className="text-2xl font-black text-slate-200 dark:text-slate-700">{completedSets}/{ex.targetSets}</span>
+                      )}
+                   </div>
+                </div>
+             );
+          })}
+       </div>
 
-      {/* Modals Layer */}
-      {showLevelUp.show && (
-        <LevelUpModal 
-          level={showLevelUp.level} 
-          onClose={() => setShowLevelUp({show: false, level: 0})} 
-        />
-      )}
+       {/* Finish Button */}
+       <div className="sticky bottom-4 mt-6">
+          <button 
+             onClick={onFinishWorkout}
+             className="w-full bg-green-500 hover:bg-green-400 text-white font-bold py-4 rounded-2xl shadow-xl shadow-green-500/30 active:scale-95 transition-all flex items-center justify-center gap-2"
+          >
+             <CheckCircle className="w-6 h-6" /> Finalizar Entrenamiento
+          </button>
+       </div>
 
-      {workoutSummary && (
-        <WorkoutCompleteModal 
-          log={workoutSummary.log} 
-          isProgramFinish={workoutSummary.isProgramFinish}
-          isWeekFinish={workoutSummary.isWeekFinish}
-          onClose={closeSummary} 
-        />
-      )}
-
-      <ConfirmationModal 
-        isOpen={showConfirmAbort}
-        title="¿Abandonar Programa?"
-        message="Perderás el progreso del programa actual. Esta acción no se puede deshacer."
-        onConfirm={confirmAbort}
-        onCancel={() => setShowConfirmAbort(false)}
-      />
-
-      {toast && (
-        <Toast 
-          message={toast.message} 
-          type={toast.type} 
-          onClose={() => setToast(null)} 
-        />
-      )}
+       {/* Modal */}
+       {activeExercise && (
+          <ExerciseLoggerModal 
+             exercise={activeExercise} 
+             onSave={handleExerciseSave} 
+             onClose={() => setActiveExercise(null)} 
+          />
+       )}
     </div>
   );
 };
@@ -1567,5 +1243,323 @@ const NavButton = ({ icon: Icon, label, isActive, onClick }: { icon: React.Eleme
     <span className="text-[10px] font-bold">{label}</span>
   </button>
 );
+
+const App = () => {
+  const [session, setSession] = useState<any>(null);
+  const [user, setUser] = useState<UserState>(INITIAL_USER_STATE);
+  const [view, setView] = useState<ViewState>('dashboard');
+  const [loading, setLoading] = useState(true);
+  
+  // Modals state
+  const [showLevelUp, setShowLevelUp] = useState(false);
+  const [showWorkoutComplete, setShowWorkoutComplete] = useState<WorkoutLog | null>(null);
+  const [showConfirmAbandon, setShowConfirmAbandon] = useState(false);
+
+  // Derived state for modals
+  const [newLevel, setNewLevel] = useState(0);
+  const [isProgFinish, setIsProgFinish] = useState(false);
+  const [isWeekFinish, setIsWeekFinish] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (session) loadUser(session.user.id);
+      else setLoading(false);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      if (session) loadUser(session.user.id);
+      else setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const loadUser = async (uid: string) => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('user_progress')
+        .select('state')
+        .eq('user_id', uid)
+        .single();
+
+      if (data && data.state) {
+        setUser(data.state);
+      } else {
+        // Init new user
+        const newUser = { ...INITIAL_USER_STATE };
+        await saveUser(newUser, uid);
+        setUser(newUser);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveUser = async (newState: UserState, uid?: string) => {
+    const userId = uid || session?.user?.id;
+    if (!userId) return;
+
+    try {
+      await supabase.from('user_progress').upsert({
+        user_id: userId,
+        state: newState,
+        updated_at: new Date().toISOString()
+      });
+    } catch (e) {
+      console.error("Error saving user state", e);
+    }
+  };
+
+  const handleUpdateUser = (newUser: UserState) => {
+    setUser(newUser);
+    saveUser(newUser);
+  };
+  
+  // Logic for leveling up
+  useEffect(() => {
+    if (user.currentXP >= user.nextLevelXP) {
+      const leftover = user.currentXP - user.nextLevelXP;
+      const nextLvl = user.level + 1;
+      const nextTarget = Math.floor(user.nextLevelXP * 1.2);
+      
+      const leveledUser = {
+        ...user,
+        level: nextLvl,
+        currentXP: leftover,
+        nextLevelXP: nextTarget
+      };
+      
+      handleUpdateUser(leveledUser);
+      setNewLevel(nextLvl);
+      setShowLevelUp(true);
+    }
+    
+    // Check achievements
+    const newUnlocked: string[] = [];
+    ACHIEVEMENTS.forEach(ach => {
+      if (!user.achievements.includes(ach.id) && ach.condition(user)) {
+        newUnlocked.push(ach.id);
+      }
+    });
+
+    if (newUnlocked.length > 0) {
+       handleUpdateUser({
+         ...user,
+         achievements: [...user.achievements, ...newUnlocked]
+       });
+    }
+
+  }, [user.currentXP, user.totalWeightLifted, user.completedWorkouts, user.totalDurationMinutes]);
+
+
+  // Program Actions
+  const startProgram = (program: Program) => {
+    // Init active program state
+    const firstDay = program.schedule[0];
+    const newActiveState: ActiveProgramProgress = {
+      programId: program.id,
+      currentDayIndex: 0,
+      startedAt: new Date().toISOString(),
+      currentDayLog: {
+        timer: 0,
+        exercises: firstDay.exercises.map(template => ({
+          ...template,
+          setsLog: Array(template.targetSets).fill(0).map((_, i) => ({
+            setNumber: i + 1,
+            weight: 0,
+            reps: 0,
+            completed: false
+          })),
+          isFullyCompleted: false
+        }))
+      }
+    };
+
+    const newUser = { ...user, activeProgram: newActiveState };
+    handleUpdateUser(newUser);
+    setView('active-workout');
+  };
+
+  const continueProgram = () => {
+    setView('active-workout');
+  };
+
+  const abandonProgram = () => {
+    setShowConfirmAbandon(true);
+  };
+
+  const confirmAbandon = () => {
+    const newUser = { ...user, activeProgram: null };
+    handleUpdateUser(newUser);
+    setShowConfirmAbandon(false);
+    setView('training');
+  };
+
+  const finishWorkout = () => {
+    if (!user.activeProgram || !user.activeProgram.currentDayLog) return;
+    
+    const program = PROGRAMS.find(p => p.id === user.activeProgram!.programId);
+    if (!program) return;
+
+    const currentDay = program.schedule[user.activeProgram.currentDayIndex];
+    const logData = user.activeProgram.currentDayLog;
+    
+    // Calculate stats
+    let volume = 0;
+    let setsDone = 0;
+    let repsDone = 0;
+    
+    logData.exercises.forEach(ex => {
+      ex.setsLog.forEach(s => {
+        if (s.completed) {
+          setsDone++;
+          repsDone += s.reps;
+          volume += (s.weight * s.reps);
+        }
+      });
+    });
+
+    const duration = Math.floor(logData.timer / 60);
+    // Rough calorie estimation: MET * weight * hours. 
+    // Lifting weights ~3-6 METs. Let's use 5. 
+    // Formula: Kcal = MET * kg * hours
+    const kcal = Math.floor(5 * (user.weight || 70) * (logData.timer / 3600));
+
+    // XP Calculation
+    let xp = program.xpRewardDay;
+    // Bonus for volume?
+    xp += Math.floor(volume / 100); 
+
+    const newLog: WorkoutLog = {
+      id: Math.random().toString(36).substr(2, 9),
+      date: new Date().toISOString(),
+      programTitle: program.title,
+      dayTitle: currentDay.title,
+      totalVolume: volume,
+      totalSets: setsDone,
+      totalReps: repsDone,
+      durationMinutes: duration,
+      xpEarned: xp,
+      kcalBurned: kcal || 0
+    };
+
+    // Update Progress
+    const nextIndex = user.activeProgram.currentDayIndex + 1;
+    const isFinished = nextIndex >= program.schedule.length;
+    
+    let updatedUser = {
+      ...user,
+      currentXP: user.currentXP + xp,
+      completedWorkouts: user.completedWorkouts + 1,
+      totalWeightLifted: user.totalWeightLifted + volume,
+      totalDurationMinutes: user.totalDurationMinutes + duration,
+      totalKcalBurned: (user.totalKcalBurned || 0) + (kcal || 0),
+      history: [...user.history, newLog],
+      activeProgram: isFinished ? null : {
+        ...user.activeProgram,
+        currentDayIndex: nextIndex,
+        currentDayLog: {
+          timer: 0,
+          exercises: program.schedule[nextIndex].exercises.map(template => ({
+            ...template,
+            setsLog: Array(template.targetSets).fill(0).map((_, i) => ({
+              setNumber: i + 1,
+              weight: 0,
+              reps: 0,
+              completed: false
+            })),
+            isFullyCompleted: false
+          }))
+        } // Prepare next day
+      }
+    };
+
+    if (isFinished) {
+      updatedUser.completedProgramIds = [...updatedUser.completedProgramIds, program.id];
+      updatedUser.currentXP += program.xpRewardFinish; // Bonus finish
+      setIsProgFinish(true);
+    } else {
+       setIsProgFinish(false);
+    }
+    
+    // Check week finish (heuristic: index % daysPerWeek == 0)
+    setIsWeekFinish(!isFinished && (nextIndex % program.daysPerWeek === 0));
+
+    handleUpdateUser(updatedUser);
+    setShowWorkoutComplete(newLog);
+    setView('dashboard');
+  };
+  
+  // Theme effect
+  useEffect(() => {
+    if (user.settings.darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [user.settings.darkMode]);
+
+  if (!session) return <AuthView />;
+
+  return (
+    <div className={`min-h-screen ${user.settings.darkMode ? 'dark' : ''}`}>
+       <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-200 font-sans selection:bg-primary-500 selection:text-white pb-safe transition-colors duration-300">
+          
+          {loading && (
+             <div className="fixed inset-0 z-[200] bg-slate-900 flex items-center justify-center">
+                <Loader2 className="w-10 h-10 text-primary-500 animate-spin" />
+             </div>
+          )}
+
+          {/* Main Content */}
+          <main className="max-w-md mx-auto min-h-screen relative p-4 pb-24">
+             {view === 'dashboard' && <DashboardView user={user} setView={setView} />}
+             {view === 'training' && <ProgramsView user={user} startProgram={startProgram} continueProgram={continueProgram} abandonProgram={abandonProgram} />}
+             {view === 'active-workout' && <ActiveWorkoutView user={user} onUpdateUser={handleUpdateUser} onFinishWorkout={finishWorkout} onCancelWorkout={() => setView('training')} />}
+             {view === 'stats' && <StatsView user={user} setUser={handleUpdateUser} />}
+             {view === 'achievements' && <AchievementsView user={user} />}
+             {view === 'profile' && <ProfileView user={user} setUser={handleUpdateUser} toggleTheme={() => handleUpdateUser({...user, settings: {...user.settings, darkMode: !user.settings.darkMode}})} signOut={() => supabase.auth.signOut()} />}
+          </main>
+
+          {/* Bottom Nav */}
+          {view !== 'active-workout' && (
+            <nav className="fixed bottom-0 left-0 w-full z-50 bg-white/90 dark:bg-slate-900/90 backdrop-blur-lg border-t border-slate-200 dark:border-slate-800 pb-safe shadow-lg">
+               <div className="max-w-md mx-auto flex justify-around h-20 items-center px-2">
+                  <NavButton icon={Home} label="Inicio" isActive={view === 'dashboard'} onClick={() => setView('dashboard')} />
+                  <NavButton icon={Dumbbell} label="Entreno" isActive={view === 'training'} onClick={() => setView('training')} />
+                  <NavButton icon={BarChart2} label="Stats" isActive={view === 'stats'} onClick={() => setView('stats')} />
+                  <NavButton icon={User} label="Perfil" isActive={view === 'profile'} onClick={() => setView('profile')} />
+               </div>
+            </nav>
+          )}
+          
+          {/* Global Modals */}
+          {showLevelUp && <LevelUpModal level={newLevel} onClose={() => setShowLevelUp(false)} />}
+          {showWorkoutComplete && (
+             <WorkoutCompleteModal 
+               log={showWorkoutComplete} 
+               isProgramFinish={isProgFinish} 
+               isWeekFinish={isWeekFinish} 
+               onClose={() => setShowWorkoutComplete(null)} 
+             />
+          )}
+          <ConfirmationModal 
+             isOpen={showConfirmAbandon} 
+             title="¿Abandonar Programa?" 
+             message="Perderás el progreso de tu sesión actual y del programa. ¿Estás seguro?" 
+             onConfirm={confirmAbandon} 
+             onCancel={() => setShowConfirmAbandon(false)} 
+          />
+       </div>
+    </div>
+  );
+};
 
 export default App;
