@@ -217,83 +217,159 @@ const WorkoutCompleteModal = ({ log, isProgramFinish, isWeekFinish, onClose }: {
   );
 };
 
-const AvatarSelectionModal = ({ isOpen, onClose, onSelect }: { isOpen: boolean, onClose: () => void, onSelect: (url: string) => void }) => {
+const AvatarSelectionModal = ({ isOpen, onClose, onSelect, currentLevel, currentAvatar }: { isOpen: boolean, onClose: () => void, onSelect: (url: string) => void, currentLevel: number, currentAvatar: string }) => {
   const [customUrl, setCustomUrl] = useState('');
   
-  // Categorías de avatares
-  const avatarCollections = [
+  // Base config for DiceBear
+  const bgColors = 'b6e3f4,c0aede,d1d4f9,ffdfbf,ffd5dc';
+
+  // Defines avatar groups with unlock levels
+  const avatarGroups = useMemo(() => [
     {
-      name: 'Aventureros RPG',
+      title: 'Iniciados',
+      minLevel: 1,
       style: 'adventurer',
-      seeds: ['Felix', 'Aneka', 'Zack', 'Midnight', 'Luna', 'Shadow', 'Buddy', 'Giggle', 'Bandit', 'Whiskers', 'Leo', 'Willow', 'Sheba', 'Cuddles', 'Abby', 'Chester']
+      seeds: ['Felix', 'Aneka', 'Zack', 'Midnight', 'Luna', 'Shadow', 'Abby', 'Chester']
     },
     {
-      name: 'Cyborgs',
+      title: 'Exploradores',
+      minLevel: 5,
+      style: 'adventurer',
+      seeds: ['Buddy', 'Giggle', 'Bandit', 'Whiskers', 'Leo', 'Willow', 'Sheba', 'Cuddles', 'Cookie', 'Sugar', 'Ginger', 'Pepper']
+    },
+    {
+      title: 'Estilo Libre',
+      minLevel: 10,
+      style: 'lorelei',
+      seeds: ['John', 'Jane', 'Alex', 'Sarah', 'Mike', 'Emily', 'Chris', 'Katie', 'Ryan', 'Amy', 'David', 'Lisa']
+    },
+    {
+      title: 'Cyborgs',
+      minLevel: 20,
       style: 'bottts',
       seeds: ['C3PO', 'R2D2', 'WallE', 'Eve', 'Bender', 'Tron', 'Data', 'Cyber', 'Glitch', 'Spark', 'Chip', 'Byte']
     },
     {
-      name: 'Humanos',
-      style: 'avataaars',
-      seeds: ['John', 'Jane', 'Alex', 'Sarah', 'Mike', 'Emily', 'Chris', 'Katie', 'David', 'Lisa', 'Ryan', 'Amy']
+      title: 'Élite',
+      minLevel: 30,
+      style: 'adventurer-neutral', // Using adventurer but implying 'elite' by selection
+      seeds: ['King', 'Queen', 'Prince', 'Princess', 'Knight', 'Wizard', 'Rogue', 'Paladin']
+    },
+    {
+      title: 'Leyendas',
+      minLevel: 50,
+      style: 'fun-emoji',
+      seeds: ['Cool', 'Love', 'Lul', 'Sad', 'Happy', 'Angry', 'Shocked', 'Sick']
     }
-  ];
+  ], []);
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-      <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-2xl max-w-md w-full border border-slate-200 dark:border-slate-800 animate-bounce-in flex flex-col max-h-[90vh]">
-        <div className="flex justify-between items-center mb-4 border-b border-slate-100 dark:border-slate-800 pb-4">
-          <h3 className="text-xl font-bold text-slate-900 dark:text-white">Elige tu Avatar</h3>
-          <button onClick={onClose} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
-            <X className="w-6 h-6 text-slate-500" />
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
+      <div className="bg-white dark:bg-slate-900 p-0 rounded-3xl shadow-2xl max-w-md w-full border border-slate-200 dark:border-slate-800 animate-bounce-in flex flex-col max-h-[90vh] overflow-hidden">
+        
+        {/* Header */}
+        <div className="flex justify-between items-center p-6 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 z-10">
+          <div>
+             <h3 className="text-xl font-black text-slate-900 dark:text-white">Galería de Avatares</h3>
+             <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mt-1">Tu Nivel Actual: <span className="text-primary-500 text-sm">{currentLevel}</span></p>
+          </div>
+          <button onClick={onClose} className="p-2 bg-slate-100 dark:bg-slate-800 hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-500 rounded-full transition-all">
+            <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="overflow-y-auto pr-2 mb-4 flex-1">
-          {avatarCollections.map((collection) => (
-            <div key={collection.name} className="mb-6">
-              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                <span className="w-1 h-4 bg-primary-500 rounded-full"></span>
-                {collection.name}
-              </h4>
-              <div className="grid grid-cols-4 gap-3">
-                {collection.seeds.map(seed => {
-                  const url = `https://api.dicebear.com/7.x/${collection.style}/svg?seed=${seed}&backgroundColor=b6e3f4,c0aede,d1d4f9`;
-                  return (
-                    <button 
-                      key={seed}
-                      onClick={() => { onSelect(url); onClose(); }}
-                      className="aspect-square rounded-xl overflow-hidden border-2 border-transparent hover:border-primary-500 hover:scale-105 hover:shadow-md transition-all bg-slate-100 dark:bg-slate-800/50 group"
-                    >
-                      <ImageWithFallback src={url} alt={seed} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
+        {/* Scrollable Content */}
+        <div className="overflow-y-auto p-6 flex-1 bg-slate-50 dark:bg-slate-950/50">
+          {avatarGroups.map((group) => {
+             const isGroupLocked = currentLevel < group.minLevel;
+             
+             return (
+               <div key={group.title} className="mb-8 last:mb-0">
+                  <div className="flex items-center justify-between mb-4">
+                     <h4 className={`text-sm font-black uppercase tracking-widest flex items-center gap-2 ${isGroupLocked ? 'text-slate-400' : 'text-slate-700 dark:text-slate-200'}`}>
+                        {isGroupLocked ? <Lock className="w-4 h-4" /> : <span className="w-2 h-2 rounded-full bg-primary-500"></span>}
+                        {group.title}
+                     </h4>
+                     {isGroupLocked && (
+                        <span className="px-2 py-1 rounded-md bg-slate-200 dark:bg-slate-800 text-[10px] font-bold text-slate-500 uppercase">
+                           Desbloquea en Nivel {group.minLevel}
+                        </span>
+                     )}
+                  </div>
+                  
+                  <div className="grid grid-cols-4 gap-3">
+                    {group.seeds.map(seed => {
+                      const url = `https://api.dicebear.com/7.x/${group.style}/svg?seed=${seed}&backgroundColor=${bgColors}`;
+                      const isSelected = currentAvatar === url;
+                      
+                      return (
+                        <div key={seed} className="relative aspect-square">
+                           <button 
+                              onClick={() => {
+                                 if (!isGroupLocked) {
+                                    onSelect(url); 
+                                    onClose();
+                                 }
+                              }}
+                              disabled={isGroupLocked}
+                              className={`w-full h-full rounded-2xl overflow-hidden border-2 transition-all relative group ${
+                                 isSelected 
+                                 ? 'border-primary-500 ring-4 ring-primary-500/20 scale-105 z-10' 
+                                 : isGroupLocked
+                                    ? 'border-transparent opacity-40 grayscale cursor-not-allowed bg-slate-200 dark:bg-slate-800'
+                                    : 'border-transparent hover:border-primary-400 hover:scale-110 hover:shadow-lg bg-white dark:bg-slate-800 shadow-sm cursor-pointer'
+                              }`}
+                           >
+                              <ImageWithFallback src={url} alt={seed} className="w-full h-full object-cover" />
+                              
+                              {/* Selected Checkmark */}
+                              {isSelected && (
+                                 <div className="absolute inset-0 bg-primary-500/20 flex items-center justify-center">
+                                    <div className="bg-primary-500 text-white p-1 rounded-full shadow-lg">
+                                       <Check className="w-4 h-4" />
+                                    </div>
+                                 </div>
+                              )}
+                           </button>
+                           
+                           {/* Lock Overlay for individual items (if group is locked) */}
+                           {isGroupLocked && (
+                              <div className="absolute -top-1 -right-1 z-20">
+                                 <div className="bg-slate-600 text-white p-1 rounded-full shadow-md border border-slate-500">
+                                    <Lock className="w-3 h-3" />
+                                 </div>
+                              </div>
+                           )}
+                        </div>
+                      );
+                    })}
+                  </div>
+               </div>
+             );
+          })}
 
-          <div className="border-t border-slate-200 dark:border-slate-800 pt-4 mt-2">
-            <p className="text-sm text-slate-500 mb-2 font-bold">O usa una URL personalizada</p>
+          <div className="border-t border-slate-200 dark:border-slate-800 pt-6 mt-6">
+            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+               <ImageIcon className="w-4 h-4" /> Personalizado
+            </h4>
             <div className="flex gap-2">
               <div className="relative flex-1">
-                <ImageIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input 
                   type="text" 
                   placeholder="https://..." 
                   value={customUrl}
                   onChange={(e) => setCustomUrl(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:border-primary-500 outline-none transition-colors text-white"
+                  className="w-full pl-3 pr-3 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 outline-none transition-colors text-slate-900 dark:text-white font-medium"
                 />
               </div>
               <button 
                 onClick={() => { if(customUrl) { onSelect(customUrl); onClose(); } }}
                 disabled={!customUrl}
-                className="px-4 py-2 bg-primary-600 text-white rounded-lg font-bold text-sm disabled:opacity-50 hover:bg-primary-500 transition-colors"
+                className="px-6 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-bold text-sm disabled:opacity-50 hover:opacity-90 transition-colors"
               >
-                Guardar
+                Usar
               </button>
             </div>
           </div>
@@ -964,6 +1040,8 @@ const ProfileView = ({ user, setUser, toggleTheme, signOut, onResetProgress }: {
             isOpen={showAvatarModal}
             onClose={() => setShowAvatarModal(false)}
             onSelect={(url) => setUser({...user, avatar: url})}
+            currentLevel={user.level}
+            currentAvatar={user.avatar}
          />
       </div>
    );
