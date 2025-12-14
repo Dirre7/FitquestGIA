@@ -67,23 +67,40 @@
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
       
+      /* CRITICAL FIX FOR WHITE BARS */
+      :root {
+        background-color: #0f172a; /* Ensure root matches dark theme */
+      }
+
       html {
-        background-color: #0f172a; /* Force dark background */
+        height: 100%;
+        width: 100%;
+        background-color: #0f172a; /* Dark background base */
         -webkit-tap-highlight-color: transparent;
+        overflow: hidden; /* Prevent html scrolling */
+        position: fixed; /* Fix html in place */
       }
 
       body {
+        height: 100%;
+        width: 100%;
         margin: 0;
         padding: 0;
-        background-color: #0f172a; /* Force dark background */
-        overscroll-behavior-y: none; /* Prevent bounce */
-        width: 100%;
-        min-height: 100dvh;
+        background-color: #0f172a; /* Dark background base */
+        overflow: hidden; /* Prevent body scrolling */
+        position: fixed; /* Fix body in place */
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        overscroll-behavior: none;
       }
 
       #root {
+        height: 100%;
         width: 100%;
-        min-height: 100dvh;
+        background-color: #0f172a; /* Dark background base */
+        overflow: hidden;
       }
 
       ::-webkit-scrollbar {

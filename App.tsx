@@ -1871,7 +1871,7 @@ const App = () => {
   }
 
   return (
-    <div className={`fixed inset-0 w-full h-[100dvh] overflow-hidden bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-200 font-sans selection:bg-primary-500 selection:text-white transition-colors duration-300 ${user.settings.darkMode ? 'dark' : ''}`}>
+    <div className={`fixed inset-0 w-full h-full overflow-hidden bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-200 font-sans selection:bg-primary-500 selection:text-white transition-colors duration-300 ${user.settings.darkMode ? 'dark' : ''}`}>
        
        {loading && (
           <div className="fixed inset-0 z-[200] bg-slate-900 flex items-center justify-center">
