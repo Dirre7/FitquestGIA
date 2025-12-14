@@ -695,33 +695,69 @@ const ProgramsView = ({ user, startProgram, continueProgram, abandonProgram, fil
 const AchievementsView = ({ user }: { user: UserState }) => {
    const unlockedCount = user.achievements.length;
    const totalCount = ACHIEVEMENTS.length;
-   const progress = (unlockedCount / totalCount) * 100;
+
+   // Sorting logic: Unlocked first
+   const sortedAchievements = useMemo(() => {
+     return [...ACHIEVEMENTS].sort((a, b) => {
+       const isA = user.achievements.includes(a.id);
+       const isB = user.achievements.includes(b.id);
+       return (isA === isB) ? 0 : isA ? -1 : 1;
+     });
+   }, [user.achievements]);
 
    return (
       <div className="space-y-6 pb-24 animate-fade-in">
-         <div>
-            <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-2">Sala de Trofeos</h2>
-            <div className="flex items-center gap-2 text-sm text-slate-500">
-               <ProgressBar current={unlockedCount} max={totalCount} />
-               <span className="font-bold whitespace-nowrap">{unlockedCount} / {totalCount}</span>
+         {/* Sticky Header */}
+         <div className="bg-slate-900/90 sticky top-0 z-30 py-4 -mx-4 px-4 border-b border-slate-800/50 backdrop-blur-md">
+            <div className="flex items-end justify-between mb-2">
+               <h2 className="text-2xl font-black text-white">Sala de Trofeos</h2>
+               <span className="text-primary-400 font-bold text-sm">{unlockedCount} / {totalCount}</span>
             </div>
+            <ProgressBar current={unlockedCount} max={totalCount} colorClass="bg-gradient-to-r from-yellow-400 to-orange-500" />
          </div>
 
-         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {ACHIEVEMENTS.map(ach => {
+         {/* Grid */}
+         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {sortedAchievements.map(ach => {
                const isUnlocked = user.achievements.includes(ach.id);
                return (
-                  <div key={ach.id} className={`p-4 rounded-xl border-2 flex items-center gap-4 transition-all ${
-                     isUnlocked 
-                     ? 'bg-yellow-50 dark:bg-yellow-900/10 border-yellow-400 dark:border-yellow-600/50' 
-                     : 'bg-slate-50 dark:bg-slate-800 border-transparent opacity-60 grayscale'
+                  <div key={ach.id} className={`relative group overflow-hidden rounded-2xl border-2 p-4 flex flex-col items-center text-center transition-all duration-300 ${
+                     isUnlocked
+                     ? 'bg-slate-800 border-yellow-500/50 shadow-lg shadow-yellow-500/10'
+                     : 'bg-slate-900 border-slate-800 opacity-60 grayscale-[0.8]'
                   }`}>
-                     <div className="text-3xl shrink-0 filter drop-shadow-sm">{ach.icon}</div>
-                     <div>
-                        <h4 className={`font-bold text-sm ${isUnlocked ? 'text-slate-900 dark:text-white' : 'text-slate-500'}`}>{ach.name}</h4>
-                        <p className="text-xs text-slate-500 leading-tight">{ach.description}</p>
+                     {/* Unlocked Background Glow */}
+                     {isUnlocked && <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/10 to-transparent pointer-events-none" />}
+
+                     {/* Icon */}
+                     <div className={`text-4xl mb-3 transform transition-transform group-hover:scale-110 ${isUnlocked ? 'drop-shadow-md' : 'opacity-50'}`}>
+                        {ach.icon}
                      </div>
-                     {isUnlocked && <CheckCircle className="w-5 h-5 text-green-500 ml-auto shrink-0" />}
+
+                     {/* Content */}
+                     <div className="relative z-10 w-full flex-1 flex flex-col justify-between">
+                        <div>
+                           <h4 className={`font-black text-sm mb-1 leading-tight ${isUnlocked ? 'text-white' : 'text-slate-500'}`}>
+                              {ach.name}
+                           </h4>
+                           <p className="text-[10px] font-medium text-slate-400 leading-snug">
+                              {ach.description}
+                           </p>
+                        </div>
+                        
+                        {/* Status Indicator */}
+                        <div className="mt-3 flex justify-center">
+                           {isUnlocked ? (
+                              <div className="bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest flex items-center gap-1">
+                                 <Star className="w-3 h-3 fill-current" /> Conseguido
+                              </div>
+                           ) : (
+                              <div className="bg-slate-800 text-slate-600 border border-slate-700 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest flex items-center gap-1">
+                                 <Lock className="w-3 h-3" /> Bloqueado
+                              </div>
+                           )}
+                        </div>
+                     </div>
                   </div>
                );
             })}
