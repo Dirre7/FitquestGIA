@@ -3,9 +3,9 @@ import {
   Trophy, Activity, User, BarChart2, Home, Lock, CheckCircle, Play, 
   Zap, Dumbbell, Clock, ChevronRight, Sun, Moon, Cloud, X, Star, 
   Maximize2, Medal, Award, Calendar, Repeat, Flame, RefreshCw, Trash2,
-  Hash, Timer, TrendingUp, LogOut, Loader2, Sparkles, MessageSquare, Bot,
+  Hash, Timer, TrendingUp, TrendingDown, LogOut, Loader2, Sparkles, MessageSquare, Bot,
   Camera, Image as ImageIcon, Info, Filter, ArrowLeft, Check, Pause, SkipForward, Plus,
-  Scale, Ruler, CalendarDays, Calculator, LayoutGrid, ChevronLeft, MoreHorizontal, Settings, MapPin
+  Scale, Ruler, CalendarDays, Calculator, LayoutGrid, ChevronLeft, MoreHorizontal, Settings, MapPin, Minus, AlertTriangle
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { supabase } from './services/supabaseClient';
@@ -641,6 +641,35 @@ const StatsView = ({ user, setUser }: { user: UserState, setUser: (u: UserState)
       return Array.from(dataMap.values()).slice(-7);
    }, [user.history]);
 
+   // Calculate weekly comparison
+   const weeklyStats = useMemo(() => {
+    const now = new Date();
+    const startOfLast7Days = new Date(now);
+    startOfLast7Days.setDate(now.getDate() - 7);
+    
+    const startOfPrevious7Days = new Date(startOfLast7Days);
+    startOfPrevious7Days.setDate(startOfLast7Days.getDate() - 7);
+
+    let current = { volume: 0, duration: 0, kcal: 0, count: 0 };
+    let previous = { volume: 0, duration: 0, kcal: 0, count: 0 };
+
+    user.history.forEach(log => {
+        const d = new Date(log.date);
+        if (d >= startOfLast7Days) {
+            current.volume += log.totalVolume;
+            current.duration += log.durationMinutes;
+            current.kcal += log.kcalBurned;
+            current.count += 1;
+        } else if (d >= startOfPrevious7Days && d < startOfLast7Days) {
+            previous.volume += log.totalVolume;
+            previous.duration += log.durationMinutes;
+            previous.kcal += log.kcalBurned;
+            previous.count += 1;
+        }
+    });
+    return { current, previous };
+  }, [user.history]);
+
    const [editingBio, setEditingBio] = useState(false);
    const [weight, setWeight] = useState(user.weight);
    const [height, setHeight] = useState(user.height);
@@ -649,6 +678,19 @@ const StatsView = ({ user, setUser }: { user: UserState, setUser: (u: UserState)
       setUser({ ...user, weight, height });
       setEditingBio(false);
    };
+
+   const renderTrend = (curr: number, prev: number) => {
+      const diff = curr - prev;
+      const isUp = diff >= 0;
+      const percent = prev === 0 ? (curr > 0 ? 100 : 0) : ((diff / prev) * 100);
+      
+      return (
+          <div className={`text-xs font-bold flex items-center gap-1 ${isUp ? 'text-green-500' : 'text-red-500'}`}>
+              {isUp ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+              <span>{Math.abs(percent).toFixed(0)}%</span>
+          </div>
+      );
+  };
 
    return (
       <div className="space-y-6 pb-24 animate-fade-in">
@@ -671,6 +713,38 @@ const StatsView = ({ user, setUser }: { user: UserState, setUser: (u: UserState)
             <div className="glass-card p-4 rounded-2xl">
                <div className="text-slate-400 text-xs font-bold uppercase mb-1">Entrenamientos</div>
                <div className="text-2xl font-black text-green-500">{user.completedWorkouts}</div>
+            </div>
+         </div>
+
+         {/* Weekly Performance Comparison */}
+         <div>
+            <h3 className="font-bold text-slate-700 dark:text-white mb-3 flex items-center gap-2 text-sm uppercase tracking-wide">
+               <Calendar className="w-4 h-4 text-primary-500" /> Rendimiento Semanal (7 Días)
+            </h3>
+            <div className="grid grid-cols-3 gap-3">
+               <div className="glass-card p-3 rounded-xl flex flex-col justify-between">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">Volumen</span>
+                  <div className="mb-1">
+                     <span className="text-lg font-black text-slate-800 dark:text-white">{(weeklyStats.current.volume / 1000).toFixed(1)}</span>
+                     <span className="text-[10px] text-slate-500 ml-0.5">k</span>
+                  </div>
+                  {renderTrend(weeklyStats.current.volume, weeklyStats.previous.volume)}
+               </div>
+               <div className="glass-card p-3 rounded-xl flex flex-col justify-between">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">Tiempo</span>
+                  <div className="mb-1">
+                     <span className="text-lg font-black text-slate-800 dark:text-white">{weeklyStats.current.duration}</span>
+                     <span className="text-[10px] text-slate-500 ml-0.5">min</span>
+                  </div>
+                  {renderTrend(weeklyStats.current.duration, weeklyStats.previous.duration)}
+               </div>
+               <div className="glass-card p-3 rounded-xl flex flex-col justify-between">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">Kcal</span>
+                  <div className="mb-1">
+                     <span className="text-lg font-black text-slate-800 dark:text-white">{weeklyStats.current.kcal}</span>
+                  </div>
+                  {renderTrend(weeklyStats.current.kcal, weeklyStats.previous.kcal)}
+               </div>
             </div>
          </div>
 
@@ -1121,6 +1195,7 @@ const DashboardView = ({ user, setView }: { user: UserState; setView: (v: ViewSt
 const ActiveWorkoutView = ({ user, onUpdateUser, onFinishWorkout, onCancelWorkout }: { user: UserState, onUpdateUser: (u: UserState) => void, onFinishWorkout: () => void, onCancelWorkout: () => void }) => {
   const [activeExercise, setActiveExercise] = useState<ActiveExerciseState | null>(null);
   const [elapsed, setElapsed] = useState(user.activeProgram?.currentDayLog?.timer || 0);
+  const [showIncompleteAlert, setShowIncompleteAlert] = useState(false);
 
   // Timer effect
   useEffect(() => {
@@ -1159,6 +1234,15 @@ const ActiveWorkoutView = ({ user, onUpdateUser, onFinishWorkout, onCancelWorkou
     });
 
     setActiveExercise(null);
+  };
+
+  const handleFinishAttempt = () => {
+     const pending = currentLog.exercises.some(ex => !ex.isFullyCompleted);
+     if (pending) {
+        setShowIncompleteAlert(true);
+     } else {
+        onFinishWorkout();
+     }
   };
   
   return (
@@ -1211,7 +1295,7 @@ const ActiveWorkoutView = ({ user, onUpdateUser, onFinishWorkout, onCancelWorkou
        {/* Finish Button */}
        <div className="sticky bottom-4 mt-6">
           <button 
-             onClick={onFinishWorkout}
+             onClick={handleFinishAttempt}
              className="w-full bg-green-500 hover:bg-green-400 text-white font-bold py-4 rounded-2xl shadow-xl shadow-green-500/30 active:scale-95 transition-all flex items-center justify-center gap-2"
           >
              <CheckCircle className="w-6 h-6" /> Finalizar Entrenamiento
@@ -1225,6 +1309,27 @@ const ActiveWorkoutView = ({ user, onUpdateUser, onFinishWorkout, onCancelWorkou
              onSave={handleExerciseSave} 
              onClose={() => setActiveExercise(null)} 
           />
+       )}
+
+       {/* Incomplete Alert Modal */}
+       {showIncompleteAlert && (
+         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+            <div className="bg-slate-900 border border-slate-700 p-6 rounded-2xl shadow-2xl max-w-sm w-full text-center relative overflow-hidden animate-bounce-in">
+               <div className="mx-auto w-16 h-16 bg-yellow-500/20 rounded-full flex items-center justify-center mb-4">
+                  <AlertTriangle className="w-8 h-8 text-yellow-500" />
+               </div>
+               <h3 className="text-xl font-bold text-white mb-2">¡Entrenamiento Incompleto!</h3>
+               <p className="text-slate-400 text-sm mb-6">
+                  Aún tienes ejercicios sin marcar como completados. Por favor, registra todas las series para finalizar la sesión y obtener tu recompensa.
+               </p>
+               <button 
+                 onClick={() => setShowIncompleteAlert(false)}
+                 className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold transition-colors"
+               >
+                 Entendido, volver
+               </button>
+            </div>
+         </div>
        )}
     </div>
   );
