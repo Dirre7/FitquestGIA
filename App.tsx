@@ -166,10 +166,10 @@ const AvatarSelectionModal = ({ isOpen, onClose, onSelect }: { isOpen: boolean, 
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-      <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-2xl max-w-md w-full border border-slate-200 dark:border-slate-700 animate-bounce-in flex flex-col max-h-[90vh]">
-        <div className="flex justify-between items-center mb-4 border-b border-slate-100 dark:border-slate-700 pb-4">
+      <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-2xl max-w-md w-full border border-slate-200 dark:border-slate-800 animate-bounce-in flex flex-col max-h-[90vh]">
+        <div className="flex justify-between items-center mb-4 border-b border-slate-100 dark:border-slate-800 pb-4">
           <h3 className="text-xl font-bold text-slate-900 dark:text-white">Elige tu Avatar</h3>
-          <button onClick={onClose} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors">
+          <button onClick={onClose} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
             <X className="w-6 h-6 text-slate-500" />
           </button>
         </div>
@@ -188,7 +188,7 @@ const AvatarSelectionModal = ({ isOpen, onClose, onSelect }: { isOpen: boolean, 
                     <button 
                       key={seed}
                       onClick={() => { onSelect(url); onClose(); }}
-                      className="aspect-square rounded-xl overflow-hidden border-2 border-transparent hover:border-primary-500 hover:scale-105 hover:shadow-md transition-all bg-slate-100 dark:bg-slate-700/50 group"
+                      className="aspect-square rounded-xl overflow-hidden border-2 border-transparent hover:border-primary-500 hover:scale-105 hover:shadow-md transition-all bg-slate-100 dark:bg-slate-800/50 group"
                     >
                       <ImageWithFallback src={url} alt={seed} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
                     </button>
@@ -198,7 +198,7 @@ const AvatarSelectionModal = ({ isOpen, onClose, onSelect }: { isOpen: boolean, 
             </div>
           ))}
 
-          <div className="border-t border-slate-200 dark:border-slate-700 pt-4 mt-2">
+          <div className="border-t border-slate-200 dark:border-slate-800 pt-4 mt-2">
             <p className="text-sm text-slate-500 mb-2 font-bold">O usa una URL personalizada</p>
             <div className="flex gap-2">
               <div className="relative flex-1">
@@ -208,7 +208,7 @@ const AvatarSelectionModal = ({ isOpen, onClose, onSelect }: { isOpen: boolean, 
                   placeholder="https://..." 
                   value={customUrl}
                   onChange={(e) => setCustomUrl(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-lg text-sm focus:border-primary-500 outline-none transition-colors"
+                  className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:border-primary-500 outline-none transition-colors text-white"
                 />
               </div>
               <button 
@@ -265,7 +265,10 @@ const DashboardView = ({ user, setView }: { user: UserState; setView: (v: ViewSt
     <div className="space-y-6 pb-28 animate-fade-in">
       
       {/* Profile Summary Card - Redesigned */}
-      <div className="relative overflow-hidden rounded-3xl bg-slate-900 text-white shadow-2xl p-6 border border-slate-800 group">
+      <div 
+        onClick={() => setView('profile')}
+        className="relative overflow-hidden rounded-3xl bg-slate-900 text-white shadow-2xl p-6 border border-slate-800 group cursor-pointer hover:border-slate-700 transition-all active:scale-[0.98]"
+      >
         {/* Background decorations */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 animate-pulse"></div>
         <div className="absolute bottom-0 left-0 w-48 h-48 bg-secondary-500/10 rounded-full blur-[60px] translate-y-1/2 -translate-x-1/2"></div>
@@ -273,12 +276,12 @@ const DashboardView = ({ user, setView }: { user: UserState; setView: (v: ViewSt
         <div className="relative z-10 flex items-center gap-6">
           {/* Avatar & Level */}
           <div className="relative shrink-0">
-            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-slate-800 shadow-xl overflow-hidden bg-slate-700">
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-slate-800 shadow-xl overflow-hidden bg-slate-700 group-hover:scale-105 transition-transform duration-500">
                <ImageWithFallback src={user.avatar} alt="Avatar" className="w-full h-full object-cover" />
             </div>
             
             {/* Big Level Badge */}
-            <div className="absolute -bottom-2 -right-2 sm:-bottom-3 sm:-right-3 flex flex-col items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-amber-400 via-orange-500 to-amber-600 text-white shadow-lg border-4 border-slate-900 transform rotate-6 hover:rotate-0 transition-transform cursor-pointer group-hover:scale-110 duration-300">
+            <div className="absolute -bottom-2 -right-2 sm:-bottom-3 sm:-right-3 flex flex-col items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-amber-400 via-orange-500 to-amber-600 text-white shadow-lg border-4 border-slate-900 transform rotate-6 group-hover:rotate-12 transition-transform duration-300">
                <span className="text-[8px] sm:text-[10px] font-bold uppercase leading-none opacity-80 text-amber-100 shadow-black drop-shadow-md">Lvl</span>
                <span className="text-xl sm:text-2xl font-black leading-none drop-shadow-md">{user.level}</span>
             </div>
@@ -291,7 +294,7 @@ const DashboardView = ({ user, setView }: { user: UserState; setView: (v: ViewSt
                   {getRankTitle(user.level)}
                 </span>
              </div>
-             <h3 className="text-2xl sm:text-3xl font-black tracking-tight truncate mb-3 text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-300 drop-shadow-sm">
+             <h3 className="text-2xl sm:text-3xl font-black tracking-tight truncate mb-3 text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-300 drop-shadow-sm group-hover:to-white transition-colors">
                {user.name}
              </h3>
 
@@ -1004,16 +1007,16 @@ const ProfileView = ({ user, setUser, toggleTheme, signOut }: {
        <div className="glass-card p-6 rounded-2xl flex flex-col items-center text-center relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-r from-primary-500/20 to-secondary-500/20"></div>
           
-          <div className="relative mb-4">
-             <div className="w-28 h-28 rounded-full border-4 border-white dark:border-slate-800 shadow-xl overflow-hidden bg-slate-200">
+          <div className="relative mb-4 group cursor-pointer" onClick={() => setShowAvatarModal(true)}>
+             <div className="w-28 h-28 rounded-full border-4 border-white dark:border-slate-800 shadow-xl overflow-hidden bg-slate-200 relative">
                <ImageWithFallback src={user.avatar} alt="Avatar" className="w-full h-full object-cover" />
+               <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Camera className="w-8 h-8 text-white/80" />
+               </div>
              </div>
-             <button 
-               onClick={() => setShowAvatarModal(true)}
-               className="absolute bottom-0 right-0 bg-primary-500 text-white p-2 rounded-full shadow-lg hover:bg-primary-600 transition-colors"
-             >
+             <div className="absolute bottom-0 right-0 bg-primary-500 text-white p-2 rounded-full shadow-lg border-4 border-slate-900 group-hover:bg-primary-600 transition-colors">
                 <Camera className="w-4 h-4" />
-             </button>
+             </div>
           </div>
 
           {isEditingName ? (
