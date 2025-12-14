@@ -67,18 +67,24 @@
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
       
-      /* CRITICAL FIX FOR WHITE BARS */
       :root {
-        background-color: #0f172a; /* Ensure root matches dark theme */
+        /* Default variables */
       }
 
       html {
         height: 100%;
         width: 100%;
-        background-color: #0f172a; /* Dark background base */
+        /* Default Light Theme Background - Slate 50 */
+        background-color: #f8fafc; 
         -webkit-tap-highlight-color: transparent;
         overflow: hidden; /* Prevent html scrolling */
         position: fixed; /* Fix html in place */
+      }
+
+      /* Dark Mode Override for HTML tag */
+      html.dark {
+        /* Dark Theme Background - Slate 900 */
+        background-color: #0f172a; 
       }
 
       body {
@@ -86,7 +92,8 @@
         width: 100%;
         margin: 0;
         padding: 0;
-        background-color: #0f172a; /* Dark background base */
+        /* Inherit background to ensure body matches html theme */
+        background-color: inherit;
         overflow: hidden; /* Prevent body scrolling */
         position: fixed; /* Fix body in place */
         top: 0;
@@ -99,7 +106,7 @@
       #root {
         height: 100%;
         width: 100%;
-        background-color: #0f172a; /* Dark background base */
+        background-color: inherit;
         overflow: hidden;
       }
 

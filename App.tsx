@@ -1856,7 +1856,7 @@ const App = () => {
     if (metaThemeColor) {
       metaThemeColor.setAttribute('content', color);
     }
-    // Update body background color to prevent white bars on scroll/overscroll
+    // Update body background color dynamically for mobile browsers
     document.body.style.backgroundColor = color;
     document.documentElement.style.backgroundColor = color;
 
