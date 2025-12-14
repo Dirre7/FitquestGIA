@@ -331,6 +331,24 @@ const buildPowerProgram = (): ProgramDay[] => {
   return schedule;
 };
 
+// --- PROGRAMA 7: RUTINA RÁPIDA (Casa - Principiante) ---
+const quickDay: ExerciseTemplate[] = [
+  createExercise("Sentadilla al Aire", 3, "15", 30, "Pies ancho de hombros. Baja controlando y sube explosivo. Espalda recta."),
+  createExercise("Flexiones Estrictas (o rodillas)", 3, "10", 30, "Manos bajo hombros. Codos a 45 grados. Baja hasta casi tocar el suelo."),
+  createExercise("Plancha Frontal", 3, "30 seg", 30, "Antebrazos en el suelo. Cuerpo en línea recta. Contrae glúteo y abdomen.")
+];
+
+const buildQuickProgram = (): ProgramDay[] => {
+  const schedule: ProgramDay[] = [];
+  for (let w = 1; w <= 2; w++) {
+     // 3 days a week
+     schedule.push({ id: `q_w${w}_d1`, title: `Semana ${w} - Sesión 1`, exercises: quickDay });
+     schedule.push({ id: `q_w${w}_d2`, title: `Semana ${w} - Sesión 2`, exercises: quickDay });
+     schedule.push({ id: `q_w${w}_d3`, title: `Semana ${w} - Sesión 3`, exercises: quickDay });
+  }
+  return schedule;
+};
+
 // --- DESAFIOS SEMANALES DEFINICIONES ---
 
 // Desafío 1: Semana del Infierno (Metabólico/Cardio)
@@ -494,6 +512,19 @@ export const PROGRAMS: Program[] = [
     xpRewardDay: 380,
     estimatedKcal: 16000, // ~500 per session * 32 sessions
     schedule: buildPowerProgram()
+  },
+  {
+    id: 'prog_quick_beg',
+    title: "Rutina Rápida",
+    description: "Solo 15 minutos. 3 ejercicios clave para activar todo el cuerpo. Ideal si tienes poco tiempo.",
+    difficulty: Difficulty.BEGINNER,
+    location: 'Casa',
+    durationWeeks: 2,
+    daysPerWeek: 3,
+    xpRewardFinish: 500,
+    xpRewardDay: 100, // Requested 100 XP
+    estimatedKcal: 900,
+    schedule: buildQuickProgram()
   },
   // --- DESAFIOS SEMANALES ---
   {
