@@ -10,6 +10,7 @@ import {
 import { supabase } from './services/supabaseClient';
 import { getAiCoachAdvice } from './services/geminiService';
 import { AuthView } from './components/AuthView';
+import { WelcomeView } from './components/WelcomeView';
 import { INITIAL_USER_STATE, PROGRAMS, ACHIEVEMENTS } from './constants';
 import { UserState, Program, ViewState, ActiveExerciseState, WorkoutLog, ActiveProgramProgress, SetLog, Difficulty, LocationType } from './types';
 
@@ -1457,6 +1458,13 @@ const App = () => {
   const [programFilter, setProgramFilter] = useState<'ALL' | Difficulty>('ALL');
   const [loading, setLoading] = useState(true);
   
+  // Welcome/Onboarding State
+  // Check if we've seen it before in localStorage. Initial render only.
+  const [showWelcome, setShowWelcome] = useState<boolean>(() => {
+    // If key exists, it means we have seen it.
+    return !localStorage.getItem('levelup_welcome_seen');
+  });
+  
   // Modals state
   const [showLevelUp, setShowLevelUp] = useState(false);
   const [showWorkoutComplete, setShowWorkoutComplete] = useState<WorkoutLog | null>(null);
@@ -1539,6 +1547,11 @@ const App = () => {
     handleUpdateUser(resetState);
     setShowConfirmReset(false);
     setView('dashboard');
+  };
+  
+  const handleWelcomeContinue = () => {
+    localStorage.setItem('levelup_welcome_seen', 'true');
+    setShowWelcome(false);
   };
   
   // Logic for leveling up
@@ -1730,7 +1743,13 @@ const App = () => {
     }
   }, [user.settings.darkMode]);
 
-  if (!session) return <AuthView />;
+  // View Logic Switcher
+  if (!session) {
+    if (showWelcome) {
+      return <WelcomeView onContinue={handleWelcomeContinue} />;
+    }
+    return <AuthView />;
+  }
 
   return (
     <div className={`min-h-screen ${user.settings.darkMode ? 'dark' : ''}`}>
