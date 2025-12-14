@@ -67,47 +67,24 @@
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
       
-      :root {
-        /* Default variables */
-      }
-
       html {
-        height: 100%;
+        min-height: 100dvh;
         width: 100%;
-        /* Default Light Theme Background - Slate 50 */
-        background-color: #f8fafc; 
         -webkit-tap-highlight-color: transparent;
-        overflow: hidden; /* Prevent html scrolling */
-        position: fixed; /* Fix html in place */
-      }
-
-      /* Dark Mode Override for HTML tag */
-      html.dark {
-        /* Dark Theme Background - Slate 900 */
-        background-color: #0f172a; 
+        /* Dynamic background controlled by Tailwind classes on body/app */
       }
 
       body {
-        height: 100%;
-        width: 100%;
         margin: 0;
         padding: 0;
-        /* Inherit background to ensure body matches html theme */
-        background-color: inherit;
-        overflow: hidden; /* Prevent body scrolling */
-        position: fixed; /* Fix body in place */
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        overscroll-behavior: none;
+        width: 100%;
+        min-height: 100dvh;
+        overscroll-behavior-y: none;
       }
 
       #root {
-        height: 100%;
         width: 100%;
-        background-color: inherit;
-        overflow: hidden;
+        min-height: 100dvh;
       }
 
       ::-webkit-scrollbar {

@@ -1871,7 +1871,7 @@ const App = () => {
   }
 
   return (
-    <div className={`fixed inset-0 w-full h-full overflow-hidden bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-200 font-sans selection:bg-primary-500 selection:text-white transition-colors duration-300 ${user.settings.darkMode ? 'dark' : ''}`}>
+    <div className={`relative min-h-[100dvh] w-full flex flex-col bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-200 font-sans selection:bg-primary-500 selection:text-white transition-colors duration-300 ${user.settings.darkMode ? 'dark' : ''}`}>
        
        {loading && (
           <div className="fixed inset-0 z-[200] bg-slate-900 flex items-center justify-center">
@@ -1880,10 +1880,10 @@ const App = () => {
        )}
 
        {/* Scrolling Container */}
-       <div className="w-full h-full overflow-y-auto overflow-x-hidden pb-safe relative">
+       <div className="flex-1 w-full pb-safe relative">
           
           {/* Main Content */}
-          <main className="max-w-md mx-auto min-h-full p-4 pb-24">
+          <main className="max-w-md mx-auto min-h-full p-4 pt-safe-top pb-24">
              {view === 'dashboard' && <DashboardView user={user} setView={setView} onGoToChallenges={goToChallenges} />}
              {view === 'training' && <ProgramsView user={user} startProgram={startProgram} continueProgram={continueProgram} abandonProgram={abandonProgram} filter={programFilter} setFilter={setProgramFilter} />}
              {view === 'active-workout' && <ActiveWorkoutView user={user} onUpdateUser={handleUpdateUser} onFinishWorkout={finishWorkout} onCancelWorkout={() => setView('training')} />}
