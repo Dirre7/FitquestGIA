@@ -99,6 +99,7 @@ export interface UserState {
   totalDurationMinutes: number;
   totalKcalBurned: number; // New: Total historical calories
   achievements: string[];
+  achievementDates: Record<string, string>; // Mapa ID -> Fecha ISO
   history: WorkoutLog[];
   
   // Biometrics

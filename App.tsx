@@ -12,7 +12,7 @@ import { getAiCoachAdvice } from './services/geminiService';
 import { AuthView } from './components/AuthView';
 import { WelcomeView } from './components/WelcomeView';
 import { INITIAL_USER_STATE, PROGRAMS, ACHIEVEMENTS } from './constants';
-import { UserState, Program, ViewState, ActiveExerciseState, WorkoutLog, ActiveProgramProgress, SetLog, Difficulty, LocationType } from './types';
+import { UserState, Program, ViewState, ActiveExerciseState, WorkoutLog, ActiveProgramProgress, SetLog, Difficulty, LocationType, Achievement } from './types';
 
 // --- Shared Components ---
 
@@ -156,6 +156,50 @@ const LevelUpModal = ({ level, onClose }: { level: number, onClose: () => void }
     <Confetti />
   </div>
 );
+
+const AchievementDetailModal = ({ achievement, dateUnlocked, onClose }: { achievement: Achievement, dateUnlocked?: string, onClose: () => void }) => {
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in" onClick={onClose}>
+      <div 
+        className="bg-slate-900 border border-slate-700 p-6 rounded-3xl shadow-2xl max-w-xs w-full text-center relative overflow-hidden animate-bounce-in"
+        onClick={(e) => e.stopPropagation()} // Prevent close on card click
+      >
+        {/* Background Effects */}
+        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-yellow-500/10 to-transparent pointer-events-none"></div>
+        
+        <button onClick={onClose} className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors">
+          <X className="w-5 h-5" />
+        </button>
+
+        <div className="relative z-10 mt-2">
+          <div className="mx-auto w-20 h-20 bg-slate-800/80 rounded-full flex items-center justify-center mb-4 shadow-lg border border-yellow-500/30">
+            <span className="text-4xl drop-shadow-md">{achievement.icon}</span>
+          </div>
+          
+          <h2 className="text-xl font-black text-white mb-2 leading-tight">{achievement.name}</h2>
+          
+          <div className="my-4 bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
+            <p className="text-slate-300 text-sm leading-relaxed">
+              {achievement.description}
+            </p>
+          </div>
+          
+          <div className="flex justify-center items-center gap-2 mb-2">
+             <div className="bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest flex items-center gap-1">
+                <Star className="w-3 h-3 fill-current" /> Conseguido
+             </div>
+          </div>
+          
+          {dateUnlocked && (
+             <p className="text-xs text-slate-500 font-medium">
+                Obtenido el {new Date(dateUnlocked).toLocaleDateString()}
+             </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const WorkoutCompleteModal = ({ log, isProgramFinish, isWeekFinish, onClose }: { log: WorkoutLog, isProgramFinish: boolean, isWeekFinish: boolean, onClose: () => void }) => {
   let title = "¡MISIÓN CUMPLIDA!";
@@ -693,6 +737,7 @@ const ProgramsView = ({ user, startProgram, continueProgram, abandonProgram, fil
 };
 
 const AchievementsView = ({ user }: { user: UserState }) => {
+   const [selectedAch, setSelectedAch] = useState<Achievement | null>(null);
    const unlockedCount = user.achievements.length;
    const totalCount = ACHIEVEMENTS.length;
 
@@ -721,10 +766,15 @@ const AchievementsView = ({ user }: { user: UserState }) => {
             {sortedAchievements.map(ach => {
                const isUnlocked = user.achievements.includes(ach.id);
                return (
-                  <div key={ach.id} className={`relative group overflow-hidden rounded-xl border p-2 flex flex-col items-center text-center transition-all duration-300 aspect-[3/4] sm:aspect-auto sm:h-auto justify-center ${
+                  <button 
+                    key={ach.id} 
+                    onClick={() => {
+                        if (isUnlocked) setSelectedAch(ach);
+                    }}
+                    className={`relative group overflow-hidden rounded-xl border p-2 flex flex-col items-center text-center transition-all duration-300 aspect-[3/4] sm:aspect-auto sm:h-auto justify-center outline-none focus:scale-[0.98] ${
                      isUnlocked
-                     ? 'bg-slate-800 border-yellow-500/50 shadow-md shadow-yellow-500/10'
-                     : 'bg-slate-900 border-slate-800 opacity-60 grayscale-[0.8]'
+                     ? 'bg-slate-800 border-yellow-500/50 shadow-md shadow-yellow-500/10 cursor-pointer hover:bg-slate-700'
+                     : 'bg-slate-900 border-slate-800 opacity-60 grayscale-[0.8] cursor-default'
                   }`}>
                      {/* Unlocked Background Glow */}
                      {isUnlocked && <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/10 to-transparent pointer-events-none" />}
@@ -764,10 +814,19 @@ const AchievementsView = ({ user }: { user: UserState }) => {
                            )}
                         </div>
                      </div>
-                  </div>
+                  </button>
                );
             })}
          </div>
+
+         {/* Detail Modal */}
+         {selectedAch && (
+            <AchievementDetailModal 
+                achievement={selectedAch} 
+                dateUnlocked={user.achievementDates ? user.achievementDates[selectedAch.id] : undefined}
+                onClose={() => setSelectedAch(null)} 
+            />
+         )}
       </div>
    );
 };
@@ -1624,9 +1683,16 @@ const App = () => {
     });
 
     if (newUnlocked.length > 0) {
+       const newDates = { ...(user.achievementDates || {}) }; // Safety check for existing users without this field
+       const now = new Date().toISOString();
+       newUnlocked.forEach(id => {
+         newDates[id] = now;
+       });
+
        handleUpdateUser({
          ...user,
-         achievements: [...user.achievements, ...newUnlocked]
+         achievements: [...user.achievements, ...newUnlocked],
+         achievementDates: newDates
        });
     }
 

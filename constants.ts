@@ -11,6 +11,7 @@ export const INITIAL_USER_STATE: UserState = {
   totalDurationMinutes: 0,
   totalKcalBurned: 0,
   achievements: [],
+  achievementDates: {}, // Inicialización vacía
   history: [],
   weight: 0,
   height: 0,
