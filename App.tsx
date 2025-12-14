@@ -800,7 +800,7 @@ const AchievementsView = ({ user }: { user: UserState }) => {
                            {isUnlocked ? (
                               <>
                                 <div className="sm:hidden text-yellow-400"><Star className="w-3 h-3 fill-current" /></div>
-                                <div className="hidden sm:flex bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-widest items-center gap-1">
+                                <div className="hidden sm:flex bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest flex items-center gap-1">
                                     <Star className="w-3 h-3 fill-current" /> Conseguido
                                 </div>
                               </>
@@ -1871,8 +1871,8 @@ const App = () => {
   }
 
   return (
-    <div className={`min-h-[100dvh] ${user.settings.darkMode ? 'dark' : ''}`}>
-       <div className="min-h-[100dvh] bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-200 font-sans selection:bg-primary-500 selection:text-white pb-safe transition-colors duration-300">
+    <div className={`h-full ${user.settings.darkMode ? 'dark' : ''}`}>
+       <div className="min-h-full bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-200 font-sans selection:bg-primary-500 selection:text-white pb-safe transition-colors duration-300">
           
           {loading && (
              <div className="fixed inset-0 z-[200] bg-slate-900 flex items-center justify-center">
@@ -1881,7 +1881,7 @@ const App = () => {
           )}
 
           {/* Main Content */}
-          <main className="max-w-md mx-auto min-h-[100dvh] relative p-4 pb-24">
+          <main className="max-w-md mx-auto min-h-full relative p-4 pb-24">
              {view === 'dashboard' && <DashboardView user={user} setView={setView} onGoToChallenges={goToChallenges} />}
              {view === 'training' && <ProgramsView user={user} startProgram={startProgram} continueProgram={continueProgram} abandonProgram={abandonProgram} filter={programFilter} setFilter={setProgramFilter} />}
              {view === 'active-workout' && <ActiveWorkoutView user={user} onUpdateUser={handleUpdateUser} onFinishWorkout={finishWorkout} onCancelWorkout={() => setView('training')} />}

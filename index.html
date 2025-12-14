@@ -67,30 +67,30 @@
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
       
-      html {
-        height: 100%;
-        background-color: #0f172a; /* Default dark color to prevent white flash */
-        overscroll-behavior: none; /* CRITICAL: Prevents pull-to-refresh/bounce revealing white bg */
-        -webkit-overflow-scrolling: touch;
-      }
-
-      body {
-        font-family: 'Inter', sans-serif;
-        overscroll-behavior-y: none; /* CRITICAL */
+      /* FIXED BODY / SCROLLING ROOT PATTERN */
+      html, body {
+        width: 100%;
         height: 100%;
         margin: 0;
         padding: 0;
-        background-color: #0f172a;
-      }
-
-      #root {
-        height: 100%;
-        overflow-y: auto; /* Allow internal scrolling instead of body scrolling */
+        overflow: hidden; /* Disable native scroll */
+        position: fixed; /* Lock body in place */
+        background-color: #0f172a; /* Default to dark match to prevent flashes */
         overscroll-behavior: none;
       }
 
+      #root {
+        width: 100%;
+        height: 100%;
+        overflow-y: auto; /* Internal scroll */
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch; /* Smooth scroll on iOS */
+        overscroll-behavior-y: none; /* Prevent chain to body */
+        position: relative;
+      }
+
       ::-webkit-scrollbar {
-        width: 6px;
+        width: 4px;
       }
       ::-webkit-scrollbar-track {
         background: transparent;
