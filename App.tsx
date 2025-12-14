@@ -226,40 +226,40 @@ const AvatarSelectionModal = ({ isOpen, onClose, onSelect, currentLevel, current
   // Defines avatar groups with unlock levels
   const avatarGroups = useMemo(() => [
     {
-      title: 'Iniciados',
+      title: 'Iniciados (Nivel 1)',
       minLevel: 1,
-      style: 'adventurer',
-      seeds: ['Felix', 'Aneka', 'Zack', 'Midnight', 'Luna', 'Shadow', 'Abby', 'Chester']
+      style: 'miniavs', // Simple & Cute
+      seeds: ['Lucy', 'Bob', 'Alice', 'John', 'Molly', 'Pete', 'Zoe', 'Max', 'Sam', 'Mia', 'Leo', 'Ivy', 'Ben', 'Nora', 'Tom', 'Ava']
     },
     {
-      title: 'Exploradores',
+      title: 'Fitness Moderno (Nivel 5)',
       minLevel: 5,
-      style: 'adventurer',
-      seeds: ['Buddy', 'Giggle', 'Bandit', 'Whiskers', 'Leo', 'Willow', 'Sheba', 'Cuddles', 'Cookie', 'Sugar', 'Ginger', 'Pepper']
+      style: 'micah', // Artistic, sleek
+      seeds: ['Aidan', 'Brianna', 'Caden', 'Destiny', 'Ethan', 'Faith', 'Gabriel', 'Hope', 'Isaac', 'Jade', 'Kyle', 'Lily', 'Mason', 'Nora', 'Oliver', 'Paige']
     },
     {
-      title: 'Estilo Libre',
+      title: 'Cross-Training (Nivel 10)',
       minLevel: 10,
-      style: 'lorelei',
-      seeds: ['John', 'Jane', 'Alex', 'Sarah', 'Mike', 'Emily', 'Chris', 'Katie', 'Ryan', 'Amy', 'David', 'Lisa']
+      style: 'avataaars', // Customizable, diverse
+      seeds: ['Jack', 'Jill', 'Mike', 'Sara', 'Chris', 'Pat', 'Alex', 'Taylor', 'Jordan', 'Morgan', 'Casey', 'Riley', 'Jamie', 'Quinn', 'Avery', 'Parker']
     },
     {
-      title: 'Cyborgs',
+      title: 'Guerreros RPG (Nivel 20)',
       minLevel: 20,
-      style: 'bottts',
-      seeds: ['C3PO', 'R2D2', 'WallE', 'Eve', 'Bender', 'Tron', 'Data', 'Cyber', 'Glitch', 'Spark', 'Chip', 'Byte']
+      style: 'adventurer', // Classic RPG look
+      seeds: ['Leo', 'Willow', 'Sheba', 'Cuddles', 'Cookie', 'Sugar', 'Ginger', 'Pepper', 'King', 'Queen', 'Prince', 'Princess', 'Knight', 'Wizard', 'Rogue', 'Paladin']
     },
     {
-      title: 'Élite',
+      title: 'Cyborgs (Nivel 30)',
       minLevel: 30,
-      style: 'adventurer-neutral', // Using adventurer but implying 'elite' by selection
-      seeds: ['King', 'Queen', 'Prince', 'Princess', 'Knight', 'Wizard', 'Rogue', 'Paladin']
+      style: 'bottts', // Robots/Machines
+      seeds: ['C3PO', 'R2D2', 'WallE', 'Eve', 'Bender', 'Tron', 'Data', 'Cyber', 'Glitch', 'Spark', 'Chip', 'Byte', 'Mega', 'Giga', 'Tera', 'Peta']
     },
     {
-      title: 'Leyendas',
+      title: 'Leyendas Divinas (Nivel 50)',
       minLevel: 50,
-      style: 'fun-emoji',
-      seeds: ['Cool', 'Love', 'Lul', 'Sad', 'Happy', 'Angry', 'Shocked', 'Sick']
+      style: 'lorelei', // Epic/Godlike
+      seeds: ['Zeus', 'Hera', 'Thor', 'Odin', 'Freya', 'Apollo', 'Athena', 'Ares', 'Mars', 'Venus', 'Jupiter', 'Diana', 'Hercules', 'Achilles', 'Perseus', 'Orion']
     }
   ], []);
 
