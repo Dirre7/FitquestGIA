@@ -1065,15 +1065,32 @@ const DashboardView = ({ user, setView, onGoToChallenges }: { user: UserState; s
           <div className="absolute -right-10 -bottom-10 w-48 h-48 bg-primary-500 rounded-full blur-[80px] opacity-30 z-0"></div>
           
           <div className="relative z-10 p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
+            <div className="flex-1">
               <div className="flex items-center gap-2 text-primary-300 font-bold text-xs uppercase tracking-wider mb-2">
                 <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
                 Programa Activo
               </div>
-              <h2 className="text-2xl md:text-3xl font-black italic">{activeProgram.title}</h2>
-              <p className="text-slate-300 text-sm mt-1">
-                Progreso: Día {activeProgress.currentDayIndex + 1} de {activeProgram.schedule.length}
-              </p>
+              <h2 className="text-2xl md:text-3xl font-black italic mb-3">{activeProgram.title}</h2>
+              
+              {/* Visual Progress Bar */}
+              <div className="w-full max-w-sm">
+                 <div className="flex justify-between text-[10px] font-bold text-slate-300 uppercase tracking-wider mb-1">
+                    <span>Progreso Total</span>
+                    <span>{Math.round((activeProgress.currentDayIndex / activeProgram.schedule.length) * 100)}%</span>
+                 </div>
+                 <div className="h-3 w-full bg-slate-800/60 rounded-full overflow-hidden border border-slate-700/50 backdrop-blur-sm relative shadow-inner">
+                    <div 
+                      className="h-full bg-gradient-to-r from-primary-400 to-green-400 shadow-[0_0_15px_rgba(74,222,128,0.4)] transition-all duration-1000 relative" 
+                      style={{ width: `${Math.max(2, ((activeProgress.currentDayIndex) / activeProgram.schedule.length) * 100)}%` }}
+                    >
+                       <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
+                    </div>
+                 </div>
+                 <p className="text-slate-300 text-xs mt-2 font-medium flex items-center gap-2">
+                    <span className="px-2 py-0.5 bg-white/20 rounded-md font-bold">Día {activeProgress.currentDayIndex + 1}</span>
+                    <span className="opacity-70">de {activeProgram.schedule.length} sesiones</span>
+                 </p>
+              </div>
             </div>
             
             <div className="flex items-center gap-4">
@@ -1085,14 +1102,6 @@ const DashboardView = ({ user, setView, onGoToChallenges }: { user: UserState; s
                 <Play fill="currentColor" className="w-6 h-6" />
               </div>
             </div>
-          </div>
-          
-          {/* Progress Bar Bottom */}
-          <div className="absolute bottom-0 left-0 w-full h-1.5 bg-slate-800">
-            <div 
-              className="h-full bg-primary-400" 
-              style={{ width: `${((activeProgress.currentDayIndex) / activeProgram.schedule.length) * 100}%` }}
-            ></div>
           </div>
         </div>
       ) : (
