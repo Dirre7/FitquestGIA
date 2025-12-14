@@ -70,8 +70,8 @@ export const WelcomeView = ({ onContinue }: { onContinue: () => void }) => {
           <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
         </button>
         
-        <p className="mt-6 text-[10px] text-slate-600 font-bold uppercase tracking-widest">
-          v1.0 • Ready Player One
+        <p className="mt-6 text-[10px] text-slate-600 font-bold uppercase tracking-widest text-center">
+          v1.0
         </p>
       </div>
     </div>
