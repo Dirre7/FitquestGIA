@@ -730,34 +730,38 @@ const AchievementsView = ({ user }: { user: UserState }) => {
 };
 
 const StatsView = ({ user, setUser }: { user: UserState, setUser: (u: UserState) => void }) => {
-   // Calculate weekly comparison
-   const weeklyStats = useMemo(() => {
-    const now = new Date();
-    const startOfLast7Days = new Date(now);
-    startOfLast7Days.setDate(now.getDate() - 7);
-    
-    const startOfPrevious7Days = new Date(startOfLast7Days);
-    startOfPrevious7Days.setDate(startOfLast7Days.getDate() - 7);
+   // Generalized stats calculation for any period
+   const calculatePeriodStats = useCallback((days: number) => {
+      const now = new Date();
+      const startOfCurrent = new Date(now);
+      startOfCurrent.setDate(now.getDate() - days);
+      
+      const startOfPrevious = new Date(startOfCurrent);
+      startOfPrevious.setDate(startOfCurrent.getDate() - days);
 
-    let current = { volume: 0, duration: 0, kcal: 0, count: 0 };
-    let previous = { volume: 0, duration: 0, kcal: 0, count: 0 };
+      let current = { volume: 0, duration: 0, kcal: 0, count: 0 };
+      let previous = { volume: 0, duration: 0, kcal: 0, count: 0 };
 
-    user.history.forEach(log => {
-        const d = new Date(log.date);
-        if (d >= startOfLast7Days) {
-            current.volume += log.totalVolume;
-            current.duration += log.durationMinutes;
-            current.kcal += log.kcalBurned;
-            current.count += 1;
-        } else if (d >= startOfPrevious7Days && d < startOfLast7Days) {
-            previous.volume += log.totalVolume;
-            previous.duration += log.durationMinutes;
-            previous.kcal += log.kcalBurned;
-            previous.count += 1;
-        }
-    });
-    return { current, previous };
-  }, [user.history]);
+      user.history.forEach(log => {
+          const d = new Date(log.date);
+          if (d >= startOfCurrent) {
+              current.volume += log.totalVolume;
+              current.duration += log.durationMinutes;
+              current.kcal += log.kcalBurned;
+              current.count += 1;
+          } else if (d >= startOfPrevious && d < startOfCurrent) {
+              previous.volume += log.totalVolume;
+              previous.duration += log.durationMinutes;
+              previous.kcal += log.kcalBurned;
+              previous.count += 1;
+          }
+      });
+      return { current, previous };
+   }, [user.history]);
+
+   const stats7 = useMemo(() => calculatePeriodStats(7), [calculatePeriodStats]);
+   const stats15 = useMemo(() => calculatePeriodStats(15), [calculatePeriodStats]);
+   const stats28 = useMemo(() => calculatePeriodStats(28), [calculatePeriodStats]);
 
    const [editingBio, setEditingBio] = useState(false);
    const [weight, setWeight] = useState(user.weight);
@@ -779,7 +783,40 @@ const StatsView = ({ user, setUser }: { user: UserState, setUser: (u: UserState)
               <span>{Math.abs(percent).toFixed(0)}%</span>
           </div>
       );
-  };
+   };
+
+   const renderStatsBlock = (title: string, stats: { current: any, previous: any }) => (
+      <div className="mb-4">
+         <h3 className="font-bold text-slate-700 dark:text-white mb-3 flex items-center gap-2 text-sm uppercase tracking-wide">
+            <Calendar className="w-4 h-4 text-primary-500" /> {title}
+         </h3>
+         <div className="grid grid-cols-3 gap-3">
+            <div className="glass-card p-3 rounded-xl flex flex-col justify-between">
+               <span className="text-[10px] font-bold text-slate-400 uppercase">Volumen</span>
+               <div className="mb-1">
+                  <span className="text-lg font-black text-slate-800 dark:text-white">{(stats.current.volume / 1000).toFixed(1)}</span>
+                  <span className="text-[10px] text-slate-500 ml-0.5">k</span>
+               </div>
+               {renderTrend(stats.current.volume, stats.previous.volume)}
+            </div>
+            <div className="glass-card p-3 rounded-xl flex flex-col justify-between">
+               <span className="text-[10px] font-bold text-slate-400 uppercase">Tiempo</span>
+               <div className="mb-1">
+                  <span className="text-lg font-black text-slate-800 dark:text-white">{stats.current.duration}</span>
+                  <span className="text-[10px] text-slate-500 ml-0.5">min</span>
+               </div>
+               {renderTrend(stats.current.duration, stats.previous.duration)}
+            </div>
+            <div className="glass-card p-3 rounded-xl flex flex-col justify-between">
+               <span className="text-[10px] font-bold text-slate-400 uppercase">Kcal</span>
+               <div className="mb-1">
+                  <span className="text-lg font-black text-slate-800 dark:text-white">{stats.current.kcal}</span>
+               </div>
+               {renderTrend(stats.current.kcal, stats.previous.kcal)}
+            </div>
+         </div>
+      </div>
+   );
 
    return (
       <div className="space-y-6 pb-24 animate-fade-in">
@@ -805,37 +842,10 @@ const StatsView = ({ user, setUser }: { user: UserState, setUser: (u: UserState)
             </div>
          </div>
 
-         {/* Weekly Performance Comparison */}
-         <div>
-            <h3 className="font-bold text-slate-700 dark:text-white mb-3 flex items-center gap-2 text-sm uppercase tracking-wide">
-               <Calendar className="w-4 h-4 text-primary-500" /> Rendimiento Semanal (7 Días)
-            </h3>
-            <div className="grid grid-cols-3 gap-3">
-               <div className="glass-card p-3 rounded-xl flex flex-col justify-between">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase">Volumen</span>
-                  <div className="mb-1">
-                     <span className="text-lg font-black text-slate-800 dark:text-white">{(weeklyStats.current.volume / 1000).toFixed(1)}</span>
-                     <span className="text-[10px] text-slate-500 ml-0.5">k</span>
-                  </div>
-                  {renderTrend(weeklyStats.current.volume, weeklyStats.previous.volume)}
-               </div>
-               <div className="glass-card p-3 rounded-xl flex flex-col justify-between">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase">Tiempo</span>
-                  <div className="mb-1">
-                     <span className="text-lg font-black text-slate-800 dark:text-white">{weeklyStats.current.duration}</span>
-                     <span className="text-[10px] text-slate-500 ml-0.5">min</span>
-                  </div>
-                  {renderTrend(weeklyStats.current.duration, weeklyStats.previous.duration)}
-               </div>
-               <div className="glass-card p-3 rounded-xl flex flex-col justify-between">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase">Kcal</span>
-                  <div className="mb-1">
-                     <span className="text-lg font-black text-slate-800 dark:text-white">{weeklyStats.current.kcal}</span>
-                  </div>
-                  {renderTrend(weeklyStats.current.kcal, weeklyStats.previous.kcal)}
-               </div>
-            </div>
-         </div>
+         {/* Stats Blocks */}
+         {renderStatsBlock("Rendimiento (7 Días)", stats7)}
+         {renderStatsBlock("Rendimiento (15 Días)", stats15)}
+         {renderStatsBlock("Rendimiento (28 Días)", stats28)}
 
          {/* Biometrics */}
          <div className="glass-card p-6 rounded-2xl">
