@@ -328,6 +328,25 @@ const ExerciseLoggerModal = ({ exercise, onSave, onClose }: { exercise: ActiveEx
     setSets(newSets);
   };
 
+  const addSet = () => {
+    const lastSet = sets[sets.length - 1];
+    setSets([
+      ...sets,
+      {
+        setNumber: sets.length + 1,
+        weight: lastSet ? lastSet.weight : 0,
+        reps: lastSet ? lastSet.reps : 0, // Optionally could clear reps or keep them
+        completed: false
+      }
+    ]);
+  };
+
+  const removeSet = (index: number) => {
+    // Re-index sets
+    const newSets = sets.filter((_, i) => i !== index).map((s, i) => ({ ...s, setNumber: i + 1 }));
+    setSets(newSets);
+  };
+
   const toggleComplete = (index: number) => {
     const newSets = [...sets];
     const wasCompleted = newSets[index].completed;
@@ -391,13 +410,10 @@ const ExerciseLoggerModal = ({ exercise, onSave, onClose }: { exercise: ActiveEx
           {/* Header */}
           <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-800/50">
              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-white rounded-lg overflow-hidden shrink-0">
-                  <ImageWithFallback src={exercise.image} alt={exercise.name} className="w-full h-full object-cover" />
-                </div>
-                <div>
-                   <h3 className="text-white font-bold">{exercise.name}</h3>
+                <div className="flex flex-col">
+                   <h3 className="text-white font-bold text-lg">{exercise.name}</h3>
                    <div className="flex items-center gap-2 text-xs text-slate-400">
-                      <span>{exercise.targetSets} Series x {exercise.targetReps} Reps</span>
+                      <span>{exercise.targetSets} Series Meta</span>
                       {exercise.restSeconds > 0 && (
                         <span className="flex items-center gap-1 text-primary-400">
                            <Clock className="w-3 h-3" /> {exercise.restSeconds}s
@@ -418,16 +434,17 @@ const ExerciseLoggerModal = ({ exercise, onSave, onClose }: { exercise: ActiveEx
              </div>
 
              {/* Sets Header */}
-             <div className="grid grid-cols-10 gap-2 text-xs font-bold text-slate-500 uppercase text-center mb-1">
+             <div className="grid grid-cols-12 gap-2 text-xs font-bold text-slate-500 uppercase text-center mb-1">
                 <div className="col-span-2">Set</div>
                 <div className="col-span-3">kg</div>
                 <div className="col-span-3">Reps</div>
                 <div className="col-span-2">Done</div>
+                <div className="col-span-2"></div>
              </div>
 
              {/* Sets Rows */}
              {sets.map((set, i) => (
-                <div key={i} className={`grid grid-cols-10 gap-2 items-center p-2 rounded-xl transition-colors ${set.completed ? 'bg-green-500/20 border border-green-500/30' : 'bg-slate-800 border border-slate-700'}`}>
+                <div key={i} className={`grid grid-cols-12 gap-2 items-center p-2 rounded-xl transition-colors ${set.completed ? 'bg-green-500/20 border border-green-500/30' : 'bg-slate-800 border border-slate-700'}`}>
                    <div className="col-span-2 text-center font-bold text-slate-400">#{set.setNumber}</div>
                    <div className="col-span-3">
                       <input 
@@ -455,8 +472,24 @@ const ExerciseLoggerModal = ({ exercise, onSave, onClose }: { exercise: ActiveEx
                          <Check className="w-5 h-5" />
                       </button>
                    </div>
+                   <div className="col-span-2 flex justify-center">
+                      <button 
+                        onClick={() => removeSet(i)}
+                        className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-500 hover:text-red-500 hover:bg-slate-700 transition-colors"
+                      >
+                         <Trash2 className="w-4 h-4" />
+                      </button>
+                   </div>
                 </div>
              ))}
+
+             {/* Add Set Button */}
+             <button 
+               onClick={addSet}
+               className="w-full mt-2 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 font-bold rounded-xl flex items-center justify-center gap-2 transition-colors border-dashed active:scale-95"
+             >
+               <Plus className="w-4 h-4" /> Añadir Serie
+             </button>
           </div>
 
           {/* Footer */}
@@ -1275,8 +1308,8 @@ const ActiveWorkoutView = ({ user, onUpdateUser, onFinishWorkout, onCancelWorkou
                       ex.isFullyCompleted ? 'border-green-500 opacity-60' : 'border-primary-500 hover:scale-[1.01]'
                    }`}
                 >
-                   <div className="w-16 h-16 bg-slate-200 dark:bg-slate-700 rounded-lg overflow-hidden shrink-0">
-                      <ImageWithFallback src={ex.image} alt={ex.name} className="w-full h-full object-cover" />
+                   <div className="w-16 h-16 bg-slate-200 dark:bg-slate-700 rounded-lg overflow-hidden shrink-0 flex items-center justify-center">
+                      <Dumbbell className="w-8 h-8 text-slate-400" />
                    </div>
                    <div className="flex-1">
                       <h4 className={`font-bold ${ex.isFullyCompleted ? 'text-green-600 line-through' : 'text-slate-900 dark:text-white'}`}>{ex.name}</h4>

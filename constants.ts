@@ -105,78 +105,12 @@ export const ACHIEVEMENTS: Achievement[] = [
    { id: 'night_owl', name: "Búho Nocturno", description: "Completa un entrenamiento entre las 22:00 y las 4:00 AM.", icon: "🦉", unlocked: false, condition: (u) => checkTimeOfDay(u, 22, 28) || checkTimeOfDay(u, 0, 4) }, // 22-24h handled by simple logic usually but keeping simple check
 ];
 
-// --- LIBRERÍA DE IMÁGENES (Fuente: Pexels - Fotografía Fitness Real) ---
-// Categorizamos las imágenes para asegurar que siempre haya una foto de alta calidad relevante.
-const IMAGE_LIBRARY: Record<string, string> = {
-  // --- GENERAL / DUMBBELLS ---
-  "default": "https://images.pexels.com/photos/841130/pexels-photo-841130.jpeg?auto=compress&cs=tinysrgb&w=800",
-  
-  // --- LEGS / SQUATS ---
-  "squat": "https://images.pexels.com/photos/1552242/pexels-photo-1552242.jpeg?auto=compress&cs=tinysrgb&w=800",
-  "lunge": "https://images.pexels.com/photos/4164761/pexels-photo-4164761.jpeg?auto=compress&cs=tinysrgb&w=800",
-  "legs": "https://images.pexels.com/photos/1552252/pexels-photo-1552252.jpeg?auto=compress&cs=tinysrgb&w=800",
-  
-  // --- PUSH / CHEST / SHOULDERS ---
-  "pushup": "https://images.pexels.com/photos/176782/pexels-photo-176782.jpeg?auto=compress&cs=tinysrgb&w=800",
-  "bench": "https://images.pexels.com/photos/3837781/pexels-photo-3837781.jpeg?auto=compress&cs=tinysrgb&w=800",
-  "shoulder": "https://images.pexels.com/photos/1552249/pexels-photo-1552249.jpeg?auto=compress&cs=tinysrgb&w=800",
-  "dips": "https://images.pexels.com/photos/4162451/pexels-photo-4162451.jpeg?auto=compress&cs=tinysrgb&w=800",
-
-  // --- PULL / BACK / BICEPS ---
-  "pullup": "https://images.pexels.com/photos/4164844/pexels-photo-4164844.jpeg?auto=compress&cs=tinysrgb&w=800", // Man doing pullups
-  "row": "https://images.pexels.com/photos/4162489/pexels-photo-4162489.jpeg?auto=compress&cs=tinysrgb&w=800", // Barbell generic
-  "bicep": "https://images.pexels.com/photos/1229356/pexels-photo-1229356.jpeg?auto=compress&cs=tinysrgb&w=800",
-
-  // --- CORE / ABS ---
-  "plank": "https://images.pexels.com/photos/2294354/pexels-photo-2294354.jpeg?auto=compress&cs=tinysrgb&w=800",
-  "abs": "https://images.pexels.com/photos/221247/pexels-photo-221247.jpeg?auto=compress&cs=tinysrgb&w=800",
-
-  // --- CARDIO ---
-  "cardio": "https://images.pexels.com/photos/3757954/pexels-photo-3757954.jpeg?auto=compress&cs=tinysrgb&w=800",
-  "jump": "https://images.pexels.com/photos/4164765/pexels-photo-4164765.jpeg?auto=compress&cs=tinysrgb&w=800",
-};
-
-// IMAGEN PERSONALIZADA: "Sentadilla Libre"
-// Por favor guarda la segunda imagen que adjuntaste (la del hombre de rojo y azul) 
-// con el nombre 'sentadilla.png' en la carpeta public.
-const CUSTOM_SQUAT_IMAGE = "/sentadilla.png";
-
-// Función inteligente para asignar fotos de Pexels basadas en palabras clave
-const getExerciseImage = (name: string) => {
-  // Regla específica para usar la imagen adjuntada UNICAMENTE en este ejercicio exacto
-  if (name === "Sentadilla Libre") {
-    return CUSTOM_SQUAT_IMAGE;
-  }
-
-  const lowerName = name.toLowerCase();
-
-  // Mapeo de palabras clave a claves de la librería
-  if (lowerName.includes("sentadilla") || lowerName.includes("squat") || lowerName.includes("prensa")) return IMAGE_LIBRARY.squat;
-  if (lowerName.includes("zancada") || lowerName.includes("búlgar") || lowerName.includes("gemelo") || lowerName.includes("femoral")) return IMAGE_LIBRARY.lunge;
-  if (lowerName.includes("peso muerto") || lowerName.includes("deadlift") || lowerName.includes("hip")) return IMAGE_LIBRARY.legs;
-  
-  if (lowerName.includes("flexion") || lowerName.includes("push") || lowerName.includes("fondo")) return IMAGE_LIBRARY.pushup;
-  if (lowerName.includes("press") || lowerName.includes("banca") || lowerName.includes("pecho") || lowerName.includes("apertura")) return IMAGE_LIBRARY.bench;
-  if (lowerName.includes("militar") || lowerName.includes("hombro") || lowerName.includes("lateral") || lowerName.includes("tríceps") || lowerName.includes("triceps")) return IMAGE_LIBRARY.shoulder;
-  
-  if (lowerName.includes("dominada") || lowerName.includes("chin") || lowerName.includes("jalón")) return IMAGE_LIBRARY.pullup;
-  if (lowerName.includes("remo") || lowerName.includes("row") || lowerName.includes("face")) return IMAGE_LIBRARY.row;
-  if (lowerName.includes("curl") || lowerName.includes("bíceps") || lowerName.includes("biceps")) return IMAGE_LIBRARY.bicep;
-  
-  if (lowerName.includes("plancha") || lowerName.includes("plank")) return IMAGE_LIBRARY.plank;
-  if (lowerName.includes("abdominal") || lowerName.includes("crunch") || lowerName.includes("leg raise") || lowerName.includes("sit") || lowerName.includes("superman")) return IMAGE_LIBRARY.abs;
-  
-  if (lowerName.includes("jack") || lowerName.includes("burpee") || lowerName.includes("mountain") || lowerName.includes("cardio") || lowerName.includes("salto")) return IMAGE_LIBRARY.cardio;
-
-  return IMAGE_LIBRARY.default;
-};
-
 // --- Helper Functions to build programs ---
 
 const createExercise = (name: string, sets: number, reps: string, rest: number, description: string): ExerciseTemplate => ({
   id: name.toLowerCase().replace(/\s/g, '_') + Math.random().toString(36).substr(2, 5),
   name,
-  image: getExerciseImage(name),
+  // image property removed
   description,
   targetSets: sets,
   targetReps: reps,

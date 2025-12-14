@@ -11,7 +11,7 @@ export type LocationType = 'Casa' | 'Gimnasio';
 export interface ExerciseTemplate {
   id: string;
   name: string;
-  image: string;
+  // image removed
   description: string; // Nueva explicación técnica
   targetSets: number;
   targetReps: string; // "10-12", "15", "Al fallo"
