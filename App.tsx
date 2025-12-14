@@ -706,55 +706,61 @@ const AchievementsView = ({ user }: { user: UserState }) => {
    }, [user.achievements]);
 
    return (
-      <div className="space-y-6 pb-24 animate-fade-in">
+      <div className="space-y-4 pb-24 animate-fade-in">
          {/* Sticky Header */}
-         <div className="bg-slate-900/90 sticky top-0 z-30 py-4 -mx-4 px-4 border-b border-slate-800/50 backdrop-blur-md">
+         <div className="bg-slate-900/90 sticky top-0 z-30 py-3 -mx-4 px-4 border-b border-slate-800/50 backdrop-blur-md">
             <div className="flex items-end justify-between mb-2">
-               <h2 className="text-2xl font-black text-white">Sala de Trofeos</h2>
-               <span className="text-primary-400 font-bold text-sm">{unlockedCount} / {totalCount}</span>
+               <h2 className="text-xl font-black text-white">Sala de Trofeos</h2>
+               <span className="text-primary-400 font-bold text-xs">{unlockedCount} / {totalCount}</span>
             </div>
             <ProgressBar current={unlockedCount} max={totalCount} colorClass="bg-gradient-to-r from-yellow-400 to-orange-500" />
          </div>
 
-         {/* Grid */}
-         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+         {/* Grid Compacto para Móvil (3 columnas) */}
+         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
             {sortedAchievements.map(ach => {
                const isUnlocked = user.achievements.includes(ach.id);
                return (
-                  <div key={ach.id} className={`relative group overflow-hidden rounded-2xl border-2 p-4 flex flex-col items-center text-center transition-all duration-300 ${
+                  <div key={ach.id} className={`relative group overflow-hidden rounded-xl border p-2 flex flex-col items-center text-center transition-all duration-300 aspect-[3/4] sm:aspect-auto sm:h-auto justify-center ${
                      isUnlocked
-                     ? 'bg-slate-800 border-yellow-500/50 shadow-lg shadow-yellow-500/10'
+                     ? 'bg-slate-800 border-yellow-500/50 shadow-md shadow-yellow-500/10'
                      : 'bg-slate-900 border-slate-800 opacity-60 grayscale-[0.8]'
                   }`}>
                      {/* Unlocked Background Glow */}
                      {isUnlocked && <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/10 to-transparent pointer-events-none" />}
 
                      {/* Icon */}
-                     <div className={`text-4xl mb-3 transform transition-transform group-hover:scale-110 ${isUnlocked ? 'drop-shadow-md' : 'opacity-50'}`}>
+                     <div className={`text-3xl sm:text-4xl mb-2 transform transition-transform group-hover:scale-110 ${isUnlocked ? 'drop-shadow-md' : 'opacity-50'}`}>
                         {ach.icon}
                      </div>
 
                      {/* Content */}
-                     <div className="relative z-10 w-full flex-1 flex flex-col justify-between">
-                        <div>
-                           <h4 className={`font-black text-sm mb-1 leading-tight ${isUnlocked ? 'text-white' : 'text-slate-500'}`}>
-                              {ach.name}
-                           </h4>
-                           <p className="text-[10px] font-medium text-slate-400 leading-snug">
-                              {ach.description}
-                           </p>
-                        </div>
+                     <div className="relative z-10 w-full flex flex-col items-center">
+                        <h4 className={`font-black text-[10px] sm:text-xs mb-1 leading-tight line-clamp-2 ${isUnlocked ? 'text-white' : 'text-slate-500'}`}>
+                           {ach.name}
+                        </h4>
+                        
+                        {/* Description hidden on mobile to save space, visible on tablet+ */}
+                        <p className="hidden sm:block text-[9px] font-medium text-slate-400 leading-snug line-clamp-3">
+                           {ach.description}
+                        </p>
                         
                         {/* Status Indicator */}
-                        <div className="mt-3 flex justify-center">
+                        <div className="mt-1 sm:mt-2">
                            {isUnlocked ? (
-                              <div className="bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest flex items-center gap-1">
-                                 <Star className="w-3 h-3 fill-current" /> Conseguido
-                              </div>
+                              <>
+                                <div className="sm:hidden text-yellow-400"><Star className="w-3 h-3 fill-current" /></div>
+                                <div className="hidden sm:flex bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-widest items-center gap-1">
+                                    <Star className="w-3 h-3 fill-current" /> Conseguido
+                                </div>
+                              </>
                            ) : (
-                              <div className="bg-slate-800 text-slate-600 border border-slate-700 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest flex items-center gap-1">
-                                 <Lock className="w-3 h-3" /> Bloqueado
-                              </div>
+                              <>
+                                <div className="sm:hidden text-slate-600"><Lock className="w-3 h-3" /></div>
+                                <div className="hidden sm:flex bg-slate-800 text-slate-600 border border-slate-700 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-widest items-center gap-1">
+                                    <Lock className="w-3 h-3" /> Bloqueado
+                                </div>
+                              </>
                            )}
                         </div>
                      </div>
