@@ -82,6 +82,11 @@ export const ACHIEVEMENTS: Achievement[] = [
    { id: 'prog_cali', name: "Ninja Urbano", description: "Completa 'Calistenia Táctica'.", icon: "🥷", unlocked: false, condition: (u) => hasFinishedProgram(u, 'prog_cali_int') },
    { id: 'prog_power', name: "Powerlifter", description: "Completa el programa 'Titán de Fuerza'.", icon: "🦍", unlocked: false, condition: (u) => hasFinishedProgram(u, 'prog_power_adv') },
 
+   // --- DESAFIOS SEMANALES [3] ---
+   { id: 'chal_hell', name: "Superviviente del Infierno", description: "Completa el Desafío: Semana del Infierno.", icon: "🔥", unlocked: false, condition: (u) => hasFinishedProgram(u, 'chal_hell_week') },
+   { id: 'chal_300', name: "Espíritu 300", description: "Completa el Desafío: El 300.", icon: "🛡️", unlocked: false, condition: (u) => hasFinishedProgram(u, 'chal_300_rep') },
+   { id: 'chal_legs', name: "Silla de Ruedas", description: "Completa el Desafío: Destructor de Piernas.", icon: "🦿", unlocked: false, condition: (u) => hasFinishedProgram(u, 'chal_leg_dest') },
+
    // --- VOLUMEN DE TRABAJO (Sets/Reps) [6] ---
    { id: 'reps1k', name: "Mil Repeticiones", description: "Realiza 1,000 repeticiones totales.", icon: "🔢", unlocked: false, condition: (u) => getTotalReps(u) >= 1000 },
    { id: 'reps5k', name: "Máquina de Reps", description: "Realiza 5,000 repeticiones totales.", icon: "🤖", unlocked: false, condition: (u) => getTotalReps(u) >= 5000 },
@@ -362,7 +367,7 @@ const powerSquat: ExerciseTemplate[] = [
 const powerBench: ExerciseTemplate[] = [
   createExercise("Press Banca Competición", 5, "3-5", 180, "Pies plantados, arco lumbar, retracción escapular. Pausa de 1 seg en el pecho antes de subir."),
   createExercise("Press Banca Agarre Estrecho", 3, "6-8", 120, "Manos ancho de hombros. Codos pegados. Enfoca en tríceps para mejorar el bloqueo."),
-  createExercise("Press Militar Estricto", 3, "6-8", 90, "De pie, sin impulso de piernas. Fuerza pura de hombros."),
+  createExercise("Press Militar Estricto", 3, "6-8", 90, "De pie, sin impulso de piernas. Fuerza de hombros."),
   createExercise("Remo Pendlay", 4, "8", 90, "Espalda paralela al suelo. La barra empieza en el suelo en cada repetición. Explosivo."),
 ];
 
@@ -390,6 +395,64 @@ const buildPowerProgram = (): ProgramDay[] => {
   }
   return schedule;
 };
+
+// --- DESAFIOS SEMANALES DEFINICIONES ---
+
+// Desafío 1: Semana del Infierno (Metabólico/Cardio)
+const hellDay1: ExerciseTemplate[] = [
+    createExercise("Burpees", 5, "15", 45, "Al suelo y arriba. Hazlo lo más rápido posible."),
+    createExercise("Mountain Climbers", 5, "30 seg", 30, "Rodillas al pecho a velocidad máxima."),
+    createExercise("Jump Squats", 4, "20", 45, "Sentadilla explosiva despegando del suelo."),
+    createExercise("Plancha Jack", 4, "20", 30, "En posición de plancha, abre y cierra piernas saltando."),
+];
+const hellDay2: ExerciseTemplate[] = [
+    createExercise("Zancadas con Salto", 4, "20 total", 45, "Alterna piernas en el aire."),
+    createExercise("Flexiones Explosivas", 4, "10", 60, "Empuja fuerte para despegar manos."),
+    createExercise("High Knees", 5, "30 seg", 30, "Rodillas arriba en el sitio, corriendo."),
+    createExercise("Sit-ups rápidos", 4, "20", 45, "Abdominales clásicos a ritmo alto."),
+];
+// Repetimos estructura para completar 5 días infernales
+const buildHellWeek = (): ProgramDay[] => {
+    return [
+        { id: 'hw_d1', title: 'Día 1: Ignición', exercises: hellDay1 },
+        { id: 'hw_d2', title: 'Día 2: Combustión', exercises: hellDay2 },
+        { id: 'hw_d3', title: 'Día 3: Llamas', exercises: hellDay1 },
+        { id: 'hw_d4', title: 'Día 4: Cenizas', exercises: hellDay2 },
+        { id: 'hw_d5', title: 'Día 5: Fénix', exercises: [...hellDay1, ...hellDay2].slice(0, 6) }, // Mix brutal
+    ];
+};
+
+// Desafío 2: El 300 (Volumen Calistenia)
+const spartanDay: ExerciseTemplate[] = [
+    createExercise("Dominadas", 1, "25 total", 120, "Acumula 25 dominadas en las series que necesites."),
+    createExercise("Peso Muerto (Ligero/Medio)", 1, "50 total", 120, "Acumula 50 repeticiones con peso controlable."),
+    createExercise("Flexiones", 1, "50 total", 90, "Acumula 50 flexiones."),
+    createExercise("Saltos al Cajón (o escalón)", 1, "50 total", 90, "Acumula 50 saltos."),
+    createExercise("Floor Wipers", 1, "50 total", 90, "Acostado, barra en manos, lleva pies a un lado y otro."),
+    createExercise("Clean & Press (Kettlebell/Mancuerna)", 1, "50 total", 120, "25 por brazo. Carga y empuja."),
+];
+const build300Challenge = (): ProgramDay[] => {
+    return [
+        { id: '300_d1', title: 'Intento 1: Supervivencia', exercises: spartanDay },
+        { id: '300_d2', title: 'Intento 2: Resistencia', exercises: spartanDay },
+        { id: '300_d3', title: 'Intento 3: Gloria', exercises: spartanDay },
+    ];
+};
+
+// Desafío 3: Destructor de Piernas (Volumen Alto)
+const legDestruction: ExerciseTemplate[] = [
+    createExercise("Sentadilla", 10, "10", 90, "El método alemán de volumen. 10 series de 10. Brutal."),
+    createExercise("Zancadas Caminando", 4, "20 pasos", 60, "Camina con mancuernas hasta que arda."),
+    createExercise("Curl Femoral", 5, "15", 45, "Bombeo máximo de isquios."),
+    createExercise("Extensiones Cuádriceps", 5, "15", 45, "Bombeo máximo de cuádriceps."),
+];
+const buildLegChallenge = (): ProgramDay[] => {
+    return [
+        { id: 'ld_d1', title: 'Día 1: Choque', exercises: legDestruction },
+        { id: 'ld_d2', title: 'Día 2: Pavor', exercises: legDestruction }, // Solo 2 días porque no podrás caminar
+    ];
+};
+
 
 export const PROGRAMS: Program[] = [
   {
@@ -469,5 +532,45 @@ export const PROGRAMS: Program[] = [
     xpRewardDay: 380,
     estimatedKcal: 16000, // ~500 per session * 32 sessions
     schedule: buildPowerProgram()
+  },
+  // --- DESAFIOS SEMANALES ---
+  {
+      id: 'chal_hell_week',
+      title: "Semana del Infierno",
+      description: "5 días de acondicionamiento metabólico extremo. Quema grasa y pon a prueba tu voluntad. Alta intensidad.",
+      difficulty: Difficulty.CHALLENGE,
+      location: 'Casa',
+      durationWeeks: 1,
+      daysPerWeek: 5,
+      xpRewardFinish: 2000, // Very high reward for short time due to intensity
+      xpRewardDay: 300,
+      estimatedKcal: 2500,
+      schedule: buildHellWeek()
+  },
+  {
+      id: 'chal_300_rep',
+      title: "El 300",
+      description: "Inspirado en los espartanos. 3 días de volumen bestial con ejercicios compuestos. ¿Puedes terminarlo?",
+      difficulty: Difficulty.CHALLENGE,
+      location: 'Gimnasio',
+      durationWeeks: 1,
+      daysPerWeek: 3,
+      xpRewardFinish: 2500,
+      xpRewardDay: 400,
+      estimatedKcal: 2000,
+      schedule: build300Challenge()
+  },
+  {
+      id: 'chal_leg_dest',
+      title: "Destructor de Piernas",
+      description: "Solo 2 días, pero no podrás caminar al día siguiente. Volumen alemán de 10x10. Solo para masoquistas.",
+      difficulty: Difficulty.CHALLENGE,
+      location: 'Gimnasio',
+      durationWeeks: 1,
+      daysPerWeek: 2,
+      xpRewardFinish: 3000,
+      xpRewardDay: 500,
+      estimatedKcal: 1500,
+      schedule: buildLegChallenge()
   }
 ];

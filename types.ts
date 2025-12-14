@@ -2,6 +2,7 @@ export enum Difficulty {
   BEGINNER = 'Principiante',
   INTERMEDIATE = 'Intermedio',
   ADVANCED = 'Avanzado',
+  CHALLENGE = 'Desafío',
 }
 
 export type LocationType = 'Casa' | 'Gimnasio';

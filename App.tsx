@@ -509,13 +509,13 @@ const ProgramsView = ({ user, startProgram, continueProgram, abandonProgram }: {
 
        {/* Filters */}
        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-          {['ALL', Difficulty.BEGINNER, Difficulty.INTERMEDIATE, Difficulty.ADVANCED].map((f) => (
+          {['ALL', Difficulty.BEGINNER, Difficulty.INTERMEDIATE, Difficulty.ADVANCED, Difficulty.CHALLENGE].map((f) => (
              <button 
                key={f}
                onClick={() => setFilter(f as any)}
                className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
                   filter === f 
-                  ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900' 
+                  ? f === Difficulty.CHALLENGE ? 'bg-red-600 text-white border-red-500' : 'bg-slate-900 text-white dark:bg-white dark:text-slate-900' 
                   : 'bg-white text-slate-600 border border-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400'
                }`}
              >
@@ -529,9 +529,10 @@ const ProgramsView = ({ user, startProgram, continueProgram, abandonProgram }: {
           {filteredPrograms.map(program => {
              const isCompleted = user.completedProgramIds.includes(program.id);
              const isActive = user.activeProgram?.programId === program.id;
+             const isChallenge = program.difficulty === Difficulty.CHALLENGE;
              
              return (
-               <div key={program.id} className={`glass-card p-5 rounded-2xl border-2 transition-all hover:scale-[1.01] ${isActive ? 'border-primary-500 ring-2 ring-primary-500/20' : 'border-transparent'}`}>
+               <div key={program.id} className={`glass-card p-5 rounded-2xl border-2 transition-all hover:scale-[1.01] ${isActive ? 'border-primary-500 ring-2 ring-primary-500/20' : isChallenge ? 'border-red-500/30 bg-red-500/5' : 'border-transparent'}`}>
                   <div className="flex justify-between items-start mb-3">
                      <div>
                         {isCompleted && <span className="text-[10px] font-bold bg-yellow-400 text-yellow-900 px-2 py-0.5 rounded-full mb-2 inline-block">COMPLETADO</span>}
@@ -540,7 +541,8 @@ const ProgramsView = ({ user, startProgram, continueProgram, abandonProgram }: {
                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${
                               program.difficulty === Difficulty.BEGINNER ? 'border-green-500 text-green-600' :
                               program.difficulty === Difficulty.INTERMEDIATE ? 'border-orange-500 text-orange-600' :
-                              'border-red-500 text-red-600'
+                              program.difficulty === Difficulty.ADVANCED ? 'border-red-500 text-red-600' :
+                              'border-red-600 text-red-100 bg-red-600'
                            }`}>
                               {program.difficulty}
                            </span>
@@ -550,7 +552,7 @@ const ProgramsView = ({ user, startProgram, continueProgram, abandonProgram }: {
                         </div>
                      </div>
                      <div className="text-right">
-                        <span className="block text-xl font-black text-primary-500">{program.daysPerWeek}d/sem</span>
+                        <span className={`block text-xl font-black ${isChallenge ? 'text-red-500' : 'text-primary-500'}`}>{program.daysPerWeek}d/sem</span>
                         <span className="text-xs text-slate-400">{program.durationWeeks} semanas</span>
                      </div>
                   </div>
@@ -569,9 +571,9 @@ const ProgramsView = ({ user, startProgram, continueProgram, abandonProgram }: {
                         <button 
                            onClick={() => startProgram(program)}
                            disabled={!!user.activeProgram}
-                           className="px-5 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg font-bold text-sm hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+                           className={`px-5 py-2 rounded-lg font-bold text-sm hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity ${isChallenge ? 'bg-red-600 text-white' : 'bg-slate-900 dark:bg-white text-white dark:text-slate-900'}`}
                         >
-                           {user.activeProgram ? 'En curso otro' : 'Empezar'}
+                           {user.activeProgram ? 'En curso otro' : 'Aceptar Desafío'}
                         </button>
                      )}
                   </div>
