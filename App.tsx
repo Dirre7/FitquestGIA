@@ -3,12 +3,12 @@ import {
   Trophy, Activity, User, BarChart2, Home, Lock, CheckCircle, Play, 
   Zap, Dumbbell, Clock, ChevronRight, Sun, Moon, Cloud, X, Star, 
   Maximize2, Medal, Award, Calendar, Repeat, Flame, RefreshCw, Trash2,
-  Hash, Timer, TrendingUp, TrendingDown, LogOut, Loader2, Sparkles, MessageSquare, Bot,
+  Hash, Timer, TrendingUp, TrendingDown, LogOut, Loader2,
   Camera, Image as ImageIcon, Info, Filter, ArrowLeft, Check, Pause, SkipForward, Plus,
-  Scale, Ruler, CalendarDays, Calculator, LayoutGrid, ChevronLeft, MoreHorizontal, Settings, MapPin, Minus, AlertTriangle
+  Scale, Ruler, CalendarDays, Calculator, LayoutGrid, ChevronLeft, MoreHorizontal, Settings, MapPin, Minus, AlertTriangle,
+  Menu
 } from 'lucide-react';
 import { supabase } from './services/supabaseClient';
-import { getAiCoachAdvice } from './services/geminiService';
 import { AuthView } from './components/AuthView';
 import { WelcomeView } from './components/WelcomeView';
 import { INITIAL_USER_STATE, PROGRAMS, ACHIEVEMENTS } from './constants';
@@ -675,40 +675,42 @@ const ProgramsView = ({ user, startProgram, continueProgram, abandonProgram, fil
           ))}
        </div>
 
-       {/* Programs Grid */}
-       <div className="space-y-4">
+       {/* Programs Grid - Responsive Grid here */}
+       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredPrograms.map(program => {
              const isCompleted = user.completedProgramIds.includes(program.id);
              const isActive = user.activeProgram?.programId === program.id;
              const isChallenge = program.difficulty === Difficulty.CHALLENGE;
              
              return (
-               <div key={program.id} className={`glass-card p-5 rounded-2xl border-2 transition-all hover:scale-[1.01] ${isActive ? 'border-primary-500 ring-2 ring-primary-500/20' : isChallenge ? 'border-red-500/30 bg-red-500/5' : 'border-transparent'}`}>
-                  <div className="flex justify-between items-start mb-3">
-                     <div>
-                        {isCompleted && <span className="text-[10px] font-bold bg-yellow-400 text-yellow-900 px-2 py-0.5 rounded-full mb-2 inline-block">COMPLETADO</span>}
-                        <h3 className="text-lg font-bold text-slate-900 dark:text-white leading-tight">{program.title}</h3>
-                        <div className="flex gap-2 mt-1">
-                           <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${
-                              program.difficulty === Difficulty.BEGINNER ? 'border-green-500 text-green-600' :
-                              program.difficulty === Difficulty.INTERMEDIATE ? 'border-orange-500 text-orange-600' :
-                              program.difficulty === Difficulty.ADVANCED ? 'border-red-500 text-red-600' :
-                              'border-red-600 text-red-100 bg-red-600'
-                           }`}>
-                              {program.difficulty}
-                           </span>
-                           <span className="text-[10px] font-bold px-1.5 py-0.5 rounded border border-slate-300 text-slate-500 flex items-center gap-1">
-                              <MapPin className="w-3 h-3" /> {program.location}
-                           </span>
-                        </div>
-                     </div>
-                     <div className="text-right">
-                        <span className={`block text-xl font-black ${isChallenge ? 'text-red-500' : 'text-primary-500'}`}>{program.daysPerWeek}d/sem</span>
-                        <span className="text-xs text-slate-400">{program.durationWeeks} semanas</span>
-                     </div>
+               <div key={program.id} className={`glass-card p-5 rounded-2xl border-2 transition-all hover:scale-[1.01] flex flex-col h-full justify-between ${isActive ? 'border-primary-500 ring-2 ring-primary-500/20' : isChallenge ? 'border-red-500/30 bg-red-500/5' : 'border-transparent'}`}>
+                  <div>
+                    <div className="flex justify-between items-start mb-3">
+                       <div>
+                          {isCompleted && <span className="text-[10px] font-bold bg-yellow-400 text-yellow-900 px-2 py-0.5 rounded-full mb-2 inline-block">COMPLETADO</span>}
+                          <h3 className="text-lg font-bold text-slate-900 dark:text-white leading-tight">{program.title}</h3>
+                          <div className="flex gap-2 mt-1 flex-wrap">
+                             <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${
+                                program.difficulty === Difficulty.BEGINNER ? 'border-green-500 text-green-600' :
+                                program.difficulty === Difficulty.INTERMEDIATE ? 'border-orange-500 text-orange-600' :
+                                program.difficulty === Difficulty.ADVANCED ? 'border-red-500 text-red-600' :
+                                'border-red-600 text-red-100 bg-red-600'
+                             }`}>
+                                {program.difficulty}
+                             </span>
+                             <span className="text-[10px] font-bold px-1.5 py-0.5 rounded border border-slate-300 text-slate-500 flex items-center gap-1">
+                                <MapPin className="w-3 h-3" /> {program.location}
+                             </span>
+                          </div>
+                       </div>
+                       <div className="text-right">
+                          <span className={`block text-xl font-black ${isChallenge ? 'text-red-500' : 'text-primary-500'}`}>{program.daysPerWeek}d/sem</span>
+                          <span className="text-xs text-slate-400">{program.durationWeeks} semanas</span>
+                       </div>
+                    </div>
+                    
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 line-clamp-2">{program.description}</p>
                   </div>
-                  
-                  <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 line-clamp-2">{program.description}</p>
                   
                   <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-700">
                      <div className="flex flex-col">
@@ -761,8 +763,8 @@ const AchievementsView = ({ user }: { user: UserState }) => {
             <ProgressBar current={unlockedCount} max={totalCount} colorClass="bg-gradient-to-r from-yellow-400 to-orange-500" />
          </div>
 
-         {/* Grid Compacto para Móvil (3 columnas) */}
-         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+         {/* Responsive Grid */}
+         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
             {sortedAchievements.map(ach => {
                const isUnlocked = user.achievements.includes(ach.id);
                return (
@@ -924,8 +926,8 @@ const StatsView = ({ user, setUser }: { user: UserState, setUser: (u: UserState)
       <div className="space-y-6 pb-24 animate-fade-in pt-safe-top">
          <h2 className="text-2xl font-black text-slate-900 dark:text-white">Estadísticas</h2>
          
-         {/* Summary Grid */}
-         <div className="grid grid-cols-2 gap-3">
+         {/* Summary Grid - Responsive 2x2 to 4x1 */}
+         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div className="glass-card p-4 rounded-2xl">
                <div className="text-slate-400 text-xs font-bold uppercase mb-1">Volumen Total</div>
                <div className="text-2xl font-black text-blue-500">{(user.totalWeightLifted / 1000).toFixed(1)} <span className="text-sm text-slate-500">ton</span></div>
@@ -944,52 +946,56 @@ const StatsView = ({ user, setUser }: { user: UserState, setUser: (u: UserState)
             </div>
          </div>
 
-         {/* Stats Blocks */}
-         {renderStatsBlock("Rendimiento (7 Días)", stats7)}
-         {renderStatsBlock("Rendimiento (15 Días)", stats15)}
-         {renderStatsBlock("Rendimiento (28 Días)", stats28)}
+         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div>
+               {/* Stats Blocks */}
+               {renderStatsBlock("Rendimiento (7 Días)", stats7)}
+               {renderStatsBlock("Rendimiento (15 Días)", stats15)}
+               {renderStatsBlock("Rendimiento (28 Días)", stats28)}
+            </div>
 
-         {/* Biometrics */}
-         <div className="glass-card p-6 rounded-2xl">
-            <div className="flex justify-between items-center mb-4">
-               <h3 className="font-bold text-slate-700 dark:text-white flex items-center gap-2">
-                  <User className="w-4 h-4 text-primary-500" /> Biometría
-               </h3>
-               {!editingBio ? (
-                  <button onClick={() => setEditingBio(true)} className="text-xs font-bold text-primary-500">Editar</button>
-               ) : (
-                  <button onClick={saveBio} className="text-xs font-bold text-green-500">Guardar</button>
+            {/* Biometrics */}
+            <div className="glass-card p-6 rounded-2xl h-fit">
+               <div className="flex justify-between items-center mb-4">
+                  <h3 className="font-bold text-slate-700 dark:text-white flex items-center gap-2">
+                     <User className="w-4 h-4 text-primary-500" /> Biometría
+                  </h3>
+                  {!editingBio ? (
+                     <button onClick={() => setEditingBio(true)} className="text-xs font-bold text-primary-500">Editar</button>
+                  ) : (
+                     <button onClick={saveBio} className="text-xs font-bold text-green-500">Guardar</button>
+                  )}
+               </div>
+
+               <div className="grid grid-cols-2 gap-6">
+                  <div className="flex flex-col gap-1">
+                     <label className="text-xs font-bold text-slate-400 uppercase">Peso (kg)</label>
+                     {editingBio ? (
+                        <input type="number" value={weight} onChange={e => setWeight(parseFloat(e.target.value))} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-lg w-full font-bold" />
+                     ) : (
+                        <span className="text-2xl font-black text-slate-800 dark:text-white">{user.weight || '--'}</span>
+                     )}
+                  </div>
+                  <div className="flex flex-col gap-1">
+                     <label className="text-xs font-bold text-slate-400 uppercase">Altura (cm)</label>
+                     {editingBio ? (
+                        <input type="number" value={height} onChange={e => setHeight(parseFloat(e.target.value))} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-lg w-full font-bold" />
+                     ) : (
+                        <span className="text-2xl font-black text-slate-800 dark:text-white">{user.height || '--'}</span>
+                     )}
+                  </div>
+               </div>
+               
+               {/* IMC Calculation just for fun */}
+               {user.weight > 0 && user.height > 0 && (
+                  <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
+                     <span className="text-sm font-bold text-slate-500">IMC Estimado</span>
+                     <span className="font-bold text-slate-800 dark:text-white">
+                        {(user.weight / ((user.height/100) ** 2)).toFixed(1)}
+                     </span>
+                  </div>
                )}
             </div>
-
-            <div className="grid grid-cols-2 gap-6">
-               <div className="flex flex-col gap-1">
-                  <label className="text-xs font-bold text-slate-400 uppercase">Peso (kg)</label>
-                  {editingBio ? (
-                     <input type="number" value={weight} onChange={e => setWeight(parseFloat(e.target.value))} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-lg w-full font-bold" />
-                  ) : (
-                     <span className="text-2xl font-black text-slate-800 dark:text-white">{user.weight || '--'}</span>
-                  )}
-               </div>
-               <div className="flex flex-col gap-1">
-                  <label className="text-xs font-bold text-slate-400 uppercase">Altura (cm)</label>
-                  {editingBio ? (
-                     <input type="number" value={height} onChange={e => setHeight(parseFloat(e.target.value))} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-lg w-full font-bold" />
-                  ) : (
-                     <span className="text-2xl font-black text-slate-800 dark:text-white">{user.height || '--'}</span>
-                  )}
-               </div>
-            </div>
-            
-            {/* IMC Calculation just for fun */}
-            {user.weight > 0 && user.height > 0 && (
-               <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
-                  <span className="text-sm font-bold text-slate-500">IMC Estimado</span>
-                  <span className="font-bold text-slate-800 dark:text-white">
-                     {(user.weight / ((user.height/100) ** 2)).toFixed(1)}
-                  </span>
-               </div>
-            )}
          </div>
       </div>
    );
@@ -1042,57 +1048,59 @@ const ProfileView = ({ user, setUser, toggleTheme, signOut, onResetProgress }: {
             <p className="text-primary-500 font-bold uppercase text-xs tracking-widest">Nivel {user.level}</p>
          </div>
 
-         {/* Options */}
-         <div className="space-y-3">
-            <div className="glass-card p-4 rounded-xl flex items-center justify-between">
-               <div className="flex items-center gap-3">
-                  {user.settings.darkMode ? <Moon className="w-5 h-5 text-indigo-400" /> : <Sun className="w-5 h-5 text-orange-400" />}
-                  <span className="font-bold text-slate-700 dark:text-slate-200">Modo Oscuro</span>
+         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Options */}
+            <div className="space-y-3">
+               <div className="glass-card p-4 rounded-xl flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                     {user.settings.darkMode ? <Moon className="w-5 h-5 text-indigo-400" /> : <Sun className="w-5 h-5 text-orange-400" />}
+                     <span className="font-bold text-slate-700 dark:text-slate-200">Modo Oscuro</span>
+                  </div>
+                  <button 
+                     onClick={toggleTheme}
+                     className={`w-12 h-6 rounded-full p-1 transition-colors ${user.settings.darkMode ? 'bg-indigo-500' : 'bg-slate-300'}`}
+                  >
+                     <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${user.settings.darkMode ? 'translate-x-6' : ''}`} />
+                  </button>
                </div>
+
                <button 
-                  onClick={toggleTheme}
-                  className={`w-12 h-6 rounded-full p-1 transition-colors ${user.settings.darkMode ? 'bg-indigo-500' : 'bg-slate-300'}`}
+                  onClick={signOut}
+                  className="w-full glass-card p-4 rounded-xl flex items-center gap-3 text-red-500 font-bold hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors"
                >
-                  <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${user.settings.darkMode ? 'translate-x-6' : ''}`} />
+                  <LogOut className="w-5 h-5" />
+                  Cerrar Sesión
+               </button>
+
+               <button 
+                  onClick={onResetProgress}
+                  className="w-full border border-red-500/50 p-4 rounded-xl flex items-center gap-3 text-red-500 font-bold hover:bg-red-500 hover:text-white transition-all text-xs uppercase tracking-widest"
+               >
+                  <Trash2 className="w-5 h-5" />
+                  Reiniciar Progreso
                </button>
             </div>
 
-            <button 
-               onClick={signOut}
-               className="w-full glass-card p-4 rounded-xl flex items-center gap-3 text-red-500 font-bold hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors"
-            >
-               <LogOut className="w-5 h-5" />
-               Cerrar Sesión
-            </button>
-
-            <button 
-               onClick={onResetProgress}
-               className="w-full border border-red-500/50 p-4 rounded-xl flex items-center gap-3 text-red-500 font-bold hover:bg-red-500 hover:text-white transition-all text-xs uppercase tracking-widest"
-            >
-               <Trash2 className="w-5 h-5" />
-               Reiniciar Progreso
-            </button>
-         </div>
-
-         {/* History Preview */}
-         <div>
-            <h3 className="font-bold text-slate-900 dark:text-white mb-3 ml-1">Historial Reciente</h3>
-            <div className="space-y-3">
-               {[...user.history].reverse().slice(0, 5).map(log => (
-                  <div key={log.id} className="glass-card p-4 rounded-xl flex justify-between items-center">
-                     <div>
-                        <h4 className="font-bold text-slate-800 dark:text-white text-sm">{log.dayTitle}</h4>
-                        <p className="text-xs text-slate-500">{new Date(log.date).toLocaleDateString()}</p>
+            {/* History Preview */}
+            <div>
+               <h3 className="font-bold text-slate-900 dark:text-white mb-3 ml-1">Historial Reciente</h3>
+               <div className="space-y-3">
+                  {[...user.history].reverse().slice(0, 5).map(log => (
+                     <div key={log.id} className="glass-card p-4 rounded-xl flex justify-between items-center">
+                        <div>
+                           <h4 className="font-bold text-slate-800 dark:text-white text-sm">{log.dayTitle}</h4>
+                           <p className="text-xs text-slate-500">{new Date(log.date).toLocaleDateString()}</p>
+                        </div>
+                        <div className="text-right">
+                           <span className="block font-bold text-green-500 text-sm">+{log.xpEarned} XP</span>
+                           <span className="text-xs text-slate-400">{log.totalVolume} kg</span>
+                        </div>
                      </div>
-                     <div className="text-right">
-                        <span className="block font-bold text-green-500 text-sm">+{log.xpEarned} XP</span>
-                        <span className="text-xs text-slate-400">{log.totalVolume} kg</span>
-                     </div>
-                  </div>
-               ))}
-               {user.history.length === 0 && (
-                  <p className="text-center text-slate-400 text-sm py-4">Aún no hay historial.</p>
-               )}
+                  ))}
+                  {user.history.length === 0 && (
+                     <p className="text-center text-slate-400 text-sm py-4">Aún no hay historial.</p>
+                  )}
+               </div>
             </div>
          </div>
 
@@ -1114,10 +1122,6 @@ const DashboardView = ({ user, setView, onGoToChallenges }: { user: UserState; s
   const unlockedAchievements = ACHIEVEMENTS.filter(ach => (user.achievements || []).includes(ach.id));
   const recentUnlocked = [...unlockedAchievements].reverse().slice(0, 4);
 
-  // AI State
-  const [aiAdvice, setAiAdvice] = useState<string | null>(null);
-  const [aiLoading, setAiLoading] = useState(false);
-
   // Helper para el título del rango
   const getRankTitle = (level: number) => {
     if (level >= 50) return "Leyenda Viviente";
@@ -1128,268 +1132,210 @@ const DashboardView = ({ user, setView, onGoToChallenges }: { user: UserState; s
     return "Novato";
   };
 
-  const handleConsultAi = async () => {
-    setAiLoading(true);
-    setAiAdvice(null);
-    try {
-      const advice = await getAiCoachAdvice(user, "Dame un consejo breve, motivador y táctico para mi siguiente nivel basado en mis estadísticas. Sé directo.");
-      setAiAdvice(advice);
-    } catch (e) {
-      setAiAdvice("El coach está ocupado en este momento. Intenta más tarde.");
-    } finally {
-      setAiLoading(false);
-    }
-  };
-
   return (
     <div className="space-y-6 pb-28 animate-fade-in pt-safe-top">
       
-      {/* Profile Summary Card - Redesigned */}
-      <div 
-        onClick={() => setView('profile')}
-        className="relative overflow-hidden rounded-3xl bg-slate-900 text-white shadow-2xl p-6 border border-slate-800 group cursor-pointer hover:border-slate-700 transition-all active:scale-[0.98]"
-      >
-        {/* Background decorations */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 animate-pulse"></div>
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-secondary-500/10 rounded-full blur-[60px] translate-y-1/2 -translate-x-1/2"></div>
-
-        <div className="relative z-10 flex items-center gap-6">
-          {/* Avatar & Level */}
-          <div className="relative shrink-0">
-            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-slate-800 shadow-xl overflow-hidden bg-slate-700 group-hover:scale-105 transition-transform duration-500">
-               <ImageWithFallback src={user.avatar} alt="Avatar" className="w-full h-full object-cover" />
-            </div>
-            
-            {/* Big Level Badge */}
-            <div className="absolute -bottom-2 -right-2 sm:-bottom-3 sm:-right-3 flex flex-col items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-amber-400 via-orange-500 to-amber-600 text-white shadow-lg border-4 border-slate-900 transform rotate-6 group-hover:rotate-12 transition-transform duration-300">
-               <span className="text-[8px] sm:text-[10px] font-bold uppercase leading-none opacity-80 text-amber-100 shadow-black drop-shadow-md">Lvl</span>
-               <span className="text-xl sm:text-2xl font-black leading-none drop-shadow-md">{user.level}</span>
-            </div>
-          </div>
-
-          {/* Info */}
-          <div className="flex-1 min-w-0 pt-2">
-             <div className="flex items-center gap-2 mb-1">
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 border border-slate-700 text-primary-400 uppercase tracking-wider shadow-sm">
-                  {getRankTitle(user.level)}
-                </span>
-             </div>
-             <h3 className="text-2xl sm:text-3xl font-black tracking-tight truncate mb-3 text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-300 drop-shadow-sm group-hover:to-white transition-colors">
-               {user.name}
-             </h3>
-
-             {/* XP Bar */}
-             <div className="relative">
-                <div className="flex justify-between text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-wider">
-                   <span>XP {user.currentXP}</span>
-                   <span>{user.nextLevelXP} Meta</span>
-                </div>
-                <div className="h-4 w-full bg-slate-800 rounded-full overflow-hidden border border-slate-700 relative shadow-inner">
-                   {/* Striped background for empty part */}
-                   <div className="absolute inset-0 opacity-10 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.1)_25%,rgba(255,255,255,0.1)_50%,transparent_50%,transparent_75%,rgba(255,255,255,0.1)_75%,rgba(255,255,255,0.1)_100%)] bg-[length:10px_10px]"></div>
-                   
-                   {/* Fill */}
-                   <div 
-                     className="h-full bg-gradient-to-r from-primary-600 to-primary-400 shadow-[0_0_15px_rgba(20,184,166,0.6)] relative transition-all duration-1000 ease-out"
-                     style={{ width: `${Math.min(100, (user.currentXP / user.nextLevelXP) * 100)}%` }}
-                   >
-                      <div className="absolute inset-0 bg-white/20"></div>
-                   </div>
-                </div>
-             </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Active Program Banner */}
-      {activeProgram && activeProgress ? (
-         <div 
-          onClick={() => setView('training')}
-          className="relative overflow-hidden rounded-3xl bg-slate-900 text-white shadow-xl shadow-primary-900/20 cursor-pointer group border border-slate-800"
-        >
-          {/* Background Gradient & Decoration */}
-          <div className="absolute inset-0 bg-gradient-to-br from-primary-900/80 to-slate-900 opacity-90 z-0"></div>
-          <div className="absolute -right-10 -bottom-10 w-48 h-48 bg-primary-500 rounded-full blur-[80px] opacity-30 z-0"></div>
-          
-          <div className="relative z-10 p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex-1">
-              <div className="flex items-center gap-2 text-primary-300 font-bold text-xs uppercase tracking-wider mb-2">
-                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                Programa Activo
-              </div>
-              <h2 className="text-2xl md:text-3xl font-black italic mb-3">{activeProgram.title}</h2>
-              
-              {/* Visual Progress Bar */}
-              <div className="w-full max-w-sm">
-                 <div className="flex justify-between text-[10px] font-bold text-slate-300 uppercase tracking-wider mb-1">
-                    <span>Progreso Total</span>
-                    <span>{Math.round((activeProgress.currentDayIndex / activeProgram.schedule.length) * 100)}%</span>
-                 </div>
-                 <div className="h-3 w-full bg-slate-800/60 rounded-full overflow-hidden border border-slate-700/50 backdrop-blur-sm relative shadow-inner">
-                    <div 
-                      className="h-full bg-gradient-to-r from-primary-400 to-green-400 shadow-[0_0_15px_rgba(74,222,128,0.4)] transition-all duration-1000 relative" 
-                      style={{ width: `${Math.max(2, ((activeProgress.currentDayIndex) / activeProgram.schedule.length) * 100)}%` }}
-                    >
-                       <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
-                    </div>
-                 </div>
-                 <p className="text-slate-300 text-xs mt-2 font-medium flex items-center gap-2">
-                    <span className="px-2 py-0.5 bg-white/20 rounded-md font-bold">Día {activeProgress.currentDayIndex + 1}</span>
-                    <span className="opacity-70">de {activeProgram.schedule.length} sesiones</span>
-                 </p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-4">
-              <div className="text-right hidden md:block">
-                <div className="text-xs text-slate-400 uppercase font-bold">Siguiente Sesión</div>
-                <div className="font-bold">{activeProgram.schedule[activeProgress.currentDayIndex].title}</div>
-              </div>
-              <div className="bg-primary-500 p-3 rounded-full text-white shadow-lg shadow-primary-500/40 group-hover:scale-110 transition-transform">
-                <Play fill="currentColor" className="w-6 h-6" />
-              </div>
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div 
-          onClick={() => setView('training')}
-          className="bg-gradient-to-r from-violet-600 to-indigo-600 rounded-3xl p-6 text-white shadow-xl cursor-pointer hover:scale-[1.01] transition-transform relative overflow-hidden"
-        >
-          <div className="relative z-10">
-            <h2 className="text-2xl font-bold mb-2">¡Comienza tu Aventura!</h2>
-            <p className="text-violet-100 mb-4">Selecciona un programa de entrenamiento para empezar a ganar XP.</p>
-            <div className="inline-flex items-center bg-white/20 backdrop-blur-sm px-4 py-2 rounded-lg font-bold text-sm">
-              Ver Programas <ChevronRight className="w-4 h-4 ml-1" />
-            </div>
-          </div>
-          <Trophy className="absolute -bottom-6 -right-6 w-32 h-32 text-white/10 rotate-12" />
-        </div>
-      )}
-
-      {/* Weekly Challenge Card */}
-      <div 
-        onClick={onGoToChallenges}
-        className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-orange-600 to-red-600 text-white shadow-lg cursor-pointer hover:shadow-orange-500/20 hover:scale-[1.01] transition-all p-5 flex items-center justify-between group"
-      >
-        <div>
-          <h3 className="font-black text-xl italic uppercase tracking-wider mb-1">Desafíos Semanales</h3>
-          <p className="text-red-100 text-sm font-medium">Prueba tu valía. Gana recompensas exclusivas.</p>
-        </div>
-        <div className="bg-white/20 p-3 rounded-full backdrop-blur-sm group-hover:bg-white/30 transition-colors">
-          <Flame className="w-6 h-6 text-white animate-pulse" />
-        </div>
-      </div>
-
-      {/* AI Coach Card */}
-      <div className="glass-card p-6 rounded-2xl relative overflow-hidden border-2 border-indigo-500/20 shadow-lg shadow-indigo-500/5">
-        <div className="absolute top-0 right-0 p-4 opacity-5">
-          <Bot className="w-24 h-24 text-indigo-500" />
-        </div>
+      {/* Grid Layout for Larger Screens */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        <div className="relative z-10">
-          <h3 className="text-lg font-bold mb-2 flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
-            <Sparkles className="w-5 h-5" /> LevelUp Coach AI
-          </h3>
-          
-          {!aiAdvice ? (
-            <>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                Analiza tus estadísticas, nivel y logros para recibir consejos tácticos personalizados.
-              </p>
-              <button 
-                onClick={handleConsultAi}
-                disabled={aiLoading}
-                className="w-full py-3 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white rounded-xl font-bold transition-all shadow-md shadow-indigo-500/20 active:scale-95 disabled:opacity-70 flex items-center justify-center gap-2"
-              >
-                {aiLoading ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    Analizando rendimiento...
-                  </>
-                ) : (
-                  <>
-                    <MessageSquare className="w-5 h-5" />
-                    Invocar Consejo Táctico
-                  </>
-                )}
-              </button>
-            </>
-          ) : (
-            <div className="animate-fade-in">
-              <div className="bg-indigo-50 dark:bg-indigo-900/30 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800 mb-4">
-                <div className="flex gap-3">
-                  <Bot className="w-6 h-6 text-indigo-500 shrink-0 mt-1" />
-                  <p className="text-sm text-slate-700 dark:text-indigo-100 italic leading-relaxed">"{aiAdvice}"</p>
+        {/* Profile Summary Card - Spans 2 columns on Large */}
+        <div 
+          onClick={() => setView('profile')}
+          className="lg:col-span-2 relative overflow-hidden rounded-3xl bg-slate-900 text-white shadow-2xl p-6 border border-slate-800 group cursor-pointer hover:border-slate-700 transition-all active:scale-[0.98]"
+        >
+          {/* Background decorations */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 animate-pulse"></div>
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-secondary-500/10 rounded-full blur-[60px] translate-y-1/2 -translate-x-1/2"></div>
+
+          <div className="relative z-10 flex items-center gap-6">
+            {/* Avatar & Level */}
+            <div className="relative shrink-0">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-slate-800 shadow-xl overflow-hidden bg-slate-700 group-hover:scale-105 transition-transform duration-500">
+                 <ImageWithFallback src={user.avatar} alt="Avatar" className="w-full h-full object-cover" />
+              </div>
+              
+              {/* Big Level Badge */}
+              <div className="absolute -bottom-2 -right-2 sm:-bottom-3 sm:-right-3 flex flex-col items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-amber-400 via-orange-500 to-amber-600 text-white shadow-lg border-4 border-slate-900 transform rotate-6 group-hover:rotate-12 transition-transform duration-300">
+                 <span className="text-[8px] sm:text-[10px] font-bold uppercase leading-none opacity-80 text-amber-100 shadow-black drop-shadow-md">Lvl</span>
+                 <span className="text-xl sm:text-2xl font-black leading-none drop-shadow-md">{user.level}</span>
+              </div>
+            </div>
+
+            {/* Info */}
+            <div className="flex-1 min-w-0 pt-2">
+               <div className="flex items-center gap-2 mb-1">
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 border border-slate-700 text-primary-400 uppercase tracking-wider shadow-sm">
+                    {getRankTitle(user.level)}
+                  </span>
+               </div>
+               <h3 className="text-2xl sm:text-3xl font-black tracking-tight truncate mb-3 text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-300 drop-shadow-sm group-hover:to-white transition-colors">
+                 {user.name}
+               </h3>
+
+               {/* XP Bar */}
+               <div className="relative">
+                  <div className="flex justify-between text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-wider">
+                     <span>XP {user.currentXP}</span>
+                     <span>{user.nextLevelXP} Meta</span>
+                  </div>
+                  <div className="h-4 w-full bg-slate-800 rounded-full overflow-hidden border border-slate-700 relative shadow-inner">
+                     {/* Striped background for empty part */}
+                     <div className="absolute inset-0 opacity-10 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.1)_25%,rgba(255,255,255,0.1)_50%,transparent_50%,transparent_75%,rgba(255,255,255,0.1)_75%,rgba(255,255,255,0.1)_100%)] bg-[length:10px_10px]"></div>
+                     
+                     {/* Fill */}
+                     <div 
+                       className="h-full bg-gradient-to-r from-primary-600 to-primary-400 shadow-[0_0_15px_rgba(20,184,166,0.6)] relative transition-all duration-1000 ease-out"
+                       style={{ width: `${Math.min(100, (user.currentXP / user.nextLevelXP) * 100)}%` }}
+                     >
+                        <div className="absolute inset-0 bg-white/20"></div>
+                     </div>
+                  </div>
+               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Quick Stats - Fits nicely in the 3rd column */}
+        <div className="grid grid-cols-2 lg:grid-cols-1 gap-4 lg:h-full">
+          <div 
+            onClick={() => setView('stats')}
+            className="glass-card p-4 rounded-xl flex flex-col items-center justify-center text-center cursor-pointer hover:bg-white/40 dark:hover:bg-slate-700/50 transition-colors h-full"
+          >
+            <Dumbbell className="w-6 h-6 text-blue-500 mb-2" />
+            <span className="text-xl font-bold">{(user.totalWeightLifted / 1000).toFixed(1)}k</span>
+            <span className="text-xs text-slate-500">Kg Totales</span>
+          </div>
+          <div 
+            onClick={() => setView('stats')}
+            className="glass-card p-4 rounded-xl flex flex-col items-center justify-center text-center cursor-pointer hover:bg-white/40 dark:hover:bg-slate-700/50 transition-colors h-full"
+          >
+            <CheckCircle className="w-6 h-6 text-green-500 mb-2" />
+            <span className="text-xl font-bold">{user.completedWorkouts}</span>
+            <span className="text-xs text-slate-500">Sesiones</span>
+          </div>
+        </div>
+
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div>
+          {/* Active Program Banner */}
+          {activeProgram && activeProgress ? (
+             <div 
+              onClick={() => setView('training')}
+              className="relative overflow-hidden rounded-3xl bg-slate-900 text-white shadow-xl shadow-primary-900/20 cursor-pointer group border border-slate-800 mb-6"
+            >
+              {/* Background Gradient & Decoration */}
+              <div className="absolute inset-0 bg-gradient-to-br from-primary-900/80 to-slate-900 opacity-90 z-0"></div>
+              <div className="absolute -right-10 -bottom-10 w-48 h-48 bg-primary-500 rounded-full blur-[80px] opacity-30 z-0"></div>
+              
+              <div className="relative z-10 p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 text-primary-300 font-bold text-xs uppercase tracking-wider mb-2">
+                    <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                    Programa Activo
+                  </div>
+                  <h2 className="text-2xl md:text-3xl font-black italic mb-3">{activeProgram.title}</h2>
+                  
+                  {/* Visual Progress Bar */}
+                  <div className="w-full max-w-sm">
+                     <div className="flex justify-between text-[10px] font-bold text-slate-300 uppercase tracking-wider mb-1">
+                        <span>Progreso Total</span>
+                        <span>{Math.round((activeProgress.currentDayIndex / activeProgram.schedule.length) * 100)}%</span>
+                     </div>
+                     <div className="h-3 w-full bg-slate-800/60 rounded-full overflow-hidden border border-slate-700/50 backdrop-blur-sm relative shadow-inner">
+                        <div 
+                          className="h-full bg-gradient-to-r from-primary-400 to-green-400 shadow-[0_0_15px_rgba(74,222,128,0.4)] transition-all duration-1000 relative" 
+                          style={{ width: `${Math.max(2, ((activeProgress.currentDayIndex) / activeProgram.schedule.length) * 100)}%` }}
+                        >
+                           <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
+                        </div>
+                     </div>
+                     <p className="text-slate-300 text-xs mt-2 font-medium flex items-center gap-2">
+                        <span className="px-2 py-0.5 bg-white/20 rounded-md font-bold">Día {activeProgress.currentDayIndex + 1}</span>
+                        <span className="opacity-70">de {activeProgram.schedule.length} sesiones</span>
+                     </p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-4">
+                  <div className="text-right hidden md:block">
+                    <div className="text-xs text-slate-400 uppercase font-bold">Siguiente Sesión</div>
+                    <div className="font-bold">{activeProgram.schedule[activeProgress.currentDayIndex].title}</div>
+                  </div>
+                  <div className="bg-primary-500 p-3 rounded-full text-white shadow-lg shadow-primary-500/40 group-hover:scale-110 transition-transform">
+                    <Play fill="currentColor" className="w-6 h-6" />
+                  </div>
                 </div>
               </div>
-              <button 
-                onClick={handleConsultAi}
-                className="text-xs font-bold text-indigo-500 hover:text-indigo-400 flex items-center gap-1 ml-auto"
+            </div>
+          ) : (
+            <div 
+              onClick={() => setView('training')}
+              className="bg-gradient-to-r from-violet-600 to-indigo-600 rounded-3xl p-6 text-white shadow-xl cursor-pointer hover:scale-[1.01] transition-transform relative overflow-hidden mb-6"
+            >
+              <div className="relative z-10">
+                <h2 className="text-2xl font-bold mb-2">¡Comienza tu Aventura!</h2>
+                <p className="text-violet-100 mb-4">Selecciona un programa de entrenamiento para empezar a ganar XP.</p>
+                <div className="inline-flex items-center bg-white/20 backdrop-blur-sm px-4 py-2 rounded-lg font-bold text-sm">
+                  Ver Programas <ChevronRight className="w-4 h-4 ml-1" />
+                </div>
+              </div>
+              <Trophy className="absolute -bottom-6 -right-6 w-32 h-32 text-white/10 rotate-12" />
+            </div>
+          )}
+
+          {/* Weekly Challenge Card */}
+          <div 
+            onClick={onGoToChallenges}
+            className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-orange-600 to-red-600 text-white shadow-lg cursor-pointer hover:shadow-orange-500/20 hover:scale-[1.01] transition-all p-5 flex items-center justify-between group"
+          >
+            <div>
+              <h3 className="font-black text-xl italic uppercase tracking-wider mb-1">Desafíos Semanales</h3>
+              <p className="text-red-100 text-sm font-medium">Prueba tu valía. Gana recompensas exclusivas.</p>
+            </div>
+            <div className="bg-white/20 p-3 rounded-full backdrop-blur-sm group-hover:bg-white/30 transition-colors">
+              <Flame className="w-6 h-6 text-white animate-pulse" />
+            </div>
+          </div>
+        </div>
+
+        {/* Recent Achievements */}
+        <div>
+          <div className="flex items-center justify-between px-1 mb-2">
+            <h3 className="text-lg font-semibold">Logros Recientes</h3>
+            <button onClick={() => setView('achievements')} className="text-sm text-primary-600 font-bold hover:underline">
+              Ver todos ({unlockedAchievements.length})
+            </button>
+          </div>
+          
+          {recentUnlocked.length === 0 ? (
+            <div className="glass-card p-6 rounded-xl text-center text-slate-400">
+              <Medal className="w-10 h-10 mx-auto mb-2 opacity-50" />
+              <p className="text-sm">Aún no has desbloqueado logros. ¡Entrena para empezar!</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {recentUnlocked.map(ach => (
+                <div key={ach.id} className="glass-card p-4 rounded-xl flex items-center gap-4 transition-all hover:scale-[1.01] border-l-4 border-yellow-400 bg-yellow-50/30 dark:bg-yellow-900/10">
+                  <div className="text-3xl shrink-0 bg-white/50 dark:bg-slate-800/50 p-2 rounded-full shadow-sm">{ach.icon}</div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-bold text-sm text-slate-900 dark:text-white truncate">{ach.name}</h4>
+                    <p className="text-xs text-slate-500 truncate">{ach.description}</p>
+                  </div>
+                  <Star className="w-4 h-4 text-yellow-500 animate-spin-slow shrink-0" />
+                </div>
+              ))}
+               <button 
+                onClick={() => setView('achievements')}
+                className="w-full p-3 rounded-xl flex items-center justify-center gap-2 border border-dashed border-slate-300 dark:border-slate-700 text-slate-400 hover:border-primary-500 hover:text-primary-500 transition-colors text-xs font-bold"
               >
-                <RefreshCw className="w-3 h-3" />
-                Pedir otro consejo
+                <Award className="w-4 h-4" />
+                Ver Colección Completa
               </button>
             </div>
           )}
         </div>
-      </div>
-
-      {/* Quick Stats */}
-      <div className="grid grid-cols-2 gap-4">
-        <div 
-          onClick={() => setView('stats')}
-          className="glass-card p-4 rounded-xl flex flex-col items-center justify-center text-center cursor-pointer hover:bg-white/40 dark:hover:bg-slate-700/50 transition-colors"
-        >
-          <Dumbbell className="w-6 h-6 text-blue-500 mb-2" />
-          <span className="text-xl font-bold">{(user.totalWeightLifted / 1000).toFixed(1)}k</span>
-          <span className="text-xs text-slate-500">Kg Totales</span>
-        </div>
-        <div 
-          onClick={() => setView('stats')}
-          className="glass-card p-4 rounded-xl flex flex-col items-center justify-center text-center cursor-pointer hover:bg-white/40 dark:hover:bg-slate-700/50 transition-colors"
-        >
-          <CheckCircle className="w-6 h-6 text-green-500 mb-2" />
-          <span className="text-xl font-bold">{user.completedWorkouts}</span>
-          <span className="text-xs text-slate-500">Sesiones</span>
-        </div>
-      </div>
-
-      {/* Recent Achievements */}
-      <div>
-        <div className="flex items-center justify-between px-1 mb-2">
-          <h3 className="text-lg font-semibold">Logros Recientes</h3>
-          <button onClick={() => setView('achievements')} className="text-sm text-primary-600 font-bold hover:underline">
-            Ver todos ({unlockedAchievements.length})
-          </button>
-        </div>
-        
-        {recentUnlocked.length === 0 ? (
-          <div className="glass-card p-6 rounded-xl text-center text-slate-400">
-            <Medal className="w-10 h-10 mx-auto mb-2 opacity-50" />
-            <p className="text-sm">Aún no has desbloqueado logros. ¡Entrena para empezar!</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {recentUnlocked.map(ach => (
-              <div key={ach.id} className="glass-card p-4 rounded-xl flex items-center gap-4 transition-all hover:scale-[1.01] border-l-4 border-yellow-400 bg-yellow-50/30 dark:bg-yellow-900/10">
-                <div className="text-3xl shrink-0 bg-white/50 dark:bg-slate-800/50 p-2 rounded-full shadow-sm">{ach.icon}</div>
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-bold text-sm text-slate-900 dark:text-white truncate">{ach.name}</h4>
-                  <p className="text-xs text-slate-500 truncate">{ach.description}</p>
-                </div>
-                <Star className="w-4 h-4 text-yellow-500 animate-spin-slow shrink-0" />
-              </div>
-            ))}
-             <button 
-              onClick={() => setView('achievements')}
-              className="w-full p-3 rounded-xl flex items-center justify-center gap-2 border border-dashed border-slate-300 dark:border-slate-700 text-slate-400 hover:border-primary-500 hover:text-primary-500 transition-colors text-xs font-bold"
-            >
-              <Award className="w-4 h-4" />
-              Ver Colección Completa
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );
@@ -1449,9 +1395,9 @@ const ActiveWorkoutView = ({ user, onUpdateUser, onFinishWorkout, onCancelWorkou
   };
   
   return (
-    <div className="pb-24 animate-fade-in relative min-h-screen flex flex-col pt-safe-top">
+    <div className="pb-24 animate-fade-in relative min-h-screen flex flex-col pt-safe-top max-w-3xl mx-auto">
        {/* Header */}
-       <div className="flex items-center justify-between mb-6 sticky top-0 z-40 bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-sm py-2">
+       <div className="flex items-center justify-between mb-6 sticky top-0 z-40 bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-sm py-2 px-2 rounded-b-xl">
           <div>
              <h2 className="text-xl font-black text-slate-900 dark:text-white">{day?.title}</h2>
              <div className="flex items-center gap-2 text-slate-500 font-mono text-sm">
@@ -1538,19 +1484,66 @@ const ActiveWorkoutView = ({ user, onUpdateUser, onFinishWorkout, onCancelWorkou
   );
 };
 
-const NavButton = ({ icon: Icon, label, isActive, onClick }: { icon: React.ElementType, label: string, isActive: boolean, onClick: () => void }) => (
+const NavButton = ({ icon: Icon, label, isActive, onClick, variant = 'bottom' }: { icon: React.ElementType, label: string, isActive: boolean, onClick: () => void, variant?: 'bottom' | 'side' }) => (
   <button 
     onClick={onClick}
-    className={`flex flex-col items-center justify-center w-full h-full space-y-1 transition-all duration-300 ${
-      isActive 
-        ? 'text-primary-600 dark:text-primary-400 scale-110' 
-        : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
-    }`}
+    className={
+      variant === 'bottom' 
+        ? `flex flex-col items-center justify-center w-full h-full space-y-1 transition-all duration-300 ${
+            isActive 
+              ? 'text-primary-600 dark:text-primary-400 scale-110' 
+              : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+          }`
+        : `flex items-center gap-4 w-full p-3 rounded-xl transition-all duration-200 ${
+            isActive
+              ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400 font-bold'
+              : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-200'
+          }`
+    }
   >
-    <Icon className={`w-6 h-6 ${isActive ? 'fill-current opacity-20' : ''}`} strokeWidth={isActive ? 2.5 : 2} />
-    <span className="text-[10px] font-bold">{label}</span>
+    <Icon className={`${variant === 'bottom' ? 'w-6 h-6' : 'w-5 h-5'} ${isActive && variant === 'bottom' ? 'fill-current opacity-20' : ''}`} strokeWidth={isActive ? 2.5 : 2} />
+    <span className={variant === 'bottom' ? "text-[10px] font-bold" : "text-sm font-medium"}>{label}</span>
   </button>
 );
+
+const Sidebar = ({ view, setView, user }: { view: ViewState, setView: (v: ViewState) => void, user: UserState }) => {
+  return (
+    <div className="hidden md:flex flex-col w-64 h-full bg-white/80 dark:bg-slate-900/90 border-r border-slate-200 dark:border-slate-800 backdrop-blur-md p-6 fixed left-0 top-0 z-50">
+      {/* Logo Area */}
+      <div className="flex items-center gap-3 mb-10 px-2">
+        <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/20">
+          <Zap className="w-6 h-6 text-white fill-current" />
+        </div>
+        <div>
+          <h1 className="text-xl font-black text-slate-900 dark:text-white leading-none">LevelUp</h1>
+          <span className="text-xs font-bold text-primary-500 tracking-wider">FITNESS</span>
+        </div>
+      </div>
+
+      {/* Navigation Links */}
+      <nav className="flex-1 space-y-2">
+        <NavButton variant="side" icon={Home} label="Inicio" isActive={view === 'dashboard'} onClick={() => setView('dashboard')} />
+        <NavButton variant="side" icon={Dumbbell} label="Entreno" isActive={view === 'training'} onClick={() => setView('training')} />
+        <NavButton variant="side" icon={BarChart2} label="Estadísticas" isActive={view === 'stats'} onClick={() => setView('stats')} />
+        <NavButton variant="side" icon={Award} label="Logros" isActive={view === 'achievements'} onClick={() => setView('achievements')} />
+        <NavButton variant="side" icon={User} label="Perfil" isActive={view === 'profile'} onClick={() => setView('profile')} />
+      </nav>
+
+      {/* Mini Profile */}
+      <div className="mt-auto pt-6 border-t border-slate-200 dark:border-slate-800">
+        <div className="flex items-center gap-3 px-2">
+          <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-slate-200 dark:border-slate-700">
+            <ImageWithFallback src={user.avatar} alt="Avatar" className="w-full h-full object-cover" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{user.name}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Nivel {user.level}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const App = () => {
   const [session, setSession] = useState<any>(null);
@@ -1871,7 +1864,7 @@ const App = () => {
   }
 
   return (
-    <div className={`absolute inset-0 w-full h-full overflow-y-auto bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-200 font-sans selection:bg-primary-500 selection:text-white transition-colors duration-300 ${user.settings.darkMode ? 'dark' : ''}`}>
+    <div className={`absolute inset-0 w-full h-full flex bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-200 font-sans selection:bg-primary-500 selection:text-white transition-colors duration-300 ${user.settings.darkMode ? 'dark' : ''}`}>
        
        {loading && (
           <div className="fixed inset-0 z-[200] bg-slate-900 flex items-center justify-center">
@@ -1879,11 +1872,14 @@ const App = () => {
           </div>
        )}
 
-       {/* Scrolling Container */}
-       <div className="min-h-full w-full pb-safe relative">
+       {/* Sidebar for Desktop/Tablet */}
+       <Sidebar view={view} setView={setView} user={user} />
+
+       {/* Scrolling Content Container */}
+       <div className="flex-1 h-full overflow-y-auto relative md:pl-64">
           
           {/* Main Content */}
-          <main className="max-w-md mx-auto min-h-full p-4 pt-safe-top pb-24">
+          <main className="max-w-7xl mx-auto min-h-full p-4 pt-safe-top pb-24 md:pb-12 md:px-8">
              {view === 'dashboard' && <DashboardView user={user} setView={setView} onGoToChallenges={goToChallenges} />}
              {view === 'training' && <ProgramsView user={user} startProgram={startProgram} continueProgram={continueProgram} abandonProgram={abandonProgram} filter={programFilter} setFilter={setProgramFilter} />}
              {view === 'active-workout' && <ActiveWorkoutView user={user} onUpdateUser={handleUpdateUser} onFinishWorkout={finishWorkout} onCancelWorkout={() => setView('training')} />}
@@ -1892,15 +1888,15 @@ const App = () => {
              {view === 'profile' && <ProfileView user={user} setUser={handleUpdateUser} toggleTheme={() => handleUpdateUser({...user, settings: {...user.settings, darkMode: !user.settings.darkMode}})} signOut={() => supabase.auth.signOut()} onResetProgress={() => setShowConfirmReset(true)} />}
           </main>
 
-          {/* Bottom Nav (Inside scrolling container but fixed visually) */}
+          {/* Bottom Nav (Mobile Only) */}
           {view !== 'active-workout' && (
-            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-[360px] z-50 mb-safe pointer-events-none">
+            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-[360px] z-50 mb-safe pointer-events-none md:hidden">
                 <nav className="liquid-glass rounded-3xl transition-all duration-300 pointer-events-auto">
                    <div className="flex justify-around items-center h-20 px-2">
-                      <NavButton icon={Home} label="Inicio" isActive={view === 'dashboard'} onClick={() => setView('dashboard')} />
-                      <NavButton icon={Dumbbell} label="Entreno" isActive={view === 'training'} onClick={() => setView('training')} />
-                      <NavButton icon={BarChart2} label="Stats" isActive={view === 'stats'} onClick={() => setView('stats')} />
-                      <NavButton icon={User} label="Perfil" isActive={view === 'profile'} onClick={() => setView('profile')} />
+                      <NavButton icon={Home} label="Inicio" isActive={view === 'dashboard'} onClick={() => setView('dashboard')} variant="bottom" />
+                      <NavButton icon={Dumbbell} label="Entreno" isActive={view === 'training'} onClick={() => setView('training')} variant="bottom" />
+                      <NavButton icon={BarChart2} label="Stats" isActive={view === 'stats'} onClick={() => setView('stats')} variant="bottom" />
+                      <NavButton icon={User} label="Perfil" isActive={view === 'profile'} onClick={() => setView('profile')} variant="bottom" />
                    </div>
                 </nav>
             </div>

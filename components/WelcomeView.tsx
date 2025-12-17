@@ -1,5 +1,5 @@
 import React from 'react';
-import { Zap, Trophy, Activity, ArrowRight, Brain, Shield } from 'lucide-react';
+import { Zap, Trophy, Activity, ArrowRight, Shield } from 'lucide-react';
 
 export const WelcomeView = ({ onContinue }: { onContinue: () => void }) => {
   return (
@@ -47,16 +47,6 @@ export const WelcomeView = ({ onContinue }: { onContinue: () => void }) => {
             <div>
               <h3 className="font-bold text-white text-sm">Estadísticas Pro</h3>
               <p className="text-xs text-slate-400">Control total de tu progreso.</p>
-            </div>
-          </div>
-
-          <div className="glass-card p-4 rounded-2xl flex items-center gap-4 border border-white/5 bg-white/5 hover:bg-white/10 transition-colors">
-            <div className="p-3 bg-purple-500/20 rounded-xl text-purple-400 shrink-0">
-              <Brain className="w-6 h-6" />
-            </div>
-            <div>
-              <h3 className="font-bold text-white text-sm">Coach IA</h3>
-              <p className="text-xs text-slate-400">Consejos inteligentes personalizados.</p>
             </div>
           </div>
         </div>
