@@ -1,3 +1,4 @@
+
 export enum Difficulty {
   BEGINNER = 'Principiante',
   INTERMEDIATE = 'Intermedio',
@@ -59,6 +60,7 @@ export interface Achievement {
   name: string;
   description: string;
   icon: string;
+  category: 'GENERAL' | 'ENTRENAMIENTO' | 'FUERZA' | 'RESISTENCIA' | 'ESPECIAL';
   unlocked: boolean;
   condition: (user: UserState) => boolean;
 }

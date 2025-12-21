@@ -165,34 +165,38 @@ const AchievementDetailModal = ({ achievement, dateUnlocked, onClose }: { achiev
         onClick={(e) => e.stopPropagation()} // Prevent close on card click
       >
         {/* Background Effects */}
-        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-yellow-500/10 to-transparent pointer-events-none"></div>
+        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-emerald-500/10 to-transparent pointer-events-none"></div>
         
         <button onClick={onClose} className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors">
           <X className="w-5 h-5" />
         </button>
 
         <div className="relative z-10 mt-2">
-          <div className="mx-auto w-20 h-20 bg-slate-800/80 rounded-full flex items-center justify-center mb-4 shadow-lg border border-yellow-500/30">
-            <span className="text-4xl drop-shadow-md">{achievement.icon}</span>
+          <div className="mx-auto w-24 h-24 bg-slate-800 rounded-full flex items-center justify-center mb-6 shadow-xl border-4 border-emerald-500/30">
+            <span className="text-5xl drop-shadow-md">{achievement.icon}</span>
           </div>
           
-          <h2 className="text-xl font-black text-white mb-2 leading-tight">{achievement.name}</h2>
+          <h2 className="text-2xl font-black text-white mb-2 leading-tight">{achievement.name}</h2>
           
-          <div className="my-4 bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
-            <p className="text-slate-300 text-sm leading-relaxed">
+          <div className="my-6 bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
+            <p className="text-slate-300 text-sm leading-relaxed font-medium">
               {achievement.description}
             </p>
           </div>
           
-          <div className="flex justify-center items-center gap-2 mb-2">
-             <div className="bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest flex items-center gap-1">
-                <Star className="w-3 h-3 fill-current" /> Conseguido
+          {dateUnlocked ? (
+             <div className="inline-flex items-center gap-2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest">
+                <CheckCircle className="w-4 h-4 fill-current" /> Conseguido
              </div>
-          </div>
+          ) : (
+             <div className="inline-flex items-center gap-2 bg-slate-800 text-slate-500 border border-slate-700 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest">
+                <Lock className="w-4 h-4" /> Bloqueado
+             </div>
+          )}
           
           {dateUnlocked && (
-             <p className="text-xs text-slate-500 font-medium">
-                Obtenido el {new Date(dateUnlocked).toLocaleDateString()}
+             <p className="text-xs text-slate-600 font-bold mt-3 uppercase tracking-wider">
+                {new Date(dateUnlocked).toLocaleDateString()}
              </p>
           )}
         </div>
@@ -424,6 +428,293 @@ const AvatarSelectionModal = ({ isOpen, onClose, onSelect, currentLevel, current
 };
 
 // --- Sub-Views ---
+
+const AchievementsView = ({ user, setView }: { user: UserState, setView: (v: ViewState) => void }) => {
+   const [selectedAch, setSelectedAch] = useState<Achievement | null>(null);
+   const [activeCategory, setActiveCategory] = useState<'TODOS' | 'GENERAL' | 'ENTRENAMIENTO' | 'FUERZA' | 'RESISTENCIA'>('TODOS');
+   const unlockedCount = user.achievements.length;
+   const totalCount = ACHIEVEMENTS.length;
+
+   // Helper: Get Rank Title (reused logic)
+   const getRankTitle = (level: number) => {
+      if (level >= 50) return "Leyenda Viviente";
+      if (level >= 30) return "Maestro Fitness";
+      if (level >= 20) return "Veterano de Hierro";
+      if (level >= 12) return "Atleta Táctico"; // Specific match for level 12 screenshot
+      if (level >= 10) return "Guerrero Élite";
+      if (level >= 5) return "Aventurero";
+      return "Novato";
+   };
+
+   // Helper: Calculate Streak
+   const calculateStreak = () => {
+      if (user.history.length === 0) return 0;
+      
+      const sortedDates = [...user.history]
+         .map(log => new Date(log.date).setHours(0,0,0,0))
+         .sort((a,b) => b - a); // Descending
+      
+      // Unique days
+      const uniqueDays = Array.from(new Set(sortedDates));
+      
+      let streak = 0;
+      const today = new Date().setHours(0,0,0,0);
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      
+      // If last workout was before yesterday, streak is broken (unless logic allows rest days, keeping simple here)
+      if (uniqueDays[0] < yesterday.getTime()) return 0;
+
+      // Check consecutive days backwards
+      let checkDate = new Date(uniqueDays[0]); // Start with latest
+      
+      for (let i = 0; i < uniqueDays.length; i++) {
+         const d = new Date(uniqueDays[i]);
+         if (d.getTime() === checkDate.getTime()) {
+            streak++;
+            checkDate.setDate(checkDate.getDate() - 1);
+         } else {
+            break;
+         }
+      }
+      return streak;
+   };
+
+   const currentStreak = calculateStreak();
+
+   // Filter Logic
+   const filteredAchievements = useMemo(() => {
+      let filtered = ACHIEVEMENTS;
+      if (activeCategory !== 'TODOS') {
+         filtered = filtered.filter(ach => ach.category === activeCategory || (activeCategory === 'ENTRENAMIENTO' && ach.category === 'ESPECIAL'));
+      }
+      // Sort: Unlocked first within category
+      return [...filtered].sort((a, b) => {
+         const isA = user.achievements.includes(a.id);
+         const isB = user.achievements.includes(b.id);
+         return (isA === isB) ? 0 : isA ? -1 : 1;
+      });
+   }, [user.achievements, activeCategory]);
+
+   // Recent Milestone (Last unlocked)
+   const recentMilestone = useMemo(() => {
+      if (user.achievements.length === 0) return null;
+      const lastId = user.achievements[user.achievements.length - 1];
+      return ACHIEVEMENTS.find(a => a.id === lastId);
+   }, [user.achievements]);
+
+   // Categories config
+   const categories = [
+      { id: 'TODOS', label: 'Todos' },
+      { id: 'GENERAL', label: 'General' },
+      { id: 'ENTRENAMIENTO', label: 'Entrenamiento' },
+      { id: 'FUERZA', label: 'Nutrición' }, // Using "Nutrición" label for FUERZA/Misc based on screenshot placeholder, sticking to logic types though
+      { id: 'RESISTENCIA', label: 'Hábito' },
+   ];
+
+   return (
+      <div className="min-h-screen bg-slate-900 text-white animate-fade-in pb-24">
+         {/* Navbar */}
+         <div className="flex items-center justify-between p-4 sticky top-0 bg-slate-900/90 backdrop-blur-md z-30 pt-safe-top">
+            <button onClick={() => setView('dashboard')} className="p-2 -ml-2 rounded-full hover:bg-slate-800 transition-colors">
+               <ArrowLeft className="w-6 h-6 text-white" />
+            </button>
+            <h1 className="text-lg font-bold">Logros y Niveles</h1>
+            <button className="text-xs font-bold text-emerald-500 hover:text-emerald-400">Reglas</button>
+         </div>
+
+         <div className="px-4 space-y-8">
+            
+            {/* Level Circle Section */}
+            <div className="flex flex-col items-center justify-center mt-2">
+               <div className="relative w-40 h-40 flex items-center justify-center">
+                  {/* Outer Ring Glow */}
+                  <div className="absolute inset-0 rounded-full border-4 border-emerald-500/20 blur-sm"></div>
+                  
+                  {/* SVG Progress Circle */}
+                  <svg className="w-full h-full transform -rotate-90">
+                     <circle
+                        cx="80"
+                        cy="80"
+                        r="70"
+                        stroke="currentColor"
+                        strokeWidth="8"
+                        fill="transparent"
+                        className="text-slate-800"
+                     />
+                     <circle
+                        cx="80"
+                        cy="80"
+                        r="70"
+                        stroke="currentColor"
+                        strokeWidth="8"
+                        fill="transparent"
+                        strokeDasharray={440}
+                        strokeDashoffset={440 - (440 * ((user.currentXP / user.nextLevelXP) || 0))} // Simplified percentage
+                        className="text-emerald-500 transition-all duration-1000 ease-out"
+                        strokeLinecap="round"
+                     />
+                  </svg>
+                  
+                  {/* Inner Content */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                     <span className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">NIVEL</span>
+                     <span className="text-5xl font-black text-white leading-none">{user.level}</span>
+                  </div>
+               </div>
+
+               <h2 className="text-2xl font-bold mt-4 text-center">{getRankTitle(user.level)}</h2>
+               <p className="text-slate-400 text-xs text-center max-w-[250px] mt-1">
+                  Tu consistencia está transformando tu biología.
+               </p>
+
+               {/* XP Bar Linear */}
+               <div className="w-full mt-6 space-y-2">
+                  <div className="flex justify-between text-xs font-bold text-slate-400">
+                     <span>Nivel {user.level}</span>
+                     <span className="text-emerald-500">{user.currentXP} / {user.nextLevelXP} XP</span>
+                     <span>Nivel {user.level + 1}</span>
+                  </div>
+                  <div className="h-3 w-full bg-slate-800 rounded-full overflow-hidden relative">
+                     <div 
+                        className="h-full bg-emerald-500 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.5)]"
+                        style={{ width: `${Math.min(100, (user.currentXP / user.nextLevelXP) * 100)}%` }}
+                     ></div>
+                  </div>
+                  <p className="text-center text-[10px] text-slate-500 font-bold uppercase tracking-wide mt-1">
+                     ¡Solo {user.nextLevelXP - user.currentXP} XP para el siguiente rango!
+                  </p>
+               </div>
+
+               {/* Chips */}
+               <div className="flex gap-3 mt-4">
+                  <div className="bg-emerald-900/20 border border-emerald-500/30 px-4 py-2 rounded-full flex items-center gap-2">
+                     <Trophy className="w-4 h-4 text-emerald-500" />
+                     <span className="text-xs font-bold text-emerald-100">{unlockedCount} / {totalCount} Logros</span>
+                  </div>
+                  <div className="bg-orange-900/20 border border-orange-500/30 px-4 py-2 rounded-full flex items-center gap-2">
+                     <Flame className="w-4 h-4 text-orange-500" />
+                     <span className="text-xs font-bold text-orange-100">{currentStreak} Días Racha</span>
+                  </div>
+               </div>
+            </div>
+
+            {/* Hito Reciente (Featured Card) */}
+            {recentMilestone && (
+               <div>
+                  <div className="flex items-center gap-2 mb-3">
+                     <Star className="w-5 h-5 text-emerald-500 fill-current" />
+                     <h3 className="font-bold text-lg">Hito Reciente</h3>
+                  </div>
+                  
+                  <div className="relative overflow-hidden rounded-3xl bg-slate-800 border border-slate-700 h-48 group cursor-pointer" onClick={() => setSelectedAch(recentMilestone)}>
+                     {/* Background Image Placeholder */}
+                     <div className="absolute inset-0 bg-slate-700">
+                        <img 
+                           src="https://images.unsplash.com/photo-1517836357463-d25dfeac3438?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" 
+                           alt="Gym Background" 
+                           className="w-full h-full object-cover opacity-40 mix-blend-overlay"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/60 to-transparent"></div>
+                     </div>
+
+                     <div className="absolute inset-0 p-6 flex flex-col justify-between z-10">
+                        <div className="flex justify-between items-start">
+                           <h4 className="text-xl font-bold text-white max-w-[70%] leading-tight">{recentMilestone.name}</h4>
+                           <span className="bg-emerald-500 text-slate-900 text-[10px] font-black px-2 py-1 rounded uppercase tracking-wider">
+                              NUEVO
+                           </span>
+                        </div>
+                        
+                        <div>
+                           <p className="text-sm text-slate-300 line-clamp-2 mb-2">{recentMilestone.description}</p>
+                           <p className="text-[10px] text-emerald-400 font-bold uppercase tracking-widest flex items-center gap-1">
+                              {recentMilestone.category} • {user.achievementDates?.[recentMilestone.id] ? new Date(user.achievementDates[recentMilestone.id]).toLocaleDateString() : 'Hoy'}
+                           </p>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+            )}
+
+            {/* Colección Grid */}
+            <div>
+               <div className="flex justify-between items-end mb-4">
+                  <h3 className="font-bold text-lg">Colección</h3>
+                  <span className="text-xs text-slate-500 font-bold">Por Desbloquear</span>
+               </div>
+
+               {/* Filter Tabs */}
+               <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-hide -mx-4 px-4">
+                  {categories.map(cat => (
+                     <button
+                        key={cat.id}
+                        onClick={() => setActiveCategory(cat.id as any)}
+                        className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
+                           activeCategory === cat.id 
+                           ? 'bg-emerald-500 text-slate-900' 
+                           : 'bg-slate-800 text-slate-400 border border-slate-700'
+                        }`}
+                     >
+                        {cat.label}
+                     </button>
+                  ))}
+               </div>
+
+               {/* Circular Grid Layout */}
+               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 pb-8">
+                  {filteredAchievements.map(ach => {
+                     const isUnlocked = user.achievements.includes(ach.id);
+                     
+                     return (
+                        <div 
+                           key={ach.id}
+                           onClick={() => { if(isUnlocked) setSelectedAch(ach); }}
+                           className={`flex flex-col items-center text-center group ${isUnlocked ? 'cursor-pointer' : 'cursor-default opacity-50'}`}
+                        >
+                           <div className={`w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center mb-3 transition-transform duration-300 relative border-2 ${
+                              isUnlocked 
+                              ? 'bg-slate-800 border-emerald-500/50 shadow-lg shadow-emerald-900/20 group-hover:scale-105' 
+                              : 'bg-slate-800/50 border-slate-700 grayscale'
+                           }`}>
+                              {/* Icon */}
+                              <span className="text-3xl sm:text-4xl">{ach.icon}</span>
+                              
+                              {/* Unlock check badge */}
+                              {isUnlocked && (
+                                 <div className="absolute -bottom-1 -right-1 bg-emerald-500 rounded-full p-1 border-2 border-slate-900">
+                                    <Check className="w-3 h-3 text-slate-900" strokeWidth={4} />
+                                 </div>
+                              )}
+                           </div>
+                           
+                           <h4 className={`text-xs font-bold leading-tight max-w-[100px] ${isUnlocked ? 'text-white' : 'text-slate-500'}`}>
+                              {ach.name}
+                           </h4>
+                           
+                           {/* Only show subtext if space allows or logic dictates - mimicking image style clean look */}
+                           <p className="text-[10px] text-slate-500 mt-1 line-clamp-1 max-w-[90%]">
+                              {isUnlocked ? 'Completado' : 'Bloqueado'}
+                           </p>
+                        </div>
+                     );
+                  })}
+               </div>
+            </div>
+
+         </div>
+
+         {/* Detail Modal */}
+         {selectedAch && (
+            <AchievementDetailModal 
+                achievement={selectedAch} 
+                dateUnlocked={user.achievementDates ? user.achievementDates[selectedAch.id] : undefined}
+                onClose={() => setSelectedAch(null)} 
+            />
+         )}
+      </div>
+   );
+};
 
 const ExerciseLoggerModal = ({ exercise, onSave, onClose }: { exercise: ActiveExerciseState, onSave: (sets: SetLog[]) => void, onClose: () => void }) => {
   const [sets, setSets] = useState<SetLog[]>(exercise.setsLog);
@@ -736,101 +1027,6 @@ const ProgramsView = ({ user, startProgram, continueProgram, abandonProgram, fil
        </div>
     </div>
   );
-};
-
-const AchievementsView = ({ user }: { user: UserState }) => {
-   const [selectedAch, setSelectedAch] = useState<Achievement | null>(null);
-   const unlockedCount = user.achievements.length;
-   const totalCount = ACHIEVEMENTS.length;
-
-   // Sorting logic: Unlocked first
-   const sortedAchievements = useMemo(() => {
-     return [...ACHIEVEMENTS].sort((a, b) => {
-       const isA = user.achievements.includes(a.id);
-       const isB = user.achievements.includes(b.id);
-       return (isA === isB) ? 0 : isA ? -1 : 1;
-     });
-   }, [user.achievements]);
-
-   return (
-      <div className="space-y-4 pb-24 animate-fade-in pt-safe-top">
-         {/* Sticky Header */}
-         <div className="bg-slate-900/90 sticky top-0 z-30 py-3 -mx-4 px-4 border-b border-slate-800/50 backdrop-blur-md">
-            <div className="flex items-end justify-between mb-2">
-               <h2 className="text-xl font-black text-white">Sala de Trofeos</h2>
-               <span className="text-primary-400 font-bold text-xs">{unlockedCount} / {totalCount}</span>
-            </div>
-            <ProgressBar current={unlockedCount} max={totalCount} colorClass="bg-gradient-to-r from-yellow-400 to-orange-500" />
-         </div>
-
-         {/* Responsive Grid */}
-         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
-            {sortedAchievements.map(ach => {
-               const isUnlocked = user.achievements.includes(ach.id);
-               return (
-                  <button 
-                    key={ach.id} 
-                    onClick={() => {
-                        if (isUnlocked) setSelectedAch(ach);
-                    }}
-                    className={`relative group overflow-hidden rounded-xl border p-2 flex flex-col items-center text-center transition-all duration-300 aspect-[3/4] sm:aspect-auto sm:h-auto justify-center outline-none focus:scale-[0.98] ${
-                     isUnlocked
-                     ? 'bg-slate-800 border-yellow-500/50 shadow-md shadow-yellow-500/10 cursor-pointer hover:bg-slate-700'
-                     : 'bg-slate-900 border-slate-800 opacity-60 grayscale-[0.8] cursor-default'
-                  }`}>
-                     {/* Unlocked Background Glow */}
-                     {isUnlocked && <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/10 to-transparent pointer-events-none" />}
-
-                     {/* Icon */}
-                     <div className={`text-3xl sm:text-4xl mb-2 transform transition-transform group-hover:scale-110 ${isUnlocked ? 'drop-shadow-md' : 'opacity-50'}`}>
-                        {ach.icon}
-                     </div>
-
-                     {/* Content */}
-                     <div className="relative z-10 w-full flex flex-col items-center">
-                        <h4 className={`font-black text-[10px] sm:text-xs mb-1 leading-tight line-clamp-2 ${isUnlocked ? 'text-white' : 'text-slate-500'}`}>
-                           {ach.name}
-                        </h4>
-                        
-                        {/* Description hidden on mobile to save space, visible on tablet+ */}
-                        <p className="hidden sm:block text-[9px] font-medium text-slate-400 leading-snug line-clamp-3">
-                           {ach.description}
-                        </p>
-                        
-                        {/* Status Indicator */}
-                        <div className="mt-1 sm:mt-2">
-                           {isUnlocked ? (
-                              <>
-                                <div className="sm:hidden text-yellow-400"><Star className="w-3 h-3 fill-current" /></div>
-                                <div className="hidden sm:flex bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest flex items-center gap-1">
-                                    <Star className="w-3 h-3 fill-current" /> Conseguido
-                                </div>
-                              </>
-                           ) : (
-                              <>
-                                <div className="sm:hidden text-slate-600"><Lock className="w-3 h-3" /></div>
-                                <div className="hidden sm:flex bg-slate-800 text-slate-600 border border-slate-700 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-widest items-center gap-1">
-                                    <Lock className="w-3 h-3" /> Bloqueado
-                                </div>
-                              </>
-                           )}
-                        </div>
-                     </div>
-                  </button>
-               );
-            })}
-         </div>
-
-         {/* Detail Modal */}
-         {selectedAch && (
-            <AchievementDetailModal 
-                achievement={selectedAch} 
-                dateUnlocked={user.achievementDates ? user.achievementDates[selectedAch.id] : undefined}
-                onClose={() => setSelectedAch(null)} 
-            />
-         )}
-      </div>
-   );
 };
 
 const StatsView = ({ user, setUser }: { user: UserState, setUser: (u: UserState) => void }) => {
@@ -1598,7 +1794,16 @@ const App = () => {
         .single();
 
       if (data && data.state) {
-        setUser(data.state);
+        // Ensure robustness for existing users with old state structure by merging with defaults
+        const sanitizedUser = {
+           ...INITIAL_USER_STATE,
+           ...data.state,
+           achievementDates: data.state.achievementDates || {},
+           completedProgramIds: data.state.completedProgramIds || [],
+           history: data.state.history || [],
+           achievements: data.state.achievements || []
+        };
+        setUser(sanitizedUser);
       } else {
         // Init new user
         const newUser = { ...INITIAL_USER_STATE };
@@ -1884,7 +2089,7 @@ const App = () => {
              {view === 'training' && <ProgramsView user={user} startProgram={startProgram} continueProgram={continueProgram} abandonProgram={abandonProgram} filter={programFilter} setFilter={setProgramFilter} />}
              {view === 'active-workout' && <ActiveWorkoutView user={user} onUpdateUser={handleUpdateUser} onFinishWorkout={finishWorkout} onCancelWorkout={() => setView('training')} />}
              {view === 'stats' && <StatsView user={user} setUser={handleUpdateUser} />}
-             {view === 'achievements' && <AchievementsView user={user} />}
+             {view === 'achievements' && <AchievementsView user={user} setView={setView} />}
              {view === 'profile' && <ProfileView user={user} setUser={handleUpdateUser} toggleTheme={() => handleUpdateUser({...user, settings: {...user.settings, darkMode: !user.settings.darkMode}})} signOut={() => supabase.auth.signOut()} onResetProgress={() => setShowConfirmReset(true)} />}
           </main>
 
@@ -1896,6 +2101,7 @@ const App = () => {
                       <NavButton icon={Home} label="Inicio" isActive={view === 'dashboard'} onClick={() => setView('dashboard')} variant="bottom" />
                       <NavButton icon={Dumbbell} label="Entreno" isActive={view === 'training'} onClick={() => setView('training')} variant="bottom" />
                       <NavButton icon={BarChart2} label="Stats" isActive={view === 'stats'} onClick={() => setView('stats')} variant="bottom" />
+                      <NavButton icon={Award} label="Logros" isActive={view === 'achievements'} onClick={() => setView('achievements')} variant="bottom" />
                       <NavButton icon={User} label="Perfil" isActive={view === 'profile'} onClick={() => setView('profile')} variant="bottom" />
                    </div>
                 </nav>
